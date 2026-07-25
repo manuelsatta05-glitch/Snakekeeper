@@ -277,6 +277,9 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
   @media print {
     body > * { display: none !important; }
     #print-area { display: block !important; }
+    #print-area * { visibility: visible !important; }
+    .print-page { display: block !important; }
+    img { display: block !important; max-width: 100% !important; }
   }
   #print-area { display: none; }
   .print-label { width: 90mm; padding: 8mm; background: white; color: black; border: 2px solid #1a3320; border-radius: 6px; font-family: 'Inter', sans-serif; page-break-after: always; }
@@ -1185,30 +1188,57 @@ function printLabel(id) {
   </div>`;
 
   // Genera QR piccolo (etichetta teca)
-  setTimeout(() => {
-    try {
-      new QRCode(document.getElementById('qr-small'), {
-        text: url, width: 90, height: 90,
-        colorDark: '#0d1f0f', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } catch(e) {}
+  // Mostra area stampa PRIMA di generare QR
+  area.style.display = 'block';
 
-    // Genera QR grande (foglio standalone)
-    try {
-      new QRCode(document.getElementById('qr-large'), {
-        text: url, width: 220, height: 220,
-        colorDark: '#0d1f0f', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    } catch(e) {}
+  // Genera QR piccolo
+  try {
+    new QRCode(document.getElementById('qr-small'), {
+      text: url, width: 90, height: 90,
+      colorDark: '#0d1f0f', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) { console.warn('QR small:', e); }
 
+  // Genera QR grande
+  try {
+    new QRCode(document.getElementById('qr-large'), {
+      text: url, width: 220, height: 220,
+      colorDark: '#0d1f0f', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  } catch(e) { console.warn('QR large:', e); }
+
+  // Aspetta che le immagini QR si carichino completamente
+  var imgs = area.querySelectorAll('img');
+  var loaded = 0;
+  
+  function tryPrint() {
+    // Piccola pausa aggiuntiva per sicurezza
     setTimeout(() => {
-      area.style.display = 'block';
       window.print();
-      area.style.display = 'none';
-    }, 400);
-  }, 100);
+      setTimeout(() => { area.style.display = 'none'; }, 500);
+    }, 300);
+  }
+
+  if (imgs.length === 0) {
+    tryPrint();
+  } else {
+    var total = imgs.length;
+    imgs.forEach(img => {
+      if (img.complete) {
+        loaded++;
+        if (loaded >= total) tryPrint();
+      } else {
+        img.onload = img.onerror = () => {
+          loaded++;
+          if (loaded >= total) tryPrint();
+        };
+      }
+    });
+    // Fallback: se dopo 3 secondi non sono caricate, stampa comunque
+    setTimeout(tryPrint, 3000);
+  }
 }
 
 // ═══════════════════════════════════════
