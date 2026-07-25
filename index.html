@@ -1070,175 +1070,163 @@ function renderRegistro() {
 }
 
 // ═══════════════════════════════════════
-//  STAMPA ETICHETTA + QR PROFESSIONALE
+//  STAMPA ETICHETTA + QR — NUOVA FINESTRA
 // ═══════════════════════════════════════
 function printLabel(id) {
   const snake = _snakes.find(s => s.id === id);
   if (!snake) return;
 
   const url = BASE_URL + '#snake=' + snake.id;
-  const area = document.getElementById('print-area');
+  const qrSmallUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(url) + '&margin=2&color=0d1f0f&bgcolor=ffffff';
+  const qrLargeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(url) + '&margin=4&color=0d1f0f&bgcolor=ffffff';
 
-  // Due formati: etichetta piccola per teca + QR grande separato
-  area.innerHTML = `
-  <style>
-    @page { margin: 8mm; size: A4; }
+  const printHTML = `<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Etichetta — ${snake.nome}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: white; font-family: 'Inter', Arial, sans-serif; color: #111; }
 
-    .print-page { font-family: 'Arial', sans-serif; color: #111; }
+  @page { size: A4; margin: 12mm; }
 
-    /* ── ETICHETTA TECA (piccola, orizzontale) ── */
-    .teca-label {
-      width: 85mm; height: 40mm;
-      border: 2px solid #1a3320; border-radius: 4mm;
-      padding: 3mm 4mm;
-      display: flex; gap: 3mm; align-items: stretch;
-      page-break-after: always;
-      background: white;
-      box-shadow: 0 0 0 0.5mm #6db56d inset;
-    }
-    .teca-qr { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .teca-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
-    .teca-nome { font-size: 13pt; font-weight: 900; color: #0d1f0f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .teca-specie { font-size: 7pt; color: #555; font-style: italic; margin-top: 0.5mm; }
-    .teca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 3mm; margin-top: 1.5mm; }
-    .teca-field { }
-    .teca-field span.lbl { display: block; font-size: 5.5pt; color: #888; text-transform: uppercase; letter-spacing: 0.3px; }
-    .teca-field span.val { display: block; font-size: 7.5pt; font-weight: 700; color: #111; }
-    .teca-icd { font-family: monospace; font-size: 6pt; color: #aaa; margin-top: 1mm; }
-    .teca-scan { font-size: 5.5pt; color: #888; margin-top: 0.5mm; }
+  /* ── SEZIONE TITOLO ── */
+  .section-label {
+    font-size: 8pt; color: #999; text-transform: uppercase;
+    letter-spacing: 1.5px; border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 3mm; margin-bottom: 5mm; margin-top: 8mm;
+  }
+  .section-label:first-child { margin-top: 0; }
 
-    /* ── FOGLIO QR GRANDE (per chi vuole stampare solo il QR) ── */
-    .qr-sheet {
-      width: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 10mm 0;
-      text-align: center;
-    }
-    .qr-sheet-title { font-size: 28pt; font-weight: 900; color: #0d1f0f; margin-bottom: 3mm; }
-    .qr-sheet-sub { font-size: 12pt; color: #444; margin-bottom: 2mm; font-style: italic; }
-    .qr-sheet-meta { font-size: 9pt; color: #666; margin-bottom: 6mm; }
-    .qr-sheet-qr { margin: 0 auto; }
-    .qr-sheet-icd { font-family: monospace; font-size: 11pt; color: #333; margin-top: 5mm; letter-spacing: 2px; }
-    .qr-sheet-url { font-size: 7pt; color: #aaa; margin-top: 2mm; word-break: break-all; max-width: 120mm; }
-    .qr-sheet-hint { margin-top: 6mm; font-size: 8pt; color: #888; border-top: 1px dashed #ccc; padding-top: 4mm; }
+  /* ── ETICHETTA TECA ── */
+  .teca-label {
+    width: 85mm; height: 42mm;
+    border: 2px solid #1a3320;
+    border-radius: 3mm;
+    padding: 3mm 3.5mm;
+    display: flex; gap: 3mm; align-items: stretch;
+    background: white;
+    outline: 2px solid #6db56d;
+    outline-offset: -1.5mm;
+    page-break-inside: avoid;
+  }
+  .teca-qr-box {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    width: 33mm;
+  }
+  .teca-qr-box img { width: 33mm; height: 33mm; display: block; }
+  .teca-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+  .teca-nome { font-family: 'Cinzel', serif; font-size: 13pt; font-weight: 700; color: #0d1f0f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .teca-sesso { font-size: 10pt; font-weight: 400; }
+  .teca-specie { font-size: 7pt; color: #555; font-style: italic; margin-top: 1mm; }
+  .teca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 3mm; margin-top: 1.5mm; }
+  .teca-field .lbl { display: block; font-size: 5.5pt; color: #999; text-transform: uppercase; letter-spacing: 0.3px; }
+  .teca-field .val { display: block; font-size: 7.5pt; font-weight: 700; color: #111; }
+  .teca-bottom { }
+  .teca-icd { font-family: monospace; font-size: 6pt; color: #bbb; }
+  .teca-scan { font-size: 5.5pt; color: #aaa; margin-top: 0.5mm; }
 
-    /* ── SEPARATORE SEZIONI ── */
-    .section-title {
-      font-size: 9pt; color: #888; text-transform: uppercase; letter-spacing: 1px;
-      border-bottom: 1px solid #eee; padding-bottom: 2mm; margin-bottom: 4mm; margin-top: 6mm;
-    }
-  </style>
-
-  <div class="print-page">
-
-    <!-- SEZIONE 1: etichetta teca -->
-    <div class="section-title">📋 Etichetta per teca (85×40mm)</div>
-    <div class="teca-label">
-      <div class="teca-qr">
-        <div id="qr-small"></div>
-      </div>
-      <div class="teca-info">
-        <div>
-          <div class="teca-nome">${snake.nome} <span style="font-weight:400;font-size:10pt">${snake.sesso === 'M' ? '♂' : '♀'}</span></div>
-          <div class="teca-specie">${snake.specie || ''}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
-        </div>
-        <div class="teca-grid">
-          <div class="teca-field">
-            <span class="lbl">Sesso</span>
-            <span class="val">${snake.sesso === 'M' ? 'Maschio' : 'Femmina'}</span>
-          </div>
-          <div class="teca-field">
-            <span class="lbl">Data nascita</span>
-            <span class="val">${fmtDate(snake.nascita)}</span>
-          </div>
-          ${snake.peso ? `<div class="teca-field">
-            <span class="lbl">Peso</span>
-            <span class="val">${snake.peso}g</span>
-          </div>` : ''}
-          ${snake.provenienza ? `<div class="teca-field">
-            <span class="lbl">Provenienza</span>
-            <span class="val" style="font-size:6.5pt">${snake.provenienza}</span>
-          </div>` : ''}
-        </div>
-        <div>
-          <div class="teca-icd">ICD: ${snake.icd}</div>
-          <div class="teca-scan">📷 Scansiona per aprire la scheda</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SEZIONE 2: QR grande standalone -->
-    <div class="section-title" style="margin-top:8mm">📱 QR Code grande (da ritagliare e applicare sulla teca)</div>
-    <div class="qr-sheet">
-      <div class="qr-sheet-title">${snake.nome}</div>
-      <div class="qr-sheet-sub">${snake.specie || 'Serpente'}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
-      <div class="qr-sheet-meta">
-        ${snake.sesso === 'M' ? '♂ Maschio' : '♀ Femmina'}
-        ${snake.nascita ? ' · Nato il ' + fmtDate(snake.nascita) : ''}
-      </div>
-      <div class="qr-sheet-qr" id="qr-large"></div>
-      <div class="qr-sheet-icd">${snake.icd}</div>
-      <div class="qr-sheet-url">${url}</div>
-      <div class="qr-sheet-hint">
-        🐍 Scansiona con la fotocamera per aprire la scheda completa su SnakeKeeper<br>
-        Puoi registrare pasti, feci e deposizioni direttamente da smartphone
-      </div>
-    </div>
-
-  </div>`;
-
-  // Genera QR piccolo (etichetta teca)
-  // Mostra area stampa PRIMA di generare QR
-  area.style.display = 'block';
-
-  // Genera QR piccolo
-  try {
-    new QRCode(document.getElementById('qr-small'), {
-      text: url, width: 90, height: 90,
-      colorDark: '#0d1f0f', colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch(e) { console.warn('QR small:', e); }
-
-  // Genera QR grande
-  try {
-    new QRCode(document.getElementById('qr-large'), {
-      text: url, width: 220, height: 220,
-      colorDark: '#0d1f0f', colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
-    });
-  } catch(e) { console.warn('QR large:', e); }
-
-  // Aspetta che le immagini QR si carichino completamente
-  var imgs = area.querySelectorAll('img');
-  var loaded = 0;
-  
-  function tryPrint() {
-    // Piccola pausa aggiuntiva per sicurezza
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => { area.style.display = 'none'; }, 500);
-    }, 300);
+  /* ── QR GRANDE ── */
+  .qr-sheet {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8mm 0; text-align: center;
+    page-break-inside: avoid;
+  }
+  .qr-nome { font-family: 'Cinzel', serif; font-size: 26pt; font-weight: 700; color: #0d1f0f; margin-bottom: 2mm; }
+  .qr-sub { font-size: 11pt; color: #444; font-style: italic; margin-bottom: 2mm; }
+  .qr-meta { font-size: 9pt; color: #666; margin-bottom: 6mm; }
+  .qr-img { display: block; margin: 0 auto; }
+  .qr-icd { font-family: monospace; font-size: 11pt; color: #333; margin-top: 5mm; letter-spacing: 2px; }
+  .qr-url { font-size: 6.5pt; color: #bbb; margin-top: 2mm; word-break: break-all; max-width: 120mm; }
+  .qr-hint {
+    margin-top: 6mm; font-size: 8pt; color: #888;
+    border-top: 1px dashed #ddd; padding-top: 4mm;
+    max-width: 130mm; line-height: 1.6;
+  }
+  .qr-border {
+    border: 2px dashed #6db56d; border-radius: 4mm;
+    padding: 6mm 10mm; display: inline-flex; flex-direction: column; align-items: center;
+    margin-top: 4mm;
   }
 
-  if (imgs.length === 0) {
-    tryPrint();
-  } else {
-    var total = imgs.length;
-    imgs.forEach(img => {
-      if (img.complete) {
-        loaded++;
-        if (loaded >= total) tryPrint();
-      } else {
-        img.onload = img.onerror = () => {
-          loaded++;
-          if (loaded >= total) tryPrint();
-        };
-      }
-    });
-    // Fallback: se dopo 3 secondi non sono caricate, stampa comunque
-    setTimeout(tryPrint, 3000);
+  /* ── PULSANTE STAMPA (nascosto in stampa) ── */
+  .no-print { text-align: center; padding: 20px; }
+  .btn-print {
+    background: #1a3320; color: white; border: none; padding: 14px 32px;
+    font-size: 16px; border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif;
+    margin-right: 10px;
   }
+  .btn-close { background: #eee; color: #333; border: none; padding: 14px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; }
+  @media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PULSANTI -->
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ Stampa / Salva PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ Chiudi</button>
+</div>
+
+<!-- SEZIONE 1: ETICHETTA TECA -->
+<div class="section-label">📋 Etichetta per teca (85×40mm) — ritaglia e applica</div>
+<div class="teca-label">
+  <div class="teca-qr-box">
+    <img src="${qrSmallUrl}" alt="QR Code" />
+  </div>
+  <div class="teca-info">
+    <div>
+      <div class="teca-nome">${snake.nome} <span class="teca-sesso">${snake.sesso === 'M' ? '♂' : '♀'}</span></div>
+      <div class="teca-specie">${snake.specie || ''}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
+    </div>
+    <div class="teca-grid">
+      <div class="teca-field">
+        <span class="lbl">Sesso</span>
+        <span class="val">${snake.sesso === 'M' ? 'Maschio' : 'Femmina'}</span>
+      </div>
+      <div class="teca-field">
+        <span class="lbl">Data nascita</span>
+        <span class="val">${fmtDate(snake.nascita)}</span>
+      </div>
+      ${snake.peso ? `<div class="teca-field"><span class="lbl">Peso</span><span class="val">${snake.peso}g</span></div>` : ''}
+      ${snake.provenienza ? `<div class="teca-field"><span class="lbl">Provenienza</span><span class="val" style="font-size:6pt">${snake.provenienza}</span></div>` : ''}
+    </div>
+    <div class="teca-bottom">
+      <div class="teca-icd">ICD: ${snake.icd}</div>
+      <div class="teca-scan">📷 Scansiona il QR per aprire la scheda</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEZIONE 2: QR GRANDE -->
+<div class="section-label" style="margin-top:10mm">📱 QR Code grande — ritaglia e applica sulla teca</div>
+<div class="qr-sheet">
+  <div class="qr-nome">${snake.nome}</div>
+  <div class="qr-sub">${snake.specie || 'Serpente'}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
+  <div class="qr-meta">${snake.sesso === 'M' ? '♂ Maschio' : '♀ Femmina'}${snake.nascita ? ' · Nato il ' + fmtDate(snake.nascita) : ''}</div>
+  <div class="qr-border">
+    <img class="qr-img" src="${qrLargeUrl}" width="260" height="260" alt="QR Code" />
+    <div class="qr-icd">${snake.icd}</div>
+  </div>
+  <div class="qr-url">${url}</div>
+  <div class="qr-hint">
+    🐍 Scansiona con la fotocamera per aprire la scheda su SnakeKeeper<br>
+    Registra pasti, feci e deposizioni direttamente da smartphone
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  // Apri in nuova finestra
+  const win = window.open('', '_blank', 'width=800,height=900');
+  win.document.write(printHTML);
+  win.document.close();
 }
 
 // ═══════════════════════════════════════
