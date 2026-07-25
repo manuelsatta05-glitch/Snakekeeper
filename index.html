@@ -8,7 +8,18 @@
 <meta name="apple-mobile-web-app-title" content="SnakeKeeper">
 <meta name="theme-color" content="#080f09">
 <title>SnakeKeeper — Gestionale Allevamento Serpenti</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* Minimal QR Code generator — pure JS, no dependencies (MIT) */
+/* Simplified QR for URLs — uses Google Charts as img tag (works on GitHub Pages) */
+var QRCode = function(el, opts) {
+  if (typeof opts === 'string') opts = {text: opts};
+  var o = Object.assign({width:256,height:256,colorDark:'#000',colorLight:'#fff'}, opts);
+  var size = o.width || 256;
+  var url = 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(o.text) + '&color=' + (o.colorDark||'#000000').replace('#','') + '&bgcolor=' + (o.colorLight||'#ffffff').replace('#','') + '&margin=2';
+  el.innerHTML = '<img src="' + url + '" width="' + size + '" height="' + size + '" style="display:block" onerror="this.style.display='none';this.parentNode.innerHTML='<div style=\"font-family:monospace;font-size:9pt;word-break:break-all;padding:4px\">&#x1F4F7; ' + encodeURIComponent(o.text).replace(/[%()]/g,'') + '</div>'">';
+};
+QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
