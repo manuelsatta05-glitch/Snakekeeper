@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SnakeKeeper">
+<meta name="theme-color" content="#080f09">
+<title>SnakeKeeper — Gestionale Allevamento Serpenti</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg-deep:     #080f09;
+    --bg-forest:   #0d1f0f;
+    --bg-moss:     #152a17;
+    --bg-card:     #1a3320;
+    --bg-card2:    #1f3d26;
+    --accent-gold: #c9a84c;
+    --accent-lime: #6db56d;
+    --accent-red:  #c0392b;
+    --accent-pink: #e391a0;
+    --text-bright: #e8f5e0;
+    --text-mid:    #a8c8a0;
+    --text-dim:    #688560;
+    --border:      #2d5030;
+    --shadow:      0 4px 24px rgba(0,0,0,0.5);
+    --radius:      12px;
+    --safe-top:    env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --nav-h:       60px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-bright);
+    min-height: 100vh;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(109,181,109,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 85% 70%, rgba(201,168,76,0.04) 0%, transparent 60%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cellipse cx='20' cy='20' rx='18' ry='12' fill='none' stroke='%236db56d' stroke-width='1'/%3E%3Cellipse cx='0' cy='10' rx='18' ry='12' fill='none' stroke='%236db56d' stroke-width='1'/%3E%3Cellipse cx='40' cy='10' rx='18' ry='12' fill='none' stroke='%236db56d' stroke-width='1'/%3E%3Cellipse cx='0' cy='30' rx='18' ry='12' fill='none' stroke='%236db56d' stroke-width='1'/%3E%3Cellipse cx='40' cy='30' rx='18' ry='12' fill='none' stroke='%236db56d' stroke-width='1'/%3E%3C/svg%3E");
+  }
+
+  /* ── LOADING SCREEN ── */
+  #loading-screen {
+    position: fixed; inset: 0; z-index: 999;
+    background: var(--bg-deep);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  }
+  #loading-screen .l-logo { font-size: 56px; animation: pulse 1.5s ease-in-out infinite; }
+  #loading-screen h2 { font-family: 'Cinzel', serif; color: var(--accent-gold); font-size: 22px; }
+  #loading-screen p { color: var(--text-dim); font-size: 14px; }
+  #loading-screen .l-bar { width: 200px; height: 3px; background: var(--bg-card); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  #loading-screen .l-bar-inner { height: 100%; background: linear-gradient(90deg, var(--accent-lime), var(--accent-gold)); border-radius: 2px; animation: loadbar 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  @keyframes loadbar { 0%{width:0%;margin-left:0} 50%{width:80%;margin-left:0} 100%{width:0%;margin-left:100%} }
+
+  /* ── LAYOUT ── */
+  #app { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+  aside {
+    width: 260px; min-height: 100vh; flex-shrink: 0;
+    background: var(--bg-forest); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .logo { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
+  .logo h1 { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; letter-spacing: 1px; color: var(--accent-gold); line-height: 1.2; }
+  .logo span { display: block; font-size: 10px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+  .snake-icon { font-size: 32px; margin-bottom: 8px; filter: drop-shadow(0 0 6px rgba(109,181,109,0.4)); }
+
+  nav { padding: 16px 12px; flex: 1; }
+  nav .nav-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; padding: 8px 12px 4px; }
+  nav button {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 14px; border-radius: 8px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-mid); font-size: 14px; font-family: 'Inter', sans-serif;
+    transition: all .2s; text-align: left; margin-bottom: 2px;
+    -webkit-tap-highlight-color: transparent; min-height: 44px;
+  }
+  nav button:hover, nav button.active { background: var(--bg-card); color: var(--text-bright); }
+  nav button.active { color: var(--accent-gold); }
+  nav .ico { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-snakes { padding: 0 12px 16px; }
+  .sidebar-snakes .nav-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; padding: 8px 12px 4px; }
+  .sidebar-snake-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 8px; cursor: pointer;
+    transition: background .15s; font-size: 13px; color: var(--text-mid);
+    min-height: 40px; -webkit-tap-highlight-color: transparent;
+  }
+  .sidebar-snake-item:hover { background: var(--bg-card); color: var(--text-bright); }
+  .sidebar-snake-item.active { background: var(--bg-card); color: var(--accent-lime); }
+  .sex-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sex-dot.M { background: #5b9bd5; }
+  .sex-dot.F { background: var(--accent-pink); }
+
+  /* Indicatore connessione */
+  .conn-badge {
+    margin: 0 12px 12px; padding: 6px 12px; border-radius: 8px;
+    font-size: 11px; display: flex; align-items: center; gap: 6px;
+  }
+  .conn-badge.online { background: rgba(109,181,109,0.15); color: var(--accent-lime); }
+  .conn-badge.offline { background: rgba(192,57,43,0.15); color: var(--accent-red); }
+  .conn-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  main { flex: 1; padding: 32px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ── MOBILE NAV ── */
+  #mobile-nav {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: var(--bg-forest); border-top: 1px solid var(--border);
+    padding-bottom: var(--safe-bottom);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  #mobile-nav-inner { display: flex; align-items: stretch; height: var(--nav-h); }
+  .mob-nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; border: none; background: none; cursor: pointer;
+    color: var(--text-dim); font-size: 10px; font-family: 'Inter', sans-serif;
+    transition: color .2s; padding: 6px 4px;
+    -webkit-tap-highlight-color: transparent; min-width: 44px;
+  }
+  .mob-nav-btn .m-ico { font-size: 20px; line-height: 1; }
+  .mob-nav-btn.active { color: var(--accent-gold); }
+
+  #mobile-header {
+    display: none; position: sticky; top: 0; z-index: 40;
+    background: var(--bg-forest); border-bottom: 1px solid var(--border);
+    padding: calc(var(--safe-top) + 8px) 16px 8px;
+    align-items: center; justify-content: space-between;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  #mobile-header .m-logo { font-family: 'Cinzel', serif; font-size: 18px; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; }
+  #hamburger { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--text-mid); font-size: 22px; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
+
+  #drawer-overlay { display: none; position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6); }
+  #drawer-overlay.open { display: block; }
+  #mobile-drawer {
+    position: fixed; top: 0; left: -280px; bottom: 0; width: 280px; z-index: 70;
+    background: var(--bg-forest); border-right: 1px solid var(--border);
+    transition: transform .3s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: var(--safe-top);
+  }
+  #mobile-drawer.open { transform: translateX(280px); }
+
+  /* ── COMPONENTS ── */
+  .page-header { margin-bottom: 24px; }
+  .page-header h2 { font-family: 'Cinzel', serif; font-size: 26px; color: var(--text-bright); }
+  .page-header p { color: var(--text-mid); font-size: 14px; margin-top: 4px; }
+
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-family: 'Cinzel', serif; font-size: 15px; color: var(--accent-gold); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); }
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--bg-forest); border: 1px solid var(--border);
+    color: var(--text-bright); border-radius: 8px; padding: 12px 14px;
+    font-family: 'Inter', sans-serif; font-size: 16px;
+    transition: border-color .2s; outline: none;
+    -webkit-appearance: none; appearance: none; min-height: 44px;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent-lime); }
+  .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%23688560'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+  }
+  .form-group select option { background: #0d1f0f; }
+
+  .btn {
+    padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
+    transition: all .2s; display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .btn-primary { background: var(--accent-gold); color: #1a0f00; }
+  .btn-primary:active { opacity:.85; transform:scale(.97); }
+  .btn-green { background: var(--accent-lime); color: #0a1a0a; }
+  .btn-green:active { opacity:.85; }
+  .btn-ghost { background: transparent; color: var(--text-mid); border: 1px solid var(--border); }
+  .btn-ghost:active { background: var(--bg-card2); }
+  .btn-danger { background: transparent; color: var(--accent-red); border: 1px solid var(--accent-red); }
+  .btn-danger:active { background: rgba(192,57,43,0.1); }
+  .btn-sm { padding: 8px 14px; font-size: 13px; min-height: 36px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-M { background: rgba(91,155,213,0.2); color: #5b9bd5; border: 1px solid rgba(91,155,213,0.3); }
+  .badge-F { background: rgba(227,145,160,0.2); color: var(--accent-pink); border: 1px solid rgba(227,145,160,0.3); }
+
+  .snakes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+  .snake-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+    cursor: pointer; transition: all .2s; position: relative; overflow: hidden;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .snake-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent-lime), var(--accent-gold)); }
+  .snake-card:active { transform: scale(.98); opacity: .9; }
+  .snake-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .snake-name { font-family: 'Cinzel', serif; font-size: 17px; color: var(--text-bright); }
+  .snake-code { font-size: 10px; color: var(--text-dim); margin-top: 2px; font-family: monospace; }
+  .snake-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .snake-info-item { background: var(--bg-moss); border-radius: 6px; padding: 8px 10px; }
+  .snake-info-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); }
+  .snake-info-value { font-size: 13px; color: var(--text-bright); margin-top: 2px; }
+  .snake-card-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+  /* ── DETAIL HEADER ── */
+  .snake-detail-header {
+    margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .snake-detail-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent-lime), var(--accent-gold), var(--accent-lime)); }
+  .sdh-top { display: flex; align-items: flex-start; gap: 16px; }
+  .snake-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--bg-moss); border: 2px solid var(--accent-lime); display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; }
+  .sdh-name-block { flex: 1; min-width: 0; }
+  .snake-detail-name { font-family: 'Cinzel', serif; font-size: 22px; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .snake-detail-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .snake-detail-meta span { background: var(--bg-moss); padding: 3px 10px; border-radius: 20px; font-size: 11px; color: var(--text-mid); white-space: nowrap; }
+  .sdh-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; align-items: flex-start; }
+  .sdh-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .snake-stats { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+  .snake-stats::-webkit-scrollbar { display: none; }
+  .stat { background: var(--bg-moss); border-radius: 8px; padding: 8px 14px; text-align: center; flex-shrink: 0; }
+  .stat-val { font-family: 'Cinzel', serif; font-size: 18px; color: var(--accent-gold); }
+  .stat-lab { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 1px; white-space: nowrap; }
+  .sdh-icd { font-family: monospace; font-size: 10px; color: var(--text-dim); background: var(--bg-moss); padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--bg-forest); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 9px 16px; border-radius: 7px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; background: none; color: var(--text-dim); transition: all .2s; white-space: nowrap; flex-shrink: 0; min-height: 38px; -webkit-tap-highlight-color: transparent; }
+  .tab.active { background: var(--bg-card); color: var(--text-bright); }
+
+  .log-entry { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .log-icon.food { background: rgba(109,181,109,0.2); }
+  .log-icon.feci { background: rgba(201,168,76,0.2); }
+  .log-icon.eggs { background: rgba(227,145,160,0.2); }
+  .log-info { flex: 1; min-width: 0; }
+  .log-date { font-size: 11px; color: var(--text-dim); }
+  .log-desc { font-size: 14px; color: var(--text-bright); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-delete { cursor: pointer; color: var(--text-dim); font-size: 14px; width: 36px; height: 36px; border-radius: 8px; border: none; background: none; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .log-delete:active { color: var(--accent-red); background: rgba(192,57,43,0.1); }
+
+  @media print {
+    body > * { display: none !important; }
+    #print-area { display: block !important; }
+  }
+  #print-area { display: none; }
+  .print-label { width: 90mm; padding: 8mm; background: white; color: black; border: 2px solid #1a3320; border-radius: 6px; font-family: 'Inter', sans-serif; page-break-after: always; }
+  .print-label-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1a3320; padding-bottom: 4mm; margin-bottom: 4mm; }
+  .print-label-title { font-family: 'Cinzel', serif; font-size: 14pt; font-weight: 700; color: #0d1f0f; }
+  .print-label-sub { font-size: 8pt; color: #555; }
+  .print-label-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; margin-bottom: 4mm; }
+  .print-field label { font-size: 7pt; color: #888; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+  .print-field span { font-size: 10pt; font-weight: 600; color: #111; }
+  .print-qr-row { display: flex; justify-content: center; margin-top: 4mm; }
+
+  .toast {
+    position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px); left: 16px; right: 16px; z-index: 200;
+    padding: 14px 20px; border-radius: 10px; font-weight: 600; font-size: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4); text-align: center;
+    animation: slideUp .25s ease; color: #0a1a0a;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-dim); }
+  .empty-state .empty-icon { font-size: 56px; margin-bottom: 14px; opacity: 0.5; }
+  .empty-state h3 { font-family: 'Cinzel', serif; font-size: 17px; color: var(--text-mid); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; max-width: 280px; margin: 0 auto 20px; }
+
+  .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .mt-24 { margin-top: 24px; }
+
+  .mini-chart { background: var(--bg-moss); border-radius: 8px; height: 80px; display: flex; align-items: flex-end; gap: 4px; padding: 12px 12px 8px; overflow: hidden; }
+  .mini-bar { background: var(--accent-lime); border-radius: 3px 3px 0 0; flex: 1; opacity: 0.8; min-width: 6px; }
+
+  /* Spinner inline */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg-forest); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 900px) and (min-width: 601px) { aside { width: 220px; } main { padding: 24px; } }
+
+  @media (max-width: 600px) {
+    aside { display: none; }
+    #mobile-header { display: flex; }
+    #mobile-nav { display: block; }
+    #app { flex-direction: column; min-height: 100vh; }
+    main { padding: 16px; padding-top: 8px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); flex: 1; }
+    .page-header { margin-bottom: 18px; }
+    .page-header h2 { font-size: 22px; }
+    .card { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    .snakes-grid { grid-template-columns: 1fr; gap: 14px; }
+    .snake-detail-header { flex-wrap: wrap; }
+    .dash-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .dash-bottom-grid { grid-template-columns: 1fr !important; }
+    .tabs { width: 100%; }
+    .toast { left: 12px; right: 12px; bottom: calc(var(--nav-h) + var(--safe-bottom) + 8px); }
+  }
+
+  @media (min-width: 601px) and (max-width: 1024px) {
+    aside { width: 200px; }
+    main { padding: 20px; }
+    .snakes-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="l-logo">🐍</div>
+  <h2>SnakeKeeper</h2>
+  <p>Connessione al database...</p>
+  <div class="l-bar"><div class="l-bar-inner"></div></div>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- MOBILE DRAWER -->
+<div id="mobile-drawer">
+  <div class="logo" style="padding-top:calc(var(--safe-top) + 20px)">
+    <div class="snake-icon">🐍</div>
+    <h1>SnakeKeeper</h1>
+    <span>Gestionale Allevamento</span>
+  </div>
+  <nav>
+    <div class="nav-label">Navigazione</div>
+    <button onclick="showPage('dashboard');closeDrawer()" id="mnav-dashboard"><span class="ico">🏠</span> Dashboard</button>
+    <button onclick="showPage('serpenti');closeDrawer()" id="mnav-serpenti"><span class="ico">🐍</span> I Miei Serpenti</button>
+    <button onclick="showPage('aggiungi');closeDrawer()" id="mnav-aggiungi"><span class="ico">➕</span> Aggiungi Serpente</button>
+    <button onclick="showPage('registro');closeDrawer()" id="mnav-registro"><span class="ico">📋</span> Registro Attività</button>
+  </nav>
+  <div class="sidebar-snakes" id="drawer-snake-list"><div class="nav-label">I tuoi serpenti</div></div>
+</div>
+
+<div id="app">
+  <!-- DESKTOP SIDEBAR -->
+  <aside>
+    <div class="logo">
+      <div class="snake-icon">🐍</div>
+      <h1>SnakeKeeper</h1>
+      <span>Gestionale Allevamento</span>
+    </div>
+    <nav>
+      <div class="nav-label">Navigazione</div>
+      <button class="active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="ico">🏠</span> Dashboard</button>
+      <button onclick="showPage('serpenti')" id="nav-serpenti"><span class="ico">🐍</span> I Miei Serpenti</button>
+      <button onclick="showPage('aggiungi')" id="nav-aggiungi"><span class="ico">➕</span> Aggiungi Serpente</button>
+      <button onclick="showPage('registro')" id="nav-registro"><span class="ico">📋</span> Registro Attività</button>
+    </nav>
+    <div class="sidebar-snakes" id="sidebar-snake-list"><div class="nav-label">I tuoi serpenti</div></div>
+    <div id="conn-indicator" class="conn-badge offline" style="margin-top:auto">
+      <div class="conn-dot"></div><span>Connessione...</span>
+    </div>
+  </aside>
+
+  <!-- MOBILE HEADER -->
+  <div id="mobile-header">
+    <div class="m-logo">🐍 <span style="font-size:16px">SnakeKeeper</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="conn-indicator-mob" style="width:8px;height:8px;border-radius:50%;background:var(--text-dim)"></div>
+      <button id="hamburger" onclick="openDrawer()">☰</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;flex:1;min-width:0">
+    <main id="main-content"></main>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div id="mobile-nav">
+  <div id="mobile-nav-inner">
+    <button class="mob-nav-btn active" id="mob-dashboard" onclick="showPage('dashboard')"><span class="m-ico">🏠</span><span>Home</span></button>
+    <button class="mob-nav-btn" id="mob-serpenti" onclick="showPage('serpenti')"><span class="m-ico">🐍</span><span>Serpenti</span></button>
+    <button class="mob-nav-btn" id="mob-aggiungi" onclick="showPage('aggiungi')" style="color:var(--accent-gold)"><span class="m-ico" style="font-size:28px;line-height:1">＋</span></button>
+    <button class="mob-nav-btn" id="mob-registro" onclick="showPage('registro')"><span class="m-ico">📋</span><span>Registro</span></button>
+    <button class="mob-nav-btn" id="mob-drawer" onclick="openDrawer()"><span class="m-ico">☰</span><span>Menu</span></button>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  SUPABASE CONFIG
+// ═══════════════════════════════════════
+const SUPABASE_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhidGNleHlydmVpZndmc3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5Njc4MDYsImV4cCI6MjEwMDU0MzgwNn0.eVW5nAZeKu8NoryZUYRKsmHGoHrPV719X3cRINCUkjk';
+
+const SB = {
+  async req(path, opts={}) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': opts.prefer || 'return=representation',
+        ...opts.headers
+      },
+      ...opts
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({message: res.statusText}));
+      throw new Error(err.message || 'Errore Supabase');
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+  },
+
+  // SERPENTI
+  async getSerpenti() {
+    return this.req('serpenti?select=*&order=created_at.asc');
+  },
+  async insertSerpente(s) {
+    return this.req('serpenti', { method:'POST', body: JSON.stringify(s) });
+  },
+  async deleteSerpente(id) {
+    return this.req(`serpenti?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
+  },
+
+  // LOGS
+  async getLogs(snakeId) {
+    const filter = snakeId ? `snake_id=eq.${snakeId}&` : '';
+    return this.req(`logs?${filter}select=*&order=data.desc,created_at.desc`);
+  },
+  async getAllLogs() {
+    return this.req('logs?select=*&order=data.desc,created_at.desc');
+  },
+  async insertLog(l) {
+    return this.req('logs', { method:'POST', body: JSON.stringify(l) });
+  },
+  async deleteLog(id) {
+    return this.req(`logs?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
+  },
+};
+
+// ═══════════════════════════════════════
+//  CACHE LOCALE (per velocità UI)
+// ═══════════════════════════════════════
+let _snakes = [];
+let _logs = [];
+let _isOnline = false;
+
+async function loadAll() {
+  try {
+    [_snakes, _logs] = await Promise.all([SB.getSerpenti(), SB.getAllLogs()]);
+    setOnline(true);
+  } catch(e) {
+    console.error('Errore caricamento:', e);
+    setOnline(false);
+    throw e;
+  }
+}
+
+function setOnline(val) {
+  _isOnline = val;
+  const ind = document.getElementById('conn-indicator');
+  const mob = document.getElementById('conn-indicator-mob');
+  if (ind) {
+    ind.className = 'conn-badge ' + (val ? 'online' : 'offline');
+    ind.innerHTML = `<div class="conn-dot"></div><span>${val ? '☁️ Supabase connesso' : '⚠️ Offline'}</span>`;
+  }
+  if (mob) mob.style.background = val ? 'var(--accent-lime)' : 'var(--accent-red)';
+}
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function genId() { return 'SN' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genICD() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+  let r = 'IT-'; for (let i=0;i<8;i++) r += chars[Math.floor(Math.random()*chars.length)];
+  return r;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const parts = d.slice(0,10).split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+function age(dob) {
+  if (!dob) return '—';
+  const ms = Date.now() - new Date(dob);
+  const days = Math.floor(ms / 86400000);
+  if (days < 30) return days + 'g';
+  const months = Math.floor(days/30);
+  if (months < 12) return months + ' mesi';
+  return Math.floor(months/12) + ' anni';
+}
+function toast(msg, color='#6db56d') {
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  t.style.background = color;
+  t.style.color = color === '#6db56d' ? '#0a1a0a' : '#fff';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+function logsForSnake(snakeId) { return _logs.filter(l=>l.snake_id===snakeId); }
+
+// ═══════════════════════════════════════
+//  DRAWER MOBILE
+// ═══════════════════════════════════════
+function openDrawer() {
+  document.getElementById('mobile-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  refreshDrawerSnakes();
+}
+function closeDrawer() {
+  document.getElementById('mobile-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function refreshDrawerSnakes() {
+  const list = document.getElementById('drawer-snake-list');
+  let html = '<div class="nav-label">I tuoi serpenti</div>';
+  if (!_snakes.length) html += '<div style="padding:8px 12px;font-size:12px;color:var(--text-dim)">Nessun serpente</div>';
+  _snakes.forEach(s => {
+    html += `<div class="sidebar-snake-item" onclick="showPage('dettaglio','${s.id}');closeDrawer()">
+      <div class="sex-dot ${s.sesso}"></div><span>${s.nome}</span></div>`;
+  });
+  list.innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+//  ROUTING
+// ═══════════════════════════════════════
+let currentPage = 'dashboard';
+let currentSnakeId = null;
+
+function showPage(page, snakeId=null) {
+  currentPage = page; currentSnakeId = snakeId;
+  window.scrollTo(0,0);
+  ['dashboard','serpenti','aggiungi','registro'].forEach(p => {
+    ['nav-','mnav-','mob-'].forEach(prefix => {
+      const el = document.getElementById(prefix+p);
+      if (el) el.classList.toggle('active', p===(page==='dettaglio'?'serpenti':page));
+    });
+  });
+  document.getElementById('main-content').innerHTML = '';
+  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro };
+  if (pages[page]) pages[page]();
+  refreshSidebar();
+}
+
+function refreshSidebar() {
+  const list = document.getElementById('sidebar-snake-list');
+  if (!list) return;
+  let html = '<div class="nav-label">I tuoi serpenti</div>';
+  if (!_snakes.length) html += '<div style="padding:8px 12px;font-size:12px;color:var(--text-dim)">Nessun serpente</div>';
+  _snakes.forEach(s => {
+    const active = currentPage==='dettaglio' && currentSnakeId===s.id ? 'active' : '';
+    html += `<div class="sidebar-snake-item ${active}" onclick="showPage('dettaglio','${s.id}')">
+      <div class="sex-dot ${s.sesso}"></div><span>${s.nome}</span></div>`;
+  });
+  list.innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════
+function renderDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = today.slice(0,7);
+  const totM = _snakes.filter(s=>s.sesso==='M').length;
+  const totF = _snakes.filter(s=>s.sesso==='F').length;
+  const foodMonth = _logs.filter(l=>l.tipo==='cibo' && l.data && l.data.startsWith(thisMonth)).length;
+  const eggsTotal = _logs.filter(l=>l.tipo==='uova').length;
+
+  const warnings = [];
+  _snakes.forEach(s => {
+    const last = _logs.filter(l=>l.snake_id===s.id && l.tipo==='cibo').sort((a,b)=>b.data.localeCompare(a.data))[0];
+    if (last) {
+      const days = Math.floor((Date.now()-new Date(last.data))/86400000);
+      if (days>=14) warnings.push({nome:s.nome, days, id:s.id});
+    } else { warnings.push({nome:s.nome, days:null, id:s.id}); }
+  });
+
+  const chartData = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(Date.now()-i*86400000).toISOString().split('T')[0];
+    chartData.push(_logs.filter(l=>l.data===d && l.tipo==='cibo').length);
+  }
+  const maxBar = Math.max(...chartData,1);
+
+  document.getElementById('main-content').innerHTML = `
+  <div class="page-header"><h2>🌿 Dashboard</h2><p>Benvenuto nel gestionale · ☁️ Dati su Supabase</p></div>
+  <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
+    ${[['🐍',_snakes.length,'Totale','var(--accent-gold)'],['♂️',totM,'Maschi','#5b9bd5'],
+       ['♀️',totF,'Femmine','var(--accent-pink)'],['🥩',foodMonth,'Pasti/mese','var(--accent-lime)'],
+       ['🥚',eggsTotal,'Deposizioni','var(--accent-pink)']
+    ].map(([ico,val,lab,col])=>`
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-size:28px;margin-bottom:4px">${ico}</div>
+        <div style="font-family:'Cinzel',serif;font-size:26px;color:${col}">${val}</div>
+        <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${lab}</div>
+      </div>`).join('')}
+  </div>
+  <div class="dash-bottom-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div class="card-title">📊 Pasti (7gg)</div>
+      <div class="mini-chart">${chartData.map(v=>`<div class="mini-bar" style="height:${Math.max(6,(v/maxBar)*100)}%"></div>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--text-dim)">
+        ${['6g','5g','4g','3g','2g','ieri','oggi'].map(l=>`<span>${l}</span>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚠️ Attenzione</div>
+      ${warnings.length===0
+        ? `<div style="color:var(--text-dim);font-size:14px;padding:8px 0">✅ Tutto in regola!</div>`
+        : warnings.map(w=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span>🐍</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.nome}</div>
+              <div style="font-size:10px;color:var(--accent-red)">${w.days===null?'Nessun pasto':w.days+'g fa'}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="showPage('dettaglio','${w.id}')" style="padding:6px 10px;font-size:11px">Vai</button>
+          </div>`).join('')}
+    </div>
+  </div>
+  ${_snakes.length===0?`
+  <div class="card mt-24" style="text-align:center;padding:40px 20px">
+    <div style="font-size:56px;margin-bottom:12px">🐍</div>
+    <h3 style="font-family:'Cinzel',serif;color:var(--text-mid);margin-bottom:8px">Inizia l'allevamento</h3>
+    <p style="color:var(--text-dim);margin-bottom:18px;font-size:14px">Aggiungi il primo serpente per cominciare.</p>
+    <button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi Serpente</button>
+  </div>`:''}`;
+}
+
+// ═══════════════════════════════════════
+//  LISTA SERPENTI
+// ═══════════════════════════════════════
+function renderSerpenti() {
+  let html = `
+  <div class="page-header"><h2>🐍 I Miei Serpenti</h2><p>${_snakes.length} esemplari registrati</p></div>
+  <div style="margin-bottom:16px"><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi</button></div>`;
+  if (!_snakes.length) {
+    html += `<div class="empty-state"><div class="empty-icon">🐍</div><h3>Nessun serpente</h3><p>Inizia aggiungendo il primo esemplare.</p><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi</button></div>`;
+  } else {
+    html += '<div class="snakes-grid">' + _snakes.map(s => {
+      const sl = logsForSnake(s.id);
+      const lastFood = sl.filter(l=>l.tipo==='cibo').sort((a,b)=>b.data.localeCompare(a.data))[0];
+      const lastFece = sl.filter(l=>l.tipo==='feci').sort((a,b)=>b.data.localeCompare(a.data))[0];
+      return `
+      <div class="snake-card" onclick="showPage('dettaglio','${s.id}')">
+        <div class="snake-card-header">
+          <div><div class="snake-name">${s.nome}</div><div class="snake-code">${s.icd}</div></div>
+          <span class="badge badge-${s.sesso}">${s.sesso==='M'?'♂':'♀'}</span>
+        </div>
+        <div class="snake-info">
+          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${s.specie||'—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Età</div><div class="snake-info-value">${age(s.nascita)}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Ultimo pasto</div><div class="snake-info-value" style="font-size:12px">${lastFood?fmtDate(lastFood.data):'—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Ultime feci</div><div class="snake-info-value" style="font-size:12px">${lastFece?fmtDate(lastFece.data):'—'}</div></div>
+        </div>
+        <div class="snake-card-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-green btn-sm" onclick="showPage('dettaglio','${s.id}')">📋 Dettagli</button>
+          <button class="btn btn-ghost btn-sm" onclick="printLabel('${s.id}')">🏷️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSerpente('${s.id}')">🗑️</button>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+  document.getElementById('main-content').innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+//  AGGIUNGI SERPENTE
+// ═══════════════════════════════════════
+function renderAggiungi() {
+  document.getElementById('main-content').innerHTML = `
+  <div class="page-header"><h2>➕ Nuovo Serpente</h2><p>Registra un nuovo esemplare</p></div>
+  <div class="card">
+    <div class="card-title">🐍 Dati Anagrafici</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nome *</label><input type="text" id="f-nome" placeholder="es. Kaa" autocomplete="off"></div>
+      <div class="form-group"><label>Specie</label><input type="text" id="f-specie" placeholder="es. Python regius" autocomplete="off"></div>
+      <div class="form-group"><label>Morfo / Varietà</label><input type="text" id="f-morfo" placeholder="es. Albino, Pastel..." autocomplete="off"></div>
+      <div class="form-group">
+        <label>Sesso *</label>
+        <select id="f-sesso">
+          <option value="">— Seleziona —</option>
+          <option value="M">♂ Maschio</option>
+          <option value="F">♀ Femmina</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data di nascita</label><input type="date" id="f-nascita"></div>
+      <div class="form-group"><label>Peso attuale (g)</label><input type="number" id="f-peso" placeholder="es. 450" inputmode="decimal"></div>
+      <div class="form-group"><label>Provenienza</label><input type="text" id="f-provenienza" placeholder="es. Allevamento XYZ" autocomplete="off"></div>
+      <div class="form-group">
+        <label>Codice ICD</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="f-icd" style="flex:1" autocomplete="off">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('f-icd').value=genICD()" style="flex-shrink:0">🔄</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group mt-16"><label>Note</label><textarea id="f-note" rows="3" placeholder="Eventuali annotazioni..." style="resize:vertical"></textarea></div>
+    <div class="flex-row mt-20">
+      <button class="btn btn-primary" id="btn-salva-serpente" onclick="saveSerpente()">💾 Salva</button>
+      <button class="btn btn-ghost" onclick="showPage('serpenti')">Annulla</button>
+    </div>
+  </div>`;
+  document.getElementById('f-icd').value = genICD();
+}
+
+async function saveSerpente() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const sesso = document.getElementById('f-sesso').value;
+  if (!nome) { toast('Inserisci il nome!','#c0392b'); return; }
+  if (!sesso) { toast('Seleziona il sesso!','#c0392b'); return; }
+  const btn = document.getElementById('btn-salva-serpente');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
+  const snake = {
+    id: genId(), nome, sesso,
+    specie: document.getElementById('f-specie').value.trim() || null,
+    morfo: document.getElementById('f-morfo').value.trim() || null,
+    nascita: document.getElementById('f-nascita').value || null,
+    peso: parseFloat(document.getElementById('f-peso').value) || null,
+    provenienza: document.getElementById('f-provenienza').value.trim() || null,
+    icd: document.getElementById('f-icd').value.trim() || genICD(),
+    note: document.getElementById('f-note').value.trim() || null,
+  };
+  try {
+    await SB.insertSerpente(snake);
+    _snakes.push(snake);
+    toast('🐍 Serpente salvato nel cloud!');
+    showPage('dettaglio', snake.id);
+  } catch(e) {
+    toast('Errore: '+e.message,'#c0392b');
+    btn.disabled=false; btn.innerHTML='💾 Salva';
+  }
+}
+
+// ═══════════════════════════════════════
+//  DETTAGLIO SERPENTE
+// ═══════════════════════════════════════
+function renderDettaglio() {
+  const snake = _snakes.find(s=>s.id===currentSnakeId);
+  if (!snake) { showPage('serpenti'); return; }
+  const logs = logsForSnake(snake.id);
+  const foodLogs = logs.filter(l=>l.tipo==='cibo').sort((a,b)=>b.data.localeCompare(a.data));
+  const feciLogs = logs.filter(l=>l.tipo==='feci').sort((a,b)=>b.data.localeCompare(a.data));
+  const eggsLogs = logs.filter(l=>l.tipo==='uova').sort((a,b)=>b.data.localeCompare(a.data));
+  const totalFood = foodLogs.reduce((s,l)=>s+(parseFloat(l.grammi)||0),0);
+  const todayVal = new Date().toISOString().split('T')[0];
+
+  document.getElementById('main-content').innerHTML = `
+  <div style="margin-bottom:14px">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('serpenti')">← Indietro</button>
+  </div>
+  <div class="snake-detail-header">
+    <div class="sdh-top">
+      <div class="snake-avatar">🐍</div>
+      <div class="sdh-name-block">
+        <div class="snake-detail-name">${snake.nome}</div>
+        <div class="snake-detail-meta">
+          <span class="badge badge-${snake.sesso}">${snake.sesso==='M'?'♂ Maschio':'♀ Femmina'}</span>
+          ${snake.specie?`<span>🦎 ${snake.specie}</span>`:''}
+          ${snake.morfo?`<span>🎨 ${snake.morfo}</span>`:''}
+          ${snake.nascita?`<span>🎂 ${fmtDate(snake.nascita)}</span>`:''}
+        </div>
+      </div>
+      <div class="sdh-actions">
+        <button class="btn btn-ghost btn-sm" onclick="printLabel('${snake.id}')">🏷️ Stampa</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSerpente('${snake.id}')">🗑️</button>
+      </div>
+    </div>
+    <div class="sdh-bottom">
+      <div class="snake-stats">
+        <div class="stat"><div class="stat-val">${age(snake.nascita)}</div><div class="stat-lab">Età</div></div>
+        <div class="stat"><div class="stat-val">${foodLogs.length}</div><div class="stat-lab">Pasti</div></div>
+        <div class="stat"><div class="stat-val">${totalFood.toFixed(0)}g</div><div class="stat-lab">Cibo tot.</div></div>
+        <div class="stat"><div class="stat-val">${feciLogs.length}</div><div class="stat-lab">Feci</div></div>
+        ${snake.sesso==='F'?`<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">Deposizioni</div></div>`:''}
+      </div>
+      <div class="sdh-icd">${snake.icd}</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-cibo" onclick="switchTab('cibo')">🥩 Pasti</button>
+    <button class="tab" id="tab-feci" onclick="switchTab('feci')">💩 Feci</button>
+    ${snake.sesso==='F'?`<button class="tab" id="tab-uova" onclick="switchTab('uova')">🥚 Uova</button>`:''}
+    <button class="tab" id="tab-info" onclick="switchTab('info')">📄 Info</button>
+  </div>
+
+  <!-- TAB CIBO -->
+  <div id="tab-content-cibo">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">🥩 Registra Pasto</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Data *</label><input type="date" id="food-data" value="${todayVal}"></div>
+        <div class="form-group">
+          <label>Tipo di cibo</label>
+          <select id="food-tipo">
+            <option>Topo scongelato</option><option>Topo vivo</option>
+            <option>Ratto scongelato</option><option>Ratto vivo</option>
+            <option>Pulcino</option><option>Coniglio</option><option>Altro</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Peso preda (g)</label><input type="number" id="food-grammi" placeholder="es. 45" inputmode="decimal"></div>
+        <div class="form-group"><label>Quantità</label><input type="number" id="food-qty" value="1" min="1" inputmode="numeric"></div>
+      </div>
+      <div class="form-group mt-16"><label>Note</label><input type="text" id="food-note" placeholder="es. Ha mangiato con entusiasmo" autocomplete="off"></div>
+      <button class="btn btn-green mt-16" id="btn-log-food" onclick="logFood('${snake.id}')">💾 Salva Pasto</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📜 Storico (${foodLogs.length})</div>
+      ${renderLogList(foodLogs,'food',snake.id)}
+    </div>
+  </div>
+
+  <!-- TAB FECI -->
+  <div id="tab-content-feci" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">💩 Registra Feci</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Data *</label><input type="date" id="feci-data" value="${todayVal}"></div>
+        <div class="form-group">
+          <label>Consistenza</label>
+          <select id="feci-tipo">
+            <option>Normale</option><option>Liquide</option><option>Dure</option>
+            <option>Con urati</option><option>Sanguinolente</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mt-16"><label>Note</label><input type="text" id="feci-note" placeholder="es. Aspetto normale" autocomplete="off"></div>
+      <button class="btn btn-primary mt-16" style="background:var(--accent-gold)" id="btn-log-feci" onclick="logFeci('${snake.id}')">💾 Salva</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📜 Storico (${feciLogs.length})</div>
+      ${renderLogList(feciLogs,'feci',snake.id)}
+    </div>
+  </div>
+
+  <!-- TAB UOVA -->
+  ${snake.sesso==='F'?`<div id="tab-content-uova" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">🥚 Registra Deposizione</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Data *</label><input type="date" id="eggs-data" value="${todayVal}"></div>
+        <div class="form-group"><label>N° uova</label><input type="number" id="eggs-num" placeholder="es. 6" inputmode="numeric"></div>
+        <div class="form-group"><label>N° fertili</label><input type="number" id="eggs-fertili" placeholder="es. 5" inputmode="numeric"></div>
+        <div class="form-group"><label>Temp. incubaz. (°C)</label><input type="number" id="eggs-temp" placeholder="es. 31" step="0.1" inputmode="decimal"></div>
+      </div>
+      <div class="form-group mt-16"><label>Note</label><input type="text" id="eggs-note" placeholder="es. Incubazione avviata" autocomplete="off"></div>
+      <button class="btn mt-16" style="background:var(--accent-pink);color:#1a0010" id="btn-log-uova" onclick="logUova('${snake.id}')">💾 Salva</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📜 Storico (${eggsLogs.length})</div>
+      ${renderLogList(eggsLogs,'eggs',snake.id)}
+    </div>
+  </div>`:''}
+
+  <!-- TAB INFO -->
+  <div id="tab-content-info" style="display:none">
+    <div class="card">
+      <div class="card-title">📄 Scheda Anagrafica</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+        ${[['Nome',snake.nome],['Specie',snake.specie||'—'],['Morfo',snake.morfo||'—'],
+           ['Sesso',snake.sesso==='M'?'♂ Maschio':'♀ Femmina'],
+           ['Nascita',fmtDate(snake.nascita)],['Età',age(snake.nascita)],
+           ['Peso',snake.peso?snake.peso+'g':'—'],['Provenienza',snake.provenienza||'—'],
+           ['Codice ICD',snake.icd]
+        ].map(([k,v])=>`
+          <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
+            <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${k}</div>
+            <div style="font-size:13px;color:var(--text-bright);margin-top:3px;font-weight:500;word-break:break-word">${v}</div>
+          </div>`).join('')}
+      </div>
+      ${snake.note?`<div style="margin-top:12px;background:var(--bg-moss);border-radius:8px;padding:12px">
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Note</div>
+        <div style="font-size:13px;color:var(--text-mid)">${snake.note}</div>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderLogList(logs, type, snakeId) {
+  const icons = { food:'🥩', feci:'💩', eggs:'🥚' };
+  if (!logs.length) return '<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna registrazione</div>';
+  return logs.map(l => {
+    let desc = '';
+    if (l.tipo==='cibo') desc=`${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g`;
+    if (l.tipo==='feci') desc=`${l.feci_tipo||'—'}`;
+    if (l.tipo==='uova') desc=`${l.num_uova||0} uova, ${l.fertili||0} fertili${l.temp?` — ${l.temp}°C`:''}`;
+    return `<div class="log-entry">
+      <div class="log-icon ${type}">${icons[type]}</div>
+      <div class="log-info">
+        <div class="log-date">${fmtDate(l.data)}</div>
+        <div class="log-desc">${desc}${l.note?` · ${l.note}`:''}</div>
+      </div>
+      <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snakeId}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(name) {
+  ['cibo','feci','uova','info'].forEach(t => {
+    const btn=document.getElementById('tab-'+t);
+    const cnt=document.getElementById('tab-content-'+t);
+    if(btn) btn.classList.toggle('active',t===name);
+    if(cnt) cnt.style.display=t===name?'':'none';
+  });
+}
+
+// ═══════════════════════════════════════
+//  LOG ACTIONS
+// ═══════════════════════════════════════
+async function logFood(snakeId) {
+  const data=document.getElementById('food-data').value;
+  if(!data){toast('Inserisci la data!','#c0392b');return;}
+  const btn=document.getElementById('btn-log-food');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const log={
+    id:'L'+Date.now()+Math.random().toString(36).slice(2,5),
+    snake_id:snakeId, tipo:'cibo', data,
+    food_tipo:document.getElementById('food-tipo').value,
+    grammi:parseFloat(document.getElementById('food-grammi').value)||null,
+    qty:parseInt(document.getElementById('food-qty').value)||1,
+    note:document.getElementById('food-note').value||null,
+  };
+  try {
+    await SB.insertLog(log);
+    _logs.unshift(log);
+    toast('🥩 Pasto salvato nel cloud!');
+    renderDettaglio();
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva Pasto'; }
+}
+
+async function logFeci(snakeId) {
+  const data=document.getElementById('feci-data').value;
+  if(!data){toast('Inserisci la data!','#c0392b');return;}
+  const btn=document.getElementById('btn-log-feci');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const log={
+    id:'L'+Date.now()+Math.random().toString(36).slice(2,5),
+    snake_id:snakeId, tipo:'feci', data,
+    feci_tipo:document.getElementById('feci-tipo').value,
+    note:document.getElementById('feci-note').value||null,
+  };
+  try {
+    await SB.insertLog(log);
+    _logs.unshift(log);
+    toast('💩 Feci salvate nel cloud!');
+    renderDettaglio(); switchTab('feci');
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva'; }
+}
+
+async function logUova(snakeId) {
+  const data=document.getElementById('eggs-data').value;
+  if(!data){toast('Inserisci la data!','#c0392b');return;}
+  const btn=document.getElementById('btn-log-uova');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const log={
+    id:'L'+Date.now()+Math.random().toString(36).slice(2,5),
+    snake_id:snakeId, tipo:'uova', data,
+    num_uova:parseInt(document.getElementById('eggs-num').value)||null,
+    fertili:parseInt(document.getElementById('eggs-fertili').value)||null,
+    temp:parseFloat(document.getElementById('eggs-temp').value)||null,
+    note:document.getElementById('eggs-note').value||null,
+  };
+  try {
+    await SB.insertLog(log);
+    _logs.unshift(log);
+    toast('🥚 Deposizione salvata nel cloud!');
+    renderDettaglio(); switchTab('uova');
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva'; }
+}
+
+async function deleteLogEntry(logId, snakeId) {
+  if(!confirm('Eliminare questa registrazione?')) return;
+  try {
+    await SB.deleteLog(logId);
+    _logs = _logs.filter(l=>l.id!==logId);
+    toast('Eliminato','#c0392b');
+    renderDettaglio();
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); }
+}
+
+async function deleteSerpente(id) {
+  if(!confirm('Eliminare questo serpente e tutte le sue registrazioni?\nI dati verranno cancellati dal database.')) return;
+  try {
+    await SB.deleteSerpente(id);
+    _snakes = _snakes.filter(s=>s.id!==id);
+    _logs = _logs.filter(l=>l.snake_id!==id);
+    toast('Serpente eliminato','#c0392b');
+    showPage('serpenti');
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); }
+}
+
+// ═══════════════════════════════════════
+//  REGISTRO GLOBALE
+// ═══════════════════════════════════════
+function renderRegistro() {
+  const logs = [..._logs].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,80);
+  const snakeMap = {}; _snakes.forEach(s=>snakeMap[s.id]=s);
+  const icons={cibo:'🥩',feci:'💩',uova:'🥚'};
+  const types={cibo:'food',feci:'feci',uova:'eggs'};
+  let html = `<div class="page-header"><h2>📋 Registro</h2><p>Ultime ${logs.length} attività</p></div><div class="card">`;
+  if(!logs.length) {
+    html+=`<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna attività</h3><p>Le attività appariranno qui.</p></div>`;
+  } else {
+    logs.forEach(l=>{
+      const snake=snakeMap[l.snake_id];
+      const sname=snake?snake.nome:'?';
+      let desc='';
+      if(l.tipo==='cibo') desc=`${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g`;
+      if(l.tipo==='feci') desc=`Feci: ${l.feci_tipo||'—'}`;
+      if(l.tipo==='uova') desc=`Deposizione: ${l.num_uova||0} uova`;
+      html+=`<div class="log-entry">
+        <div class="log-icon ${types[l.tipo]||'food'}">${icons[l.tipo]||'📌'}</div>
+        <div class="log-info">
+          <div class="log-date">${fmtDate(l.data)} · <span style="color:var(--accent-lime);cursor:pointer" onclick="showPage('dettaglio','${l.snake_id}')">${sname}</span></div>
+          <div class="log-desc">${desc}${l.note?` · ${l.note}`:''}</div>
+        </div>
+      </div>`;
+    });
+  }
+  html+='</div>';
+  document.getElementById('main-content').innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+//  STAMPA ETICHETTA + QR
+// ═══════════════════════════════════════
+function printLabel(id) {
+  const snake=_snakes.find(s=>s.id===id);
+  if(!snake) return;
+  const area=document.getElementById('print-area');
+  area.innerHTML=`
+    <div class="print-label">
+      <div class="print-label-header">
+        <div>
+          <div class="print-label-title">${snake.nome}</div>
+          <div class="print-label-sub">🐍 SnakeKeeper — Allevamento</div>
+        </div>
+        <div style="font-size:24px">${snake.sesso==='M'?'♂':'♀'}</div>
+      </div>
+      <div class="print-label-grid">
+        <div class="print-field"><label>Specie</label><span>${snake.specie||'—'}</span></div>
+        <div class="print-field"><label>Morfo</label><span>${snake.morfo||'—'}</span></div>
+        <div class="print-field"><label>Sesso</label><span>${snake.sesso==='M'?'Maschio':'Femmina'}</span></div>
+        <div class="print-field"><label>Nascita</label><span>${fmtDate(snake.nascita)}</span></div>
+        <div class="print-field" style="grid-column:1/-1"><label>Codice ICD</label><span style="font-family:monospace">${snake.icd}</span></div>
+        ${snake.provenienza?`<div class="print-field" style="grid-column:1/-1"><label>Provenienza</label><span>${snake.provenienza}</span></div>`:''}
+      </div>
+      <div class="print-qr-row"><div id="qr-print"></div></div>
+      <div style="text-align:center;font-size:7pt;color:#888;margin-top:3mm">Scansiona per aprire la scheda completa</div>
+    </div>`;
+  const url=window.location.href.split('#')[0]+'#snake='+snake.id;
+  try {
+    new QRCode(document.getElementById('qr-print'),{text:url,width:90,height:90,colorDark:'#0d1f0f',colorLight:'#ffffff'});
+  } catch(e) {
+    document.getElementById('qr-print').innerHTML=`<div style="font-size:8pt;font-family:monospace">${snake.icd}</div>`;
+  }
+  setTimeout(()=>{area.style.display='block';window.print();area.style.display='none';},300);
+}
+
+// ═══════════════════════════════════════
+//  HASH ROUTING
+// ═══════════════════════════════════════
+function checkHash() {
+  const hash=window.location.hash;
+  if(hash.startsWith('#snake=')) {
+    const id=hash.replace('#snake=','');
+    if(_snakes.find(s=>s.id===id)){showPage('dettaglio',id);return true;}
+  }
+  return false;
+}
+window.addEventListener('hashchange',checkHash);
+
+// Swipe gesture drawer
+let touchStartX=0;
+document.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  if(dx<-60&&document.getElementById('mobile-drawer').classList.contains('open'))closeDrawer();
+},{passive:true});
+
+// ═══════════════════════════════════════
+//  INIT — carica da Supabase
+// ═══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadAll();
+    document.getElementById('loading-screen').style.display='none';
+    if(!checkHash()) showPage('dashboard');
+  } catch(e) {
+    document.getElementById('loading-screen').innerHTML=`
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+        <h2 style="font-family:'Cinzel',serif;color:var(--accent-red);margin-bottom:8px">Errore di connessione</h2>
+        <p style="color:var(--text-dim);margin-bottom:20px;font-size:14px">${e.message}</p>
+        <button class="btn btn-primary" onclick="location.reload()">🔄 Riprova</button>
+      </div>`;
+  }
+});
+</script>
+</body>
+</html>
