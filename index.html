@@ -454,6 +454,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
     <button onclick="showPage('serpenti');closeDrawer()" id="mnav-serpenti"><span class="ico">🐍</span> I Miei Serpenti</button>
     <button onclick="showPage('aggiungi');closeDrawer()" id="mnav-aggiungi"><span class="ico">➕</span> Aggiungi Serpente</button>
     <button onclick="showPage('registro');closeDrawer()" id="mnav-registro"><span class="ico">📋</span> Registro Attività</button>
+    <button onclick="showPage('venduti');closeDrawer()" id="mnav-venduti"><span class="ico">💰</span> Venduti</button>
   </nav>
   <div class="sidebar-snakes" id="drawer-snake-list"><div class="nav-label">I tuoi serpenti</div></div>
 </div>
@@ -472,6 +473,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
       <button onclick="showPage('serpenti')" id="nav-serpenti"><span class="ico">🐍</span> I Miei Serpenti</button>
       <button onclick="showPage('aggiungi')" id="nav-aggiungi"><span class="ico">➕</span> Aggiungi Serpente</button>
       <button onclick="showPage('registro')" id="nav-registro"><span class="ico">📋</span> Registro Attività</button>
+      <button onclick="showPage('venduti')" id="nav-venduti"><span class="ico">💰</span> Venduti</button>
     </nav>
     <div class="sidebar-snakes" id="sidebar-snake-list"><div class="nav-label">I tuoi serpenti</div></div>
     <div style="margin-top:auto;padding:0 12px 12px">
@@ -551,6 +553,17 @@ const SB = {
     return this.req(`serpenti?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
   },
 
+  // VENDUTI
+  async getVenduti() {
+    return this.req('venduti?select=*&order=data_vendita.desc');
+  },
+  async insertVenduto(v) {
+    return this.req('venduti', { method:'POST', body: JSON.stringify(v) });
+  },
+  async deleteVenduto(id) {
+    return this.req(`venduti?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
+  },
+
   // LOGS
   async getLogs(snakeId) {
     const filter = snakeId ? `snake_id=eq.${snakeId}&` : '';
@@ -572,11 +585,12 @@ const SB = {
 // ═══════════════════════════════════════
 let _snakes = [];
 let _logs = [];
+let _venduti = [];
 let _isOnline = false;
 
 async function loadAll() {
   try {
-    [_snakes, _logs] = await Promise.all([SB.getSerpenti(), SB.getAllLogs()]);
+    [_snakes, _logs, _venduti] = await Promise.all([SB.getSerpenti(), SB.getAllLogs(), SB.getVenduti()]);
     setOnline(true);
   } catch(e) {
     console.error('Errore caricamento:', e);
@@ -671,7 +685,7 @@ function showPage(page, snakeId=null) {
     });
   });
   document.getElementById('main-content').innerHTML = '';
-  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro };
+  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro, venduti:renderVenduti };
   if (pages[page]) pages[page]();
   refreshSidebar();
 }
@@ -897,6 +911,7 @@ function renderDettaglio() {
       </div>
       <div class="sdh-actions">
         <button class="btn btn-ghost btn-sm" onclick="printLabel('${snake.id}')">🏷️ Stampa</button>
+        <button class="btn btn-ghost btn-sm" onclick="showVendiModal('${snake.id}')" style="color:var(--accent-gold);border-color:var(--accent-gold)">💰 Vendi</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSerpente('${snake.id}')">🗑️</button>
       </div>
     </div>
@@ -1122,6 +1137,398 @@ async function deleteSerpente(id) {
     toast('Serpente eliminato','#c0392b');
     showPage('serpenti');
   } catch(e) { toast('Errore: '+e.message,'#c0392b'); }
+}
+
+// ═══════════════════════════════════════
+//  MODALE VENDI
+// ═══════════════════════════════════════
+function showVendiModal(snakeId) {
+  const snake = _snakes.find(s => s.id === snakeId);
+  if (!snake) return;
+  const today = new Date().toISOString().split('T')[0];
+
+  // Rimuovi modale esistente
+  const existing = document.getElementById('vendi-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'vendi-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:600px;box-shadow:0 -10px 40px rgba(0,0,0,0.6);padding-bottom:calc(24px + var(--safe-bottom));max-height:90vh;overflow-y:auto">
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--accent-gold);margin-bottom:6px">💰 Segna come Venduto</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">Stai vendendo: <strong style="color:var(--text-bright)">${snake.nome}</strong></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Data vendita *</label>
+          <input type="date" id="v-data" value="${today}" style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-size:16px;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Prezzo (€)</label>
+          <input type="number" id="v-prezzo" placeholder="es. 150" inputmode="decimal" style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-size:16px;font-family:'Inter',sans-serif;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+          <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Nome acquirente</label>
+          <input type="text" id="v-acquirente" placeholder="es. Mario Rossi" autocomplete="off" style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-size:16px;font-family:'Inter',sans-serif;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+          <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Note vendita</label>
+          <input type="text" id="v-note" placeholder="es. Venduto con accessori" autocomplete="off" style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-size:16px;font-family:'Inter',sans-serif;outline:none">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="document.getElementById('vendi-modal').remove()" style="padding:12px 20px;background:transparent;color:var(--text-mid);border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;cursor:pointer">Annulla</button>
+        <button id="btn-conferma-vendi" onclick="confermaVendita('${snake.id}')" style="padding:12px 24px;background:var(--accent-gold);color:#1a0f00;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer">💰 Conferma Vendita</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function confermaVendita(snakeId) {
+  const snake = _snakes.find(s => s.id === snakeId);
+  if (!snake) return;
+  const data = document.getElementById('v-data').value;
+  if (!data) { toast('Inserisci la data vendita!', '#c0392b'); return; }
+  const btn = document.getElementById('btn-conferma-vendi');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  const venduto = {
+    id: 'V' + Date.now() + Math.random().toString(36).slice(2,5).toUpperCase(),
+    snake_id: snake.id,
+    nome: snake.nome,
+    specie: snake.specie,
+    morfo: snake.morfo,
+    sesso: snake.sesso,
+    nascita: snake.nascita,
+    peso: snake.peso,
+    provenienza: snake.provenienza,
+    icd: snake.icd,
+    note: snake.note,
+    data_vendita: data,
+    acquirente: document.getElementById('v-acquirente').value.trim() || null,
+    prezzo: parseFloat(document.getElementById('v-prezzo').value) || null,
+    note_vendita: document.getElementById('v-note').value.trim() || null,
+    snake_created_at: snake.created_at,
+  };
+
+  try {
+    await SB.insertVenduto(venduto);
+    // Rimuovi serpente dall'allevamento
+    await SB.deleteSerpente(snake.id);
+    _venduti.unshift(venduto);
+    _snakes = _snakes.filter(s => s.id !== snakeId);
+    _logs = _logs.filter(l => l.snake_id !== snakeId);
+    document.getElementById('vendi-modal').remove();
+    toast('💰 Serpente segnato come venduto!');
+    showPage('venduti');
+  } catch(e) {
+    toast('Errore: ' + e.message, '#c0392b');
+    btn.disabled = false; btn.innerHTML = '💰 Conferma Vendita';
+  }
+}
+
+// ═══════════════════════════════════════
+//  PAGINA VENDUTI
+// ═══════════════════════════════════════
+function renderVenduti() {
+  const totIncasso = _venduti.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
+  let html = `
+  <div class="page-header">
+    <h2>💰 Serpenti Venduti</h2>
+    <p>${_venduti.length} esemplari venduti · Incasso totale: <strong style="color:var(--accent-gold)">€${totIncasso.toFixed(2)}</strong></p>
+  </div>`;
+
+  if (!_venduti.length) {
+    html += `<div class="empty-state"><div class="empty-icon">💰</div><h3>Nessuna vendita</h3><p>I serpenti venduti appariranno qui con tutto il loro storico.</p></div>`;
+  } else {
+    html += '<div class="snakes-grid">' + _venduti.map(v => `
+      <div class="snake-card" style="cursor:default">
+        <div class="snake-card-header">
+          <div>
+            <div class="snake-name" style="display:flex;align-items:center;gap:8px">${v.nome} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
+            <div class="snake-code">${v.icd}</div>
+          </div>
+          <span class="badge badge-${v.sesso}">${v.sesso === 'M' ? '♂' : '♀'}</span>
+        </div>
+        <div class="snake-info">
+          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${v.specie || '—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Data vendita</div><div class="snake-info-value">${fmtDate(v.data_vendita)}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Acquirente</div><div class="snake-info-value">${v.acquirente || '—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Prezzo</div><div class="snake-info-value" style="color:var(--accent-gold)">${v.prezzo ? '€' + v.prezzo : '—'}</div></div>
+        </div>
+        <div class="snake-card-actions">
+          <button class="btn btn-primary btn-sm" onclick="printResoconto('${v.id}')">📄 PDF Resoconto</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteVenduto('${v.id}')">🗑️</button>
+        </div>
+      </div>`).join('') + '</div>';
+  }
+  document.getElementById('main-content').innerHTML = html;
+}
+
+async function deleteVenduto(id) {
+  if (!confirm('Eliminare questo record dalla lista venduti?')) return;
+  try {
+    await SB.deleteVenduto(id);
+    _venduti = _venduti.filter(v => v.id !== id);
+    toast('Eliminato', '#c0392b');
+    renderVenduti();
+  } catch(e) { toast('Errore: ' + e.message, '#c0392b'); }
+}
+
+// ═══════════════════════════════════════
+//  PDF RESOCONTO VITA SERPENTE
+// ═══════════════════════════════════════
+async function printResoconto(vendutoId) {
+  const v = _venduti.find(x => x.id === vendutoId);
+  if (!v) return;
+
+  // Carica i log storici di questo serpente da Supabase
+  let logs = [];
+  try {
+    logs = await SB.getLogs(v.snake_id);
+  } catch(e) { logs = []; }
+
+  const foodLogs = logs.filter(l => l.tipo === 'cibo').sort((a,b) => a.data.localeCompare(b.data));
+  const feciLogs = logs.filter(l => l.tipo === 'feci').sort((a,b) => a.data.localeCompare(b.data));
+  const eggsLogs = logs.filter(l => l.tipo === 'uova').sort((a,b) => a.data.localeCompare(b.data));
+  const totalCibo = foodLogs.reduce((s,l) => s + (parseFloat(l.grammi) || 0), 0);
+
+  // Calcola giorni in allevamento
+  const dataIngresso = v.snake_created_at ? new Date(v.snake_created_at) : null;
+  const dataVendita = new Date(v.data_vendita);
+  const giorniAllevamento = dataIngresso ? Math.floor((dataVendita - dataIngresso) / 86400000) : null;
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(BASE_URL + '#snake=' + v.snake_id)}&margin=2&color=0d1f0f&bgcolor=ffffff`;
+
+  const win = window.open('', '_blank', 'width=900,height=1100');
+  win.document.write(`<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Resoconto — ${v.nome}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', Arial, sans-serif; color: #111; background: white; font-size: 10pt; }
+  @page { size: A4; margin: 15mm 12mm; }
+
+  /* HEADER */
+  .doc-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding-bottom: 5mm; border-bottom: 3px solid #1a3320; margin-bottom: 6mm;
+  }
+  .doc-title { font-family: 'Cinzel', serif; font-size: 22pt; color: #0d1f0f; font-weight: 700; }
+  .doc-sub { font-size: 9pt; color: #888; margin-top: 2mm; }
+  .doc-logo { font-size: 9pt; color: #888; text-align: right; }
+  .doc-logo strong { display: block; font-family: 'Cinzel', serif; font-size: 13pt; color: #1a3320; }
+
+  /* SEZIONE */
+  .section { margin-bottom: 6mm; page-break-inside: avoid; }
+  .section-title {
+    font-family: 'Cinzel', serif; font-size: 11pt; color: #1a3320;
+    border-bottom: 1.5px solid #6db56d; padding-bottom: 2mm; margin-bottom: 3mm;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* GRIGLIA DATI */
+  .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+  .data-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm; }
+  .data-field { background: #f8f8f8; border-radius: 2mm; padding: 2.5mm 3.5mm; }
+  .data-field .lbl { font-size: 6.5pt; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 1mm; }
+  .data-field .val { font-size: 10pt; font-weight: 700; color: #111; }
+  .data-field .val.gold { color: #c9a84c; }
+  .data-field .val.green { color: #1a3320; }
+
+  /* HEADER SERPENTE */
+  .snake-header { display: flex; gap: 5mm; align-items: flex-start; margin-bottom: 5mm; }
+  .snake-header-info { flex: 1; }
+  .snake-nome { font-family: 'Cinzel', serif; font-size: 20pt; color: #0d1f0f; }
+  .snake-specie { font-size: 10pt; color: #555; font-style: italic; margin-top: 1mm; }
+  .snake-icd { font-family: monospace; font-size: 9pt; color: #888; margin-top: 2mm; background: #f0f0f0; display: inline-block; padding: 1.5mm 3mm; border-radius: 2mm; }
+  .sesso-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 9pt; font-weight: 700; margin-top: 2mm; margin-left: 3mm; }
+  .sesso-M { background: rgba(91,155,213,0.15); color: #3a7ab5; border: 1px solid rgba(91,155,213,0.3); }
+  .sesso-F { background: rgba(227,145,160,0.15); color: #c06070; border: 1px solid rgba(227,145,160,0.3); }
+
+  /* STATISTICHE */
+  .stats-row { display: flex; gap: 3mm; margin-bottom: 5mm; }
+  .stat-box { flex: 1; background: #f8f8f8; border-radius: 2mm; padding: 3mm; text-align: center; border-left: 3px solid #6db56d; }
+  .stat-box .sv { font-family: 'Cinzel', serif; font-size: 18pt; color: #1a3320; }
+  .stat-box .sl { font-size: 6.5pt; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1mm; }
+
+  /* TABELLA LOG */
+  .log-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .log-table th { background: #1a3320; color: white; padding: 2mm 3mm; text-align: left; font-weight: 600; font-size: 7.5pt; }
+  .log-table td { padding: 2mm 3mm; border-bottom: 1px solid #eee; vertical-align: top; }
+  .log-table tr:nth-child(even) td { background: #fafafa; }
+  .log-table tr:last-child td { border-bottom: none; }
+
+  /* VENDITA BOX */
+  .vendita-box {
+    background: linear-gradient(135deg, #0d1f0f, #1a3320);
+    color: white; border-radius: 3mm; padding: 5mm 6mm;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5mm;
+  }
+  .vendita-box .vb-title { font-family: 'Cinzel', serif; font-size: 13pt; color: #c9a84c; }
+  .vendita-box .vb-data { font-size: 9pt; color: #a8c8a0; margin-top: 1mm; }
+  .vendita-box .vb-prezzo { font-family: 'Cinzel', serif; font-size: 22pt; color: #c9a84c; }
+
+  /* FOOTER */
+  .doc-footer {
+    margin-top: 8mm; padding-top: 3mm; border-top: 1px solid #ddd;
+    display: flex; justify-content: space-between; font-size: 7pt; color: #bbb;
+  }
+
+  /* PULSANTI */
+  .no-print { text-align: center; padding: 16px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+  .btn-print { background: #1a3320; color: white; border: none; padding: 12px 28px; font-size: 15px; border-radius: 8px; cursor: pointer; margin-right: 8px; font-family: 'Inter', sans-serif; }
+  .btn-close { background: #eee; color: #333; border: none; padding: 12px 20px; font-size: 15px; border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; }
+  @media print { .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ Stampa / Salva PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ Chiudi</button>
+</div>
+
+<div style="padding: 0">
+
+  <!-- HEADER DOCUMENTO -->
+  <div class="doc-header">
+    <div>
+      <div class="doc-title">Resoconto Esemplare</div>
+      <div class="doc-sub">Storico completo vita in allevamento · Generato il ${new Date().toLocaleDateString('it-IT')}</div>
+    </div>
+    <div class="doc-logo">
+      <strong>🐍 SnakeKeeper</strong>
+      Gestionale Allevamento Serpenti
+    </div>
+  </div>
+
+  <!-- ANAGRAFICA -->
+  <div class="section">
+    <div class="snake-header">
+      <div class="snake-header-info">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
+          <div class="snake-nome">${v.nome}</div>
+          <span class="sesso-badge sesso-${v.sesso}">${v.sesso === 'M' ? '♂ Maschio' : '♀ Femmina'}</span>
+        </div>
+        <div class="snake-specie">${v.specie || ''}${v.morfo ? ' · ' + v.morfo : ''}</div>
+        <div class="snake-icd">ICD: ${v.icd}</div>
+      </div>
+      <img src="${qrUrl}" width="80" height="80" style="border:1px solid #ddd;border-radius:2mm" />
+    </div>
+
+    <div class="data-grid">
+      <div class="data-field"><span class="lbl">Data di nascita</span><span class="val">${fmtDate(v.nascita)}</span></div>
+      <div class="data-field"><span class="lbl">Provenienza</span><span class="val">${v.provenienza || '—'}</span></div>
+      <div class="data-field"><span class="lbl">Peso registrato</span><span class="val">${v.peso ? v.peso + 'g' : '—'}</span></div>
+      <div class="data-field"><span class="lbl">Ingresso allevamento</span><span class="val">${dataIngresso ? dataIngresso.toLocaleDateString('it-IT') : '—'}</span></div>
+      <div class="data-field"><span class="lbl">Giorni in allevamento</span><span class="val green">${giorniAllevamento !== null ? giorniAllevamento + ' giorni' : '—'}</span></div>
+      <div class="data-field"><span class="lbl">Morfo</span><span class="val">${v.morfo || '—'}</span></div>
+    </div>
+    ${v.note ? `<div style="background:#fffbf0;border-left:3px solid #c9a84c;padding:2.5mm 4mm;border-radius:0 2mm 2mm 0;margin-top:3mm;font-size:9pt;color:#555"><strong>Note:</strong> ${v.note}</div>` : ''}
+  </div>
+
+  <!-- STATISTICHE RIEPILOGO -->
+  <div class="section">
+    <div class="section-title">📊 Riepilogo Attività</div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="sv">${foodLogs.length}</div><div class="sl">Pasti totali</div></div>
+      <div class="stat-box"><div class="sv">${totalCibo.toFixed(0)}g</div><div class="sl">Cibo somministrato</div></div>
+      <div class="stat-box"><div class="sv">${feciLogs.length}</div><div class="sl">Feci registrate</div></div>
+      ${v.sesso === 'F' ? `<div class="stat-box"><div class="sv">${eggsLogs.length}</div><div class="sl">Deposizioni</div></div>` : ''}
+      ${giorniAllevamento ? `<div class="stat-box"><div class="sv">${foodLogs.length > 0 ? (giorniAllevamento / foodLogs.length).toFixed(0) : '—'}</div><div class="sl">Giorni tra pasti</div></div>` : ''}
+    </div>
+  </div>
+
+  <!-- STORICO ALIMENTAZIONE -->
+  ${foodLogs.length > 0 ? `
+  <div class="section">
+    <div class="section-title">🥩 Storico Alimentazione</div>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Data</th><th>Tipo di cibo</th><th>Qty</th><th>Peso (g)</th><th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${foodLogs.map(l => `<tr>
+          <td>${fmtDate(l.data)}</td>
+          <td>${l.food_tipo || '—'}</td>
+          <td style="text-align:center">${l.qty || 1}</td>
+          <td style="text-align:center">${l.grammi || '—'}</td>
+          <td style="color:#888">${l.note || ''}</td>
+        </tr>`).join('')}
+        <tr style="background:#f0f7f0">
+          <td colspan="3"><strong>Totale</strong></td>
+          <td style="text-align:center"><strong>${totalCibo.toFixed(0)}g</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  <!-- STORICO FECI -->
+  ${feciLogs.length > 0 ? `
+  <div class="section">
+    <div class="section-title">💩 Storico Feci</div>
+    <table class="log-table">
+      <thead><tr><th>Data</th><th>Consistenza</th><th>Note</th></tr></thead>
+      <tbody>
+        ${feciLogs.map(l => `<tr>
+          <td>${fmtDate(l.data)}</td>
+          <td>${l.feci_tipo || '—'}</td>
+          <td style="color:#888">${l.note || ''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  <!-- STORICO DEPOSIZIONI (solo femmine) -->
+  ${v.sesso === 'F' && eggsLogs.length > 0 ? `
+  <div class="section">
+    <div class="section-title">🥚 Storico Deposizioni</div>
+    <table class="log-table">
+      <thead><tr><th>Data</th><th>Uova deposte</th><th>Fertili</th><th>Temp. (°C)</th><th>Note</th></tr></thead>
+      <tbody>
+        ${eggsLogs.map(l => `<tr>
+          <td>${fmtDate(l.data)}</td>
+          <td style="text-align:center">${l.num_uova || '—'}</td>
+          <td style="text-align:center">${l.fertili || '—'}</td>
+          <td style="text-align:center">${l.temp || '—'}</td>
+          <td style="color:#888">${l.note || ''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  <!-- BOX VENDITA -->
+  <div class="section">
+    <div class="section-title">💰 Dettagli Vendita</div>
+    <div class="vendita-box">
+      <div>
+        <div class="vb-title">Venduto il ${fmtDate(v.data_vendita)}</div>
+        <div class="vb-data">Acquirente: ${v.acquirente || 'Non specificato'}</div>
+        ${v.note_vendita ? `<div class="vb-data">Note: ${v.note_vendita}</div>` : ''}
+      </div>
+      <div class="vb-prezzo">${v.prezzo ? '€' + parseFloat(v.prezzo).toFixed(2) : 'N/D'}</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span>SnakeKeeper — Gestionale Allevamento Serpenti</span>
+    <span>ICD: ${v.icd} · Documento generato il ${new Date().toLocaleDateString('it-IT')}</span>
+  </div>
+
+</div>
+</body>
+</html>`);
+  win.document.close();
 }
 
 // ═══════════════════════════════════════
