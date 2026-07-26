@@ -1963,7 +1963,7 @@ async function doRegister() {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registrazione...';
   try {
     await authReq('signup', { email, password });
-    showAuthMsg('✅ Registrazione completata! Controlla la tua email per verificare l'account.');
+    showAuthMsg("✅ Registrazione completata! Controlla la tua email per verificare l'account.");
     btn.disabled = false; btn.innerHTML = '🐍 Crea Account';
   } catch(e) {
     showAuthMsg('❌ ' + e.message, true);
