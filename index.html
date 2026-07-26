@@ -588,15 +588,36 @@ let _logs = [];
 let _venduti = [];
 let _isOnline = false;
 
+// Helper: fetch con timeout
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
 async function loadAll() {
-  try {
-    [_snakes, _logs, _venduti] = await Promise.all([SB.getSerpenti(), SB.getAllLogs(), SB.getVenduti()]);
-    setOnline(true);
-  } catch(e) {
-    console.error('Errore caricamento:', e);
-    setOnline(false);
-    throw e;
-  }
+  // Carica ogni tabella individualmente — se una fallisce, le altre funzionano comunque
+  const results = await Promise.allSettled([
+    withTimeout(SB.getSerpenti(), 15000, []),
+    withTimeout(SB.getAllLogs(), 15000, []),
+    withTimeout(SB.getVenduti(), 15000, [])
+  ]);
+
+  _snakes = results[0].status === 'fulfilled' ? (results[0].value || []) : [];
+  _logs = results[1].status === 'fulfilled' ? (results[1].value || []) : [];
+  _venduti = results[2].status === 'fulfilled' ? (results[2].value || []) : [];
+
+  // Log errori per debug
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.error(['serpenti','logs','venduti'][i] + ' errore:', r.reason);
+    }
+  });
+
+  // Considera online se almeno serpenti e logs sono caricati
+  const ok = results[0].status === 'fulfilled' && results[1].status === 'fulfilled';
+  setOnline(ok);
 }
 
 function setOnline(val) {
@@ -2037,6 +2058,15 @@ function showAuthSuccess(type) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+  // Timeout di sicurezza: se dopo 20s siamo ancora sul loading, mostra login
+  const safetyTimeout = setTimeout(() => {
+    const ls = document.getElementById('loading-screen');
+    if (ls && ls.style.display !== 'none') {
+      ls.style.display = 'none';
+      showLoginScreen();
+    }
+  }, 20000);
+
   try {
     // Controlla se arriviamo da link email Supabase (token nell'hash)
     const params = getHashParams();
@@ -2050,6 +2080,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         user: { email: '' }
       });
       await loadAll();
+      clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       hideLoginScreen();
       if(!checkHash()) showPage('dashboard');
@@ -2058,22 +2089,32 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Controlla sessione esistente
-    const session = await getSession();
+    let session = null;
+    try {
+      session = await withTimeout(getSession(), 8000, null);
+    } catch(e) {
+      console.error('getSession errore:', e);
+      session = null;
+    }
     
     if (session && session.access_token) {
       // Utente già loggato
       _currentUser = session.user || {};
       await loadAll();
+      clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       hideLoginScreen();
       if(!checkHash()) showPage('dashboard');
     } else {
       // Nessuna sessione — mostra login
+      clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       showLoginScreen();
     }
 
   } catch(e) {
+    clearTimeout(safetyTimeout);
+    console.error('Init errore:', e);
     document.getElementById('loading-screen').innerHTML=`
       <div style="text-align:center;padding:40px">
         <div style="font-size:48px;margin-bottom:16px">⚠️</div>
