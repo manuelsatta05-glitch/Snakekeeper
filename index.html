@@ -2084,18 +2084,28 @@ window.addEventListener('DOMContentLoaded', async () => {
     const params = getHashParams();
     
     if (params.access_token && params.type) {
-      // Arrivo da link email — salva sessione e mostra conferma
+      // Arrivo da link email — pulisci SUBITO l'URL per evitare confusione
+      history.replaceState(null, '', window.location.pathname);
+      
+      // Salva sessione
       saveSession({
         access_token: params.access_token,
         refresh_token: params.refresh_token,
         expires_in: parseInt(params.expires_in) || 3600,
-        user: { email: '' }
+        user: { email: params.email || '' }
       });
-      await loadAll();
+      
+      // Carica dati con gestione errori
+      try {
+        await loadAll();
+      } catch(loadErr) {
+        console.error('loadAll dopo email:', loadErr);
+      }
+      
       clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       hideLoginScreen();
-      if(!checkHash()) showPage('dashboard');
+      showPage('dashboard');
       setTimeout(() => showAuthSuccess(params.type), 300);
       return;
     }
