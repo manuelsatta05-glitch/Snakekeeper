@@ -363,6 +363,81 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
   <div class="l-bar"><div class="l-bar-inner"></div></div>
 </div>
 
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;z-index:998;background:var(--bg-deep);display:none;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:400px">
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:64px;filter:drop-shadow(0 0 12px rgba(109,181,109,0.5))">🐍</div>
+      <h1 style="font-family:'Cinzel',serif;color:var(--accent-gold);font-size:28px;margin-top:12px">SnakeKeeper</h1>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:4px;letter-spacing:1px;text-transform:uppercase">Gestionale Allevamento</p>
+    </div>
+
+    <!-- Card login/register -->
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+      
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;background:var(--bg-forest);padding:4px;border-radius:10px;border:1px solid var(--border);margin-bottom:24px">
+        <button id="tab-login-btn" onclick="switchAuthTab('login')"
+          style="flex:1;padding:10px;border-radius:7px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;background:var(--bg-card);color:var(--text-bright);transition:all .2s">
+          Accedi
+        </button>
+        <button id="tab-register-btn" onclick="switchAuthTab('register')"
+          style="flex:1;padding:10px;border-radius:7px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;background:none;color:var(--text-dim);transition:all .2s">
+          Registrati
+        </button>
+      </div>
+
+      <!-- Form Login -->
+      <div id="form-login">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Email</label>
+            <input type="email" id="login-email" placeholder="la-tua@email.com" autocomplete="email"
+              style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:16px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+              style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:16px;outline:none">
+          </div>
+          <button onclick="doLogin()" id="btn-login"
+            style="margin-top:4px;padding:14px;background:var(--accent-gold);color:#1a0f00;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;min-height:48px">
+            🔓 Accedi
+          </button>
+          <button onclick="doForgotPassword()"
+            style="background:none;border:none;color:var(--text-dim);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;padding:4px">
+            Password dimenticata?
+          </button>
+        </div>
+      </div>
+
+      <!-- Form Register -->
+      <div id="form-register" style="display:none">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Email</label>
+            <input type="email" id="reg-email" placeholder="la-tua@email.com" autocomplete="email"
+              style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:16px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Password</label>
+            <input type="password" id="reg-password" placeholder="min. 6 caratteri" autocomplete="new-password"
+              style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:16px;outline:none">
+          </div>
+          <button onclick="doRegister()" id="btn-register"
+            style="margin-top:4px;padding:14px;background:var(--accent-lime);color:#0a1a0a;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;min-height:48px">
+            🐍 Crea Account
+          </button>
+        </div>
+      </div>
+
+      <!-- Messaggio errore/successo -->
+      <div id="auth-message" style="display:none;margin-top:16px;padding:12px 16px;border-radius:8px;font-size:14px;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
 <!-- DRAWER OVERLAY -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
 
@@ -399,8 +474,14 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
       <button onclick="showPage('registro')" id="nav-registro"><span class="ico">📋</span> Registro Attività</button>
     </nav>
     <div class="sidebar-snakes" id="sidebar-snake-list"><div class="nav-label">I tuoi serpenti</div></div>
-    <div id="conn-indicator" class="conn-badge offline" style="margin-top:auto">
-      <div class="conn-dot"></div><span>Connessione...</span>
+    <div style="margin-top:auto;padding:0 12px 12px">
+      <div id="conn-indicator" class="conn-badge offline" style="margin-bottom:8px">
+        <div class="conn-dot"></div><span>Connessione...</span>
+      </div>
+      <div id="user-info" style="font-size:11px;color:var(--text-dim);padding:6px 12px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <button onclick="doLogout()" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+        🚪 Esci
+      </button>
     </div>
   </aside>
 
@@ -1323,6 +1404,150 @@ document.addEventListener('touchend',e=>{
 //  INIT — carica da Supabase
 // ═══════════════════════════════════════
 // ═══════════════════════════════════════
+//  AUTH SUPABASE
+// ═══════════════════════════════════════
+let _currentUser = null;
+
+async function authReq(endpoint, body) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error_description || data.msg || 'Errore autenticazione');
+  return data;
+}
+
+async function getSession() {
+  // Controlla se c'è un token nel localStorage di Supabase
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('auth-token'));
+  if (!keys.length) return null;
+  try {
+    const session = JSON.parse(localStorage.getItem(keys[0]));
+    if (!session || !session.access_token) return null;
+    // Verifica token non scaduto
+    const exp = session.expires_at || 0;
+    if (Date.now() / 1000 > exp) {
+      // Prova refresh
+      const refreshed = await authReq('token?grant_type=refresh_token', { refresh_token: session.refresh_token });
+      saveSession(refreshed);
+      return refreshed;
+    }
+    return session;
+  } catch(e) { return null; }
+}
+
+function saveSession(data) {
+  if (!data || !data.access_token) return;
+  const key = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
+  localStorage.setItem(key, JSON.stringify({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: Math.floor(Date.now()/1000) + (data.expires_in || 3600),
+    user: data.user
+  }));
+  _currentUser = data.user;
+}
+
+function clearSession() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('auth-token'));
+  keys.forEach(k => localStorage.removeItem(k));
+  _currentUser = null;
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('mobile-nav').style.display = 'none';
+}
+
+function hideLoginScreen() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('mobile-nav').style.display = 'block';
+  // Mostra email utente nella sidebar
+  if (_currentUser) {
+    const el = document.getElementById('user-info');
+    if (el) el.textContent = '👤 ' + (_currentUser.email || '');
+  }
+}
+
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('form-login').style.display = isLogin ? '' : 'none';
+  document.getElementById('form-register').style.display = isLogin ? 'none' : '';
+  document.getElementById('tab-login-btn').style.background = isLogin ? 'var(--bg-card)' : 'none';
+  document.getElementById('tab-login-btn').style.color = isLogin ? 'var(--text-bright)' : 'var(--text-dim)';
+  document.getElementById('tab-register-btn').style.background = isLogin ? 'none' : 'var(--bg-card)';
+  document.getElementById('tab-register-btn').style.color = isLogin ? 'var(--text-dim)' : 'var(--text-bright)';
+  document.getElementById('auth-message').style.display = 'none';
+}
+
+function showAuthMsg(msg, isError=false) {
+  const el = document.getElementById('auth-message');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = isError ? 'rgba(192,57,43,0.15)' : 'rgba(109,181,109,0.15)';
+  el.style.color = isError ? 'var(--accent-red)' : 'var(--accent-lime)';
+  el.style.border = isError ? '1px solid rgba(192,57,43,0.3)' : '1px solid rgba(109,181,109,0.3)';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showAuthMsg('Inserisci email e password', true); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Accesso...';
+  try {
+    const data = await authReq('token?grant_type=password', { email, password });
+    saveSession(data);
+    hideLoginScreen();
+    await loadAll();
+    showPage('dashboard');
+  } catch(e) {
+    showAuthMsg('❌ ' + e.message, true);
+    btn.disabled = false; btn.innerHTML = '🔓 Accedi';
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!email || !password) { showAuthMsg('Inserisci email e password', true); return; }
+  if (password.length < 6) { showAuthMsg('La password deve avere almeno 6 caratteri', true); return; }
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registrazione...';
+  try {
+    await authReq('signup', { email, password });
+    showAuthMsg('✅ Registrazione completata! Controlla la tua email per verificare l'account.');
+    btn.disabled = false; btn.innerHTML = '🐍 Crea Account';
+  } catch(e) {
+    showAuthMsg('❌ ' + e.message, true);
+    btn.disabled = false; btn.innerHTML = '🐍 Crea Account';
+  }
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showAuthMsg('Inserisci prima la tua email', true); return; }
+  try {
+    await authReq('recover', { email });
+    showAuthMsg('✅ Email di recupero inviata! Controlla la tua casella.');
+  } catch(e) {
+    showAuthMsg('❌ ' + e.message, true);
+  }
+}
+
+async function doLogout() {
+  clearSession();
+  showLoginScreen();
+}
+
+// ═══════════════════════════════════════
 //  GESTIONE AUTH SUPABASE (email verify)
 // ═══════════════════════════════════════
 function getHashParams() {
@@ -1406,17 +1631,39 @@ function showAuthSuccess(type) {
 
 window.addEventListener('DOMContentLoaded', async () => {
   try {
-    await loadAll();
-    document.getElementById('loading-screen').style.display='none';
-
-    // Controlla se arriviamo da un link email Supabase
+    // Controlla se arriviamo da link email Supabase (token nell'hash)
     const params = getHashParams();
-    if(params.access_token && params.type) {
+    
+    if (params.access_token && params.type) {
+      // Arrivo da link email — salva sessione e mostra conferma
+      saveSession({
+        access_token: params.access_token,
+        refresh_token: params.refresh_token,
+        expires_in: parseInt(params.expires_in) || 3600,
+        user: { email: '' }
+      });
+      await loadAll();
+      document.getElementById('loading-screen').style.display = 'none';
+      hideLoginScreen();
       if(!checkHash()) showPage('dashboard');
-      // Piccolo delay per far caricare la UI prima dell'overlay
       setTimeout(() => showAuthSuccess(params.type), 300);
-    } else {
+      return;
+    }
+
+    // Controlla sessione esistente
+    const session = await getSession();
+    
+    if (session && session.access_token) {
+      // Utente già loggato
+      _currentUser = session.user || {};
+      await loadAll();
+      document.getElementById('loading-screen').style.display = 'none';
+      hideLoginScreen();
       if(!checkHash()) showPage('dashboard');
+    } else {
+      // Nessuna sessione — mostra login
+      document.getElementById('loading-screen').style.display = 'none';
+      showLoginScreen();
     }
 
   } catch(e) {
