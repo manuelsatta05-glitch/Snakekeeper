@@ -524,20 +524,10 @@ const BASE_URL = 'https://manuelsatta05-glitch.github.io/Snakekeeper/';
 
 const SB = {
   async req(path, opts={}) {
-    // Usa il token utente se disponibile, altrimenti la chiave anon
-    let authToken = SUPABASE_KEY;
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('auth-token'));
-      if (keys.length) {
-        const s = JSON.parse(localStorage.getItem(keys[0]));
-        if (s && s.access_token) authToken = s.access_token;
-      }
-    } catch(e) {}
-    
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
         'Prefer': opts.prefer || 'return=representation',
         ...opts.headers
@@ -1867,12 +1857,30 @@ async function getSession() {
     if (!keys.length) return null;
     const session = JSON.parse(localStorage.getItem(keys[0]));
     if (!session || !session.access_token) return null;
-    // Verifica token non scaduto — se scaduto NON tentiamo refresh (per evitare blocchi)
+    // Verifica token non scaduto
     const exp = session.expires_at || 0;
     if (Date.now() / 1000 > exp) {
-      // Token scaduto — pulisci e richiedi nuovo login
       clearSession();
       return null;
+    }
+    // Verifica che l'utente esista ancora su Supabase (potrebbe essere stato eliminato)
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+      if (!res.ok) {
+        // Token non valido o utente eliminato
+        clearSession();
+        return null;
+      }
+      const user = await res.json();
+      session.user = user;
+    } catch(e) {
+      // Errore rete — mantieni sessione locale
+      console.warn('Verifica utente fallita:', e);
     }
     return session;
   } catch(e) { 
