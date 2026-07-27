@@ -13,13 +13,13 @@
 <meta name="description" content="Gestionale professionale per allevamento serpenti">
 
 <!-- PWA Icons Apple -->
-<link rel="apple-touch-icon" href="/Snakekeeper/icon-180.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/Snakekeeper/icon-192.png">
-<link rel="apple-touch-icon" sizes="167x167" href="/Snakekeeper/icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/Snakekeeper/icon-180.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="/Snakekeeper/manifest.json">
+<link rel="manifest" href="/manifest.json">
 
 <!-- Splash Screen iOS -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -554,7 +554,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
 // ═══════════════════════════════════════
 const SUPABASE_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhidGNleHlydmVpZndmc3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5Njc4MDYsImV4cCI6MjEwMDU0MzgwNn0.eVW5nAZeKu8NoryZUYRKsmHGoHrPV719X3cRINCUkjk';
-const BASE_URL = 'https://manuelsatta05-glitch.github.io/Snakekeeper/';
+const BASE_URL = 'https://snakekeeper.it/';
 
 const SB = {
   async req(path, opts={}) {
@@ -2106,7 +2106,7 @@ document.addEventListener('touchend',e=>{
 // Registra Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/Snakekeeper/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .then(reg => {
         console.log('[SW] Registrato:', reg.scope);
         // Ascolta messaggi dal SW per sync
