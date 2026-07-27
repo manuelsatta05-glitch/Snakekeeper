@@ -31,6 +31,7 @@
 </style>
 
 <title>SnakeKeeper — Gestionale Allevamento Serpenti</title>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 /* Minimal QR Code generator — pure JS, no dependencies (MIT) */
 /* Simplified QR for URLs — uses Google Charts as img tag (works on GitHub Pages) */
@@ -555,6 +556,13 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
 const SUPABASE_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhidGNleHlydmVpZndmc3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5Njc4MDYsImV4cCI6MjEwMDU0MzgwNn0.eVW5nAZeKu8NoryZUYRKsmHGoHrPV719X3cRINCUkjk';
 const BASE_URL = 'https://snakekeeper.it/';
+
+// ── STRIPE CONFIG ──────────────────────────────────────────────────────────
+const STRIPE_PK = 'pk_test_51TxoKTFXkOXN7EUyLw4pgbOi0oIBtV19KQocWnnmPnICXEP8nHxfxaMSj63Cl8Y99eGhOEuo7YNQ9ZJyNv988YS6000Mp34367';
+const STRIPE_PRICES = {
+  monthly: 'price_1TxpSvFXkOXN7EUyZKKmjo8k',  // €4.99/mese
+  yearly:  'price_1TxpVJFXkOXN7EUyIq3GWCt7'   // €47.99/anno
+};
 
 const SB = {
   async req(path, opts={}) {
@@ -2264,32 +2272,97 @@ function applyPlanUI() {
 }
 
 function showUpgradeModal() {
+  document.getElementById('upgrade-modal')?.remove();
   const modal = document.createElement('div');
   modal.id = 'upgrade-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px';
   modal.innerHTML = `
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:380px;width:100%;text-align:center;box-shadow:var(--shadow)">
-      <div style="font-size:48px;margin-bottom:16px">🐍</div>
-      <div style="font-family:'Cinzel',serif;font-size:22px;color:var(--accent-gold);margin-bottom:8px">Limite Piano Free</div>
-      <div style="color:var(--text-mid);font-size:14px;line-height:1.6;margin-bottom:24px">
-        Con il piano gratuito puoi gestire fino a <strong style="color:var(--text-bright)">${FREE_SNAKE_LIMIT} serpenti</strong>.<br><br>
-        Passa a <strong style="color:var(--accent-gold)">SnakeKeeper Pro</strong> per serpenti illimitati e funzionalità avanzate.
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:var(--shadow)">
+      <div style="font-size:48px;margin-bottom:12px">🐍</div>
+      <div style="font-family:'Cinzel',serif;font-size:22px;color:var(--accent-gold);margin-bottom:8px">Passa a Pro</div>
+      <div style="color:var(--text-mid);font-size:14px;line-height:1.6;margin-bottom:20px">
+        Con il piano gratuito puoi gestire fino a <strong style="color:var(--text-bright)">${FREE_SNAKE_LIMIT} serpenti</strong>.<br>
+        Passa a <strong style="color:var(--accent-gold)">SnakeKeeper Pro</strong> per serpenti illimitati.
       </div>
-      <div style="background:var(--bg-moss);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">
-        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Pro include</div>
-        ${['🐍 Serpenti illimitati','📊 Statistiche avanzate','📄 Export PDF & Excel','☁️ Backup prioritario','✅ Supporto dedicato'].map(f=>`<div style="font-size:13px;color:var(--text-mid);margin:4px 0">${f}</div>`).join('')}
+
+      <!-- Features -->
+      <div style="background:var(--bg-moss);border-radius:12px;padding:14px;margin-bottom:20px;text-align:left">
+        ${['🐍 Serpenti illimitati','📊 Statistiche avanzate','📄 Export PDF & Excel','☁️ Backup prioritario','✅ Supporto dedicato'].map(f=>`
+          <div style="font-size:13px;color:var(--text-mid);margin:5px 0;display:flex;align-items:center;gap:6px">${f}</div>`).join('')}
       </div>
-      <button onclick="document.getElementById('upgrade-modal').remove()" 
+
+      <!-- Scelta piano -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div id="plan-monthly" onclick="selectPlan('monthly')" style="cursor:pointer;border:2px solid var(--accent-gold);border-radius:10px;padding:14px;background:rgba(201,168,76,0.08)">
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Mensile</div>
+          <div style="font-size:22px;font-weight:700;color:var(--accent-gold)">€4.99</div>
+          <div style="font-size:11px;color:var(--text-dim)">al mese</div>
+        </div>
+        <div id="plan-yearly" onclick="selectPlan('yearly')" style="cursor:pointer;border:2px solid var(--border);border-radius:10px;padding:14px;position:relative">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent-lime);color:#0a1a0a;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap">RISPARMIA 20%</div>
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Annuale</div>
+          <div style="font-size:22px;font-weight:700;color:var(--text-bright)">€47.99</div>
+          <div style="font-size:11px;color:var(--text-dim)">all'anno</div>
+        </div>
+      </div>
+
+      <button id="btn-checkout" onclick="startCheckout()"
         style="width:100%;padding:14px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px">
-        ⭐ Passa a Pro — Presto disponibile
+        ⭐ Inizia con il piano Mensile
       </button>
-      <button onclick="document.getElementById('upgrade-modal').remove()" 
+      <button onclick="document.getElementById('upgrade-modal').remove()"
         style="width:100%;padding:10px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer">
         Rimani sul piano Free
       </button>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:12px">🔒 Pagamento sicuro con Stripe · Annulla quando vuoi</div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  _selectedPlan = 'monthly';
+}
+
+let _selectedPlan = 'monthly';
+
+function selectPlan(plan) {
+  _selectedPlan = plan;
+  const monthly = document.getElementById('plan-monthly');
+  const yearly = document.getElementById('plan-yearly');
+  const btn = document.getElementById('btn-checkout');
+  if (plan === 'monthly') {
+    monthly.style.border = '2px solid var(--accent-gold)';
+    monthly.style.background = 'rgba(201,168,76,0.08)';
+    yearly.style.border = '2px solid var(--border)';
+    yearly.style.background = 'transparent';
+    btn.textContent = '⭐ Inizia con il piano Mensile';
+  } else {
+    yearly.style.border = '2px solid var(--accent-gold)';
+    yearly.style.background = 'rgba(201,168,76,0.08)';
+    monthly.style.border = '2px solid var(--border)';
+    monthly.style.background = 'transparent';
+    btn.textContent = '⭐ Inizia con il piano Annuale';
+  }
+}
+
+async function startCheckout() {
+  const btn = document.getElementById('btn-checkout');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Reindirizzamento...';
+  try {
+    const stripe = Stripe(STRIPE_PK);
+    const priceId = STRIPE_PRICES[_selectedPlan];
+    const { error } = await stripe.redirectToCheckout({
+      lineItems: [{ price: priceId, quantity: 1 }],
+      mode: 'subscription',
+      successUrl: BASE_URL + '?checkout=success',
+      cancelUrl: BASE_URL + '?checkout=cancel',
+      customerEmail: _currentUser?.email || undefined,
+    });
+    if (error) throw new Error(error.message);
+  } catch(e) {
+    toast('❌ Errore checkout: ' + e.message, '#c0392b');
+    btn.disabled = false;
+    btn.innerHTML = '⭐ Riprova';
+  }
 }
 
 // ── PANNELLO ADMIN ──────────────────────────────────────────────────────────
@@ -2799,6 +2872,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       hideLoginScreen();
+      // Gestisci ritorno da Stripe Checkout
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('checkout') === 'success') {
+        history.replaceState(null, '', window.location.pathname);
+        setTimeout(() => toast('🎉 Benvenuto in SnakeKeeper Pro! Il piano verrà attivato a breve.'), 500);
+      } else if (urlParams.get('checkout') === 'cancel') {
+        history.replaceState(null, '', window.location.pathname);
+      }
       if(!checkHash()) showPage('dashboard');
     } else {
       // Nessuna sessione — mostra login
