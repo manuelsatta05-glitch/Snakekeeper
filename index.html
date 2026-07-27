@@ -2356,6 +2356,8 @@ async function loadUserPlan() {
   try {
     const session = await getSession();
     const token = session ? session.access_token : SUPABASE_KEY;
+
+    // Prima prova: cerca per user_id con token utente
     const res = await fetch(`${SUPABASE_URL}/rest/v1/user_plans?user_id=eq.${_currentUser.id}&select=plan`, {
       headers: {
         'apikey': SUPABASE_KEY,
@@ -2365,11 +2367,30 @@ async function loadUserPlan() {
     });
     if (res.ok) {
       const data = await res.json();
-      _userPlan = data?.[0]?.plan || 'free';
+      if (data && data.length > 0) {
+        _userPlan = data[0].plan || 'free';
+        applyPlanUI();
+        return;
+      }
     }
+
+    // Fallback: controlla se è admin per email direttamente
+    if (_currentUser.email === ADMIN_EMAIL) {
+      _userPlan = 'admin';
+      applyPlanUI();
+      return;
+    }
+
+    // Nessun piano trovato → free
+    _userPlan = 'free';
   } catch(e) {
     console.warn('loadUserPlan errore:', e);
-    _userPlan = 'free';
+    // Fallback sicuro: se è l'email admin, assegna admin
+    if (_currentUser?.email === ADMIN_EMAIL) {
+      _userPlan = 'admin';
+    } else {
+      _userPlan = 'free';
+    }
   }
   applyPlanUI();
 }
