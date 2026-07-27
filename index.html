@@ -1215,14 +1215,9 @@ async function confermaVendita(snakeId) {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
 
   try {
-    // 1. Prima recupera TUTTI i log del serpente da Supabase
-    let logsSnapshot = [];
-    try {
-      logsSnapshot = await SB.getLogs(snakeId);
-    } catch(e) {
-      // Usa quelli in memoria se la query fallisce
-      logsSnapshot = _logs.filter(l => l.snake_id === snakeId);
-    }
+    // 1. Prendi i log dalla cache locale (_logs è già in memoria e aggiornato)
+    const logsSnapshot = _logs.filter(l => l.snake_id === snakeId);
+    console.log('Log trovati per snapshot:', logsSnapshot.length);
 
     const venduto = {
       id: 'V' + Date.now() + Math.random().toString(36).slice(2,5).toUpperCase(),
@@ -1241,13 +1236,13 @@ async function confermaVendita(snakeId) {
       prezzo: parseFloat(document.getElementById('v-prezzo').value) || null,
       note_vendita: document.getElementById('v-note').value.trim() || null,
       snake_created_at: snake.created_at,
-      logs_snapshot: logsSnapshot, // Salva snapshot completo dei log
+      logs_snapshot: logsSnapshot,
     };
 
-    // 2. Salva il venduto (con logs inclusi) PRIMA di eliminare il serpente
+    // 2. Salva il venduto CON i log PRIMA di eliminare il serpente
     await SB.insertVenduto(venduto);
 
-    // 3. Ora elimina il serpente (i log vengono eliminati a cascata, ma li abbiamo già salvati)
+    // 3. Solo DOPO elimina il serpente (e i log a cascata)
     await SB.deleteSerpente(snake.id);
 
     // 4. Aggiorna cache locale
@@ -1256,7 +1251,7 @@ async function confermaVendita(snakeId) {
     _logs = _logs.filter(l => l.snake_id !== snakeId);
 
     document.getElementById('vendi-modal').remove();
-    toast('💰 Serpente segnato come venduto!');
+    toast('💰 ' + snake.nome + ' segnato come venduto con ' + logsSnapshot.length + ' log salvati!');
     showPage('venduti');
   } catch(e) {
     toast('Errore: ' + e.message, '#c0392b');
@@ -1294,13 +1289,23 @@ function renderVenduti() {
           <div class="snake-info-item"><div class="snake-info-label">Prezzo</div><div class="snake-info-value" style="color:var(--accent-gold)">${v.prezzo ? '€' + v.prezzo : '—'}</div></div>
         </div>
         <div class="snake-card-actions">
-          <button class="btn btn-ghost btn-sm" onclick="showPage('dettaglioVenduto','${v.id}')">📋 Dettaglio</button>
-          <button class="btn btn-primary btn-sm" onclick="printResoconto(currentSnakeId)">📄 PDF</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteVenduto('${v.id}')">🗑️</button>
+          <button class="btn btn-ghost btn-sm vend-detail-btn" data-id="${v.id}">📋 Dettaglio</button>
+          <button class="btn btn-primary btn-sm vend-pdf-btn" data-id="${v.id}">📄 PDF</button>
+          <button class="btn btn-danger btn-sm vend-del-btn" data-id="${v.id}">🗑️</button>
         </div>
       </div>`).join('') + '</div>';
   }
   document.getElementById('main-content').innerHTML = html;
+
+  // Event delegation — evita problemi con onclick e template literals su Safari
+  document.getElementById('main-content').addEventListener('click', function(e) {
+    const detBtn = e.target.closest('.vend-detail-btn');
+    const pdfBtn = e.target.closest('.vend-pdf-btn');
+    const delBtn = e.target.closest('.vend-del-btn');
+    if (detBtn) showPage('dettaglioVenduto', detBtn.dataset.id);
+    if (pdfBtn) printResoconto(pdfBtn.dataset.id);
+    if (delBtn) deleteVenduto(delBtn.dataset.id);
+  });
 }
 
 async function deleteVenduto(id) {
