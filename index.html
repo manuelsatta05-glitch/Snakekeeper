@@ -3,10 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- PWA Meta Tags -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SnakeKeeper">
-<meta name="theme-color" content="#080f09">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1f0f">
+<meta name="description" content="Gestionale professionale per allevamento serpenti">
+
+<!-- PWA Icons Apple -->
+<link rel="apple-touch-icon" href="/Snakekeeper/icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/Snakekeeper/icon-192.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/Snakekeeper/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/Snakekeeper/icon-180.png">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/Snakekeeper/manifest.json">
+
+<!-- Splash Screen iOS -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  /* Splash screen per iOS standalone */
+  @media (display-mode: standalone) {
+    body { padding-top: env(safe-area-inset-top); }
+  }
+</style>
+
 <title>SnakeKeeper — Gestionale Allevamento Serpenti</title>
 <script>
 /* Minimal QR Code generator — pure JS, no dependencies (MIT) */
@@ -2051,6 +2074,106 @@ document.addEventListener('touchend',e=>{
   const dx=e.changedTouches[0].clientX-touchStartX;
   if(dx<-60&&document.getElementById('mobile-drawer').classList.contains('open'))closeDrawer();
 },{passive:true});
+
+// ═══════════════════════════════════════
+//  SERVICE WORKER + OFFLINE SYNC
+// ═══════════════════════════════════════
+
+// Registra Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/Snakekeeper/sw.js')
+      .then(reg => {
+        console.log('[SW] Registrato:', reg.scope);
+        // Ascolta messaggi dal SW per sync
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data.type === 'SYNC_REQUESTED') {
+            syncPendingOfflineData();
+          }
+        });
+      })
+      .catch(err => console.warn('[SW] Registrazione fallita:', err));
+  });
+}
+
+// Coda operazioni offline
+const OFFLINE_QUEUE_KEY = 'sk_offline_queue';
+
+function getOfflineQueue() {
+  try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function saveOfflineQueue(q) {
+  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q));
+}
+function addToOfflineQueue(operation) {
+  const q = getOfflineQueue();
+  q.push({ ...operation, timestamp: Date.now() });
+  saveOfflineQueue(q);
+  console.log('[Offline] Aggiunta operazione alla coda:', operation.type);
+}
+
+// Sincronizza dati offline quando torna la connessione
+async function syncPendingOfflineData() {
+  const q = getOfflineQueue();
+  if (!q.length) return;
+  console.log('[Sync] Sincronizzazione', q.length, 'operazioni offline...');
+  
+  const failed = [];
+  for (const op of q) {
+    try {
+      if (op.type === 'INSERT_SERPENTE') await SB.insertSerpente(op.data);
+      else if (op.type === 'INSERT_LOG') await SB.insertLog(op.data);
+      else if (op.type === 'INSERT_VENDUTO') await SB.insertVenduto(op.data);
+      else if (op.type === 'DELETE_SERPENTE') await SB.deleteSerpente(op.id);
+      else if (op.type === 'DELETE_LOG') await SB.deleteLog(op.id);
+      console.log('[Sync] ✅', op.type, 'sincronizzato');
+    } catch(e) {
+      console.warn('[Sync] ❌ Fallito:', op.type, e.message);
+      failed.push(op);
+    }
+  }
+  
+  saveOfflineQueue(failed);
+  
+  if (failed.length === 0 && q.length > 0) {
+    toast('☁️ ' + q.length + ' modifiche offline sincronizzate!');
+    await loadAll();
+    showPage(currentPage, currentSnakeId);
+  }
+}
+
+// Indicatore connessione online/offline
+window.addEventListener('online', () => {
+  setOnline(true);
+  toast('🟢 Connessione ripristinata!');
+  syncPendingOfflineData();
+});
+window.addEventListener('offline', () => {
+  setOnline(false);
+  toast('🔴 Modalità offline — i dati vengono salvati localmente', '#c9a84c');
+});
+
+// Wrapper Supabase con fallback offline
+const _origInsertLog = SB.insertLog.bind(SB);
+SB.insertLog = async function(log) {
+  if (!navigator.onLine) {
+    _logs.unshift(log);
+    addToOfflineQueue({ type: 'INSERT_LOG', data: log });
+    return [log];
+  }
+  return _origInsertLog(log);
+};
+
+const _origInsertSerpente = SB.insertSerpente.bind(SB);
+SB.insertSerpente = async function(s) {
+  if (!navigator.onLine) {
+    _snakes.push(s);
+    addToOfflineQueue({ type: 'INSERT_SERPENTE', data: s });
+    return [s];
+  }
+  return _origInsertSerpente(s);
+};
 
 // ═══════════════════════════════════════
 //  INIT — carica da Supabase
