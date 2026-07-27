@@ -268,6 +268,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
   .log-icon.food { background: rgba(109,181,109,0.2); }
   .log-icon.feci { background: rgba(201,168,76,0.2); }
   .log-icon.eggs { background: rgba(227,145,160,0.2); }
+  .log-icon.pulizia { background: rgba(74,144,164,0.2); }
   .log-info { flex: 1; min-width: 0; }
   .log-date { font-size: 11px; color: var(--text-dim); }
   .log-desc { font-size: 14px; color: var(--text-bright); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -911,6 +912,7 @@ function renderDettaglio() {
   const foodLogs = logs.filter(l=>l.tipo==='cibo').sort((a,b)=>b.data.localeCompare(a.data));
   const feciLogs = logs.filter(l=>l.tipo==='feci').sort((a,b)=>b.data.localeCompare(a.data));
   const eggsLogs = logs.filter(l=>l.tipo==='uova').sort((a,b)=>b.data.localeCompare(a.data));
+  const puliziaLogs = logs.filter(l=>l.tipo==='pulizia').sort((a,b)=>b.data.localeCompare(a.data));
   const totalFood = foodLogs.reduce((s,l)=>s+(parseFloat(l.grammi)||0),0);
   const todayVal = new Date().toISOString().split('T')[0];
 
@@ -942,6 +944,7 @@ function renderDettaglio() {
         <div class="stat"><div class="stat-val">${foodLogs.length}</div><div class="stat-lab">Pasti</div></div>
         <div class="stat"><div class="stat-val">${totalFood.toFixed(0)}g</div><div class="stat-lab">Cibo tot.</div></div>
         <div class="stat"><div class="stat-val">${feciLogs.length}</div><div class="stat-lab">Feci</div></div>
+        <div class="stat"><div class="stat-val">${puliziaLogs.length}</div><div class="stat-lab">Pulizie</div></div>
         ${snake.sesso==='F'?`<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">Deposizioni</div></div>`:''}
       </div>
       <div class="sdh-icd">${snake.icd}</div>
@@ -952,6 +955,7 @@ function renderDettaglio() {
     <button class="tab active" id="tab-cibo" onclick="switchTab('cibo')">🥩 Pasti</button>
     <button class="tab" id="tab-feci" onclick="switchTab('feci')">💩 Feci</button>
     ${snake.sesso==='F'?`<button class="tab" id="tab-uova" onclick="switchTab('uova')">🥚 Uova</button>`:''}
+    <button class="tab" id="tab-pulizia" onclick="switchTab('pulizia')">🧹 Pulizia</button>
     <button class="tab" id="tab-info" onclick="switchTab('info')">📄 Info</button>
   </div>
 
@@ -1023,6 +1027,39 @@ function renderDettaglio() {
     </div>
   </div>`:''}
 
+  <!-- TAB PULIZIA -->
+  <div id="tab-content-pulizia" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">🧹 Registra Pulizia Vasca</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Data *</label><input type="date" id="pulizia-data" value="${todayVal}"></div>
+        <div class="form-group">
+          <label>Tipo pulizia</label>
+          <select id="pulizia-tipo">
+            <option value="Pulizia completa">Pulizia completa</option>
+            <option value="Pulizia parziale">Pulizia parziale</option>
+            <option value="Cambio acqua">Cambio acqua</option>
+            <option value="Disinfezione">Disinfezione</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mt-16"><label>Note</label><input type="text" id="pulizia-note" placeholder="es. Sostituito substrato" autocomplete="off"></div>
+      <button class="btn mt-16" style="background:#4a90a4;color:#fff" id="btn-log-pulizia" onclick="logPulizia('${snake.id}')">💾 Salva</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📜 Storico Pulizie (${puliziaLogs.length})</div>
+      ${puliziaLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna pulizia registrata</div>':
+        puliziaLogs.map(l=>`<div class="log-entry">
+          <div class="log-icon" style="background:rgba(74,144,164,0.2)">🧹</div>
+          <div class="log-info">
+            <div class="log-date">${fmtDate(l.data)}</div>
+            <div class="log-desc">${l.pulizia_tipo||'Pulizia'}${l.note?` · ${l.note}`:''}</div>
+          </div>
+          <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snake.id}')">✕</button>
+        </div>`).join('')}
+    </div>
+  </div>
+
   <!-- TAB INFO -->
   <div id="tab-content-info" style="display:none">
     <div class="card">
@@ -1048,7 +1085,7 @@ function renderDettaglio() {
 }
 
 function renderLogList(logs, type, snakeId) {
-  const icons = { food:'🥩', feci:'💩', eggs:'🥚' };
+  const icons = { food:'🥩', feci:'💩', eggs:'🥚', pulizia:'🧹' };
   if (!logs.length) return '<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna registrazione</div>';
   return logs.map(l => {
     let desc = '';
@@ -1067,7 +1104,7 @@ function renderLogList(logs, type, snakeId) {
 }
 
 function switchTab(name) {
-  ['cibo','feci','uova','info'].forEach(t => {
+  ['cibo','feci','uova','pulizia','info'].forEach(t => {
     const btn=document.getElementById('tab-'+t);
     const cnt=document.getElementById('tab-content-'+t);
     if(btn) btn.classList.toggle('active',t===name);
@@ -1136,6 +1173,25 @@ async function logUova(snakeId) {
     _logs.unshift(log);
     toast('🥚 Deposizione salvata nel cloud!');
     renderDettaglio(); switchTab('uova');
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva'; }
+}
+
+async function logPulizia(snakeId) {
+  const data=document.getElementById('pulizia-data').value;
+  if(!data){toast('Inserisci la data!','#c0392b');return;}
+  const btn=document.getElementById('btn-log-pulizia');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const log={
+    id:'L'+Date.now()+Math.random().toString(36).slice(2,5),
+    snake_id:snakeId, tipo:'pulizia', data,
+    pulizia_tipo:document.getElementById('pulizia-tipo').value,
+    note:document.getElementById('pulizia-note').value||null,
+  };
+  try {
+    await SB.insertLog(log);
+    _logs.unshift(log);
+    toast('🧹 Pulizia salvata nel cloud!');
+    renderDettaglio(); switchTab('pulizia');
   } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva'; }
 }
 
@@ -1725,8 +1781,8 @@ async function printResoconto(vendutoId) {
 function renderRegistro() {
   const logs = [..._logs].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,80);
   const snakeMap = {}; _snakes.forEach(s=>snakeMap[s.id]=s);
-  const icons={cibo:'🥩',feci:'💩',uova:'🥚'};
-  const types={cibo:'food',feci:'feci',uova:'eggs'};
+  const icons={cibo:'🥩',feci:'💩',uova:'🥚',pulizia:'🧹'};
+  const types={cibo:'food',feci:'feci',uova:'eggs',pulizia:'pulizia'};
   let html = `<div class="page-header"><h2>📋 Registro</h2><p>Ultime ${logs.length} attività</p></div><div class="card">`;
   if(!logs.length) {
     html+=`<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna attività</h3><p>Le attività appariranno qui.</p></div>`;
@@ -1738,6 +1794,7 @@ function renderRegistro() {
       if(l.tipo==='cibo') desc=`${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g`;
       if(l.tipo==='feci') desc=`Feci: ${l.feci_tipo||'—'}`;
       if(l.tipo==='uova') desc=`Deposizione: ${l.num_uova||0} uova`;
+      if(l.tipo==='pulizia') desc=`Pulizia: ${l.pulizia_tipo||'—'}`;
       html+=`<div class="log-entry">
         <div class="log-icon ${types[l.tipo]||'food'}">${icons[l.tipo]||'📌'}</div>
         <div class="log-info">
