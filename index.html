@@ -706,7 +706,7 @@ function showPage(page, snakeId=null) {
     });
   });
   document.getElementById('main-content').innerHTML = '';
-  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro, venduti:renderVenduti };
+  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro, venduti:renderVenduti, dettaglioVenduto:renderDettaglioVenduto };
   if (pages[page]) pages[page]();
   refreshSidebar();
 }
@@ -1294,8 +1294,8 @@ function renderVenduti() {
           <div class="snake-info-item"><div class="snake-info-label">Prezzo</div><div class="snake-info-value" style="color:var(--accent-gold)">${v.prezzo ? '€' + v.prezzo : '—'}</div></div>
         </div>
         <div class="snake-card-actions">
-          <button class="btn btn-ghost btn-sm" onclick="showDettaglioVenduto('${v.id}')">📋 Dettaglio</button>
-          <button class="btn btn-primary btn-sm" onclick="printResoconto('${v.id}')">📄 PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('dettaglioVenduto','${v.id}')">📋 Dettaglio</button>
+          <button class="btn btn-primary btn-sm" onclick="printResoconto(currentSnakeId)">📄 PDF</button>
           <button class="btn btn-danger btn-sm" onclick="deleteVenduto('${v.id}')">🗑️</button>
         </div>
       </div>`).join('') + '</div>';
@@ -1316,9 +1316,10 @@ async function deleteVenduto(id) {
 // ═══════════════════════════════════════
 //  DETTAGLIO SERPENTE VENDUTO
 // ═══════════════════════════════════════
-function showDettaglioVenduto(vendutoId) {
+function renderDettaglioVenduto() {
+  const vendutoId = currentSnakeId;
   const v = _venduti.find(x => x.id === vendutoId);
-  if (!v) return;
+  if (!v) { showPage('venduti'); return; }
 
   const logs = v.logs_snapshot || [];
   const foodLogs = logs.filter(l => l.tipo === 'cibo').sort((a,b) => b.data.localeCompare(a.data));
@@ -1478,7 +1479,12 @@ async function printResoconto(vendutoId) {
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(BASE_URL + '#snake=' + v.snake_id)}&margin=2&color=0d1f0f&bgcolor=ffffff`;
 
-  const win = window.open('', '_blank', 'width=900,height=1100');
+  // Apri PDF in nuova tab (compatibile Safari iOS)
+  const win = window.open('about:blank', '_blank');
+  if (!win) {
+    toast('Abilita i popup per Safari per visualizzare il PDF', '#c0392b');
+    return;
+  }
   win.document.write(`<!DOCTYPE html>
 <html lang="it">
 <head>
