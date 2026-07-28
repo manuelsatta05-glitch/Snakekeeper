@@ -2856,7 +2856,7 @@ async function doRegister() {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registrazione...';
   try {
     await authReq('signup', { email, password });
-    showAuthMsg("✅ Registrazione completata! Controlla la tua email per verificare l'account.");
+    showAuthMsg("✅ Registrazione completata! Controlla SUBITO la tua email (anche lo spam) e clicca il link per verificare l'account. Il link scade dopo un po', quindi verificalo appena possibile.");
     btn.disabled = false; btn.innerHTML = '🐍 Crea Account';
   } catch(e) {
     showAuthMsg('❌ ' + e.message, true);
@@ -2891,6 +2891,81 @@ function getHashParams() {
     if(k) params[k] = decodeURIComponent(v||'');
   });
   return params;
+}
+
+// Modal per link email scaduto/non valido
+function showExpiredLinkModal(errorCode, errorDesc) {
+  const isExpired = errorCode === 'otp_expired' || (errorDesc||'').toLowerCase().includes('expired');
+  const modal = document.createElement('div');
+  modal.id = 'expired-link-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:800;background:rgba(8,15,9,0.95);display:flex;align-items:center;justify-content:center;padding:24px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:var(--shadow)">
+      <div style="font-size:48px;margin-bottom:12px">${isExpired ? '⏰' : '⚠️'}</div>
+      <div style="font-family:'Cinzel',serif;font-size:22px;color:var(--accent-gold);margin-bottom:8px">
+        ${isExpired ? 'Link scaduto' : 'Link non valido'}
+      </div>
+      <div style="color:var(--text-mid);font-size:14px;line-height:1.6;margin-bottom:20px">
+        ${isExpired
+          ? 'Il link di verifica è scaduto. Inserisci la tua email qui sotto per riceverne uno nuovo.'
+          : 'Questo link non è più valido. Richiedi una nuova email di verifica inserendo il tuo indirizzo.'}
+      </div>
+      <div class="form-group" style="text-align:left;margin-bottom:14px">
+        <label>La tua email</label>
+        <input type="email" id="resend-email" placeholder="nome@email.com" autocomplete="email" style="width:100%">
+      </div>
+      <button id="btn-resend" onclick="resendVerificationEmail()"
+        style="width:100%;padding:14px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px">
+        📧 Invia nuova email di verifica
+      </button>
+      <button onclick="document.getElementById('expired-link-modal').remove()"
+        style="width:100%;padding:10px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer">
+        Torna al login
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function resendVerificationEmail() {
+  const email = document.getElementById('resend-email').value.trim();
+  if (!email || !email.includes('@')) {
+    toast('Inserisci un\'email valida!', '#c0392b');
+    return;
+  }
+  const btn = document.getElementById('btn-resend');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Invio in corso...';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'signup',
+        email: email,
+        options: { emailRedirectTo: BASE_URL }
+      })
+    });
+    if (res.ok) {
+      document.getElementById('expired-link-modal').remove();
+      toast('✅ Email inviata! Controlla la tua casella (anche lo spam).');
+    } else {
+      const err = await res.json().catch(()=>({}));
+      // Supabase a volte risponde ok anche se già verificato
+      if (err.msg && err.msg.toLowerCase().includes('already')) {
+        document.getElementById('expired-link-modal').remove();
+        toast('✅ Questo account è già verificato! Puoi accedere.');
+      } else {
+        throw new Error(err.msg || err.error_description || 'Errore invio');
+      }
+    }
+  } catch(e) {
+    toast('❌ ' + e.message, '#c0392b');
+    btn.disabled = false;
+    btn.innerHTML = '📧 Riprova';
+  }
 }
 
 function showAuthSuccess(type) {
@@ -2975,7 +3050,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     // Controlla se arriviamo da link email Supabase (token nell'hash)
     const params = getHashParams();
-    
+
+    // GESTIONE ERRORI dal link email (es. link scaduto)
+    if (params.error) {
+      history.replaceState(null, '', window.location.pathname);
+      clearTimeout(safetyTimeout);
+      document.getElementById('loading-screen').style.display = 'none';
+      showLoginScreen();
+      showExpiredLinkModal(params.error_code, params.error_description);
+      return;
+    }
+
     if (params.access_token && params.type) {
       // Arrivo da link email — pulisci SUBITO l'URL per evitare confusione
       history.replaceState(null, '', window.location.pathname);
