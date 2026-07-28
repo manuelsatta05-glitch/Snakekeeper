@@ -4646,10 +4646,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       if(!checkHash()) showPage('dashboard');
       setTimeout(initCookieBanner, 1500);
     } else {
-      // Nessuna sessione — mostra landing page
+      // Nessuna sessione — mostra login
       clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
-      showLanding();
+      showLoginScreen();
       setTimeout(initCookieBanner, 1500);
     }
 
