@@ -2658,20 +2658,20 @@ async function changePlan(userId, newPlan) {
   try {
     const session = await getSession();
     const token = session ? session.access_token : SUPABASE_KEY;
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_plans?user_id=eq.${userId}`, {
-      method: 'PATCH',
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_user_plan`, {
+      method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ plan: newPlan })
+      body: JSON.stringify({ p_user_id: userId, p_plan: newPlan })
     });
     if (res.ok) {
       toast('✅ Piano aggiornato!');
     } else {
-      throw new Error('Errore aggiornamento');
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.message || err.hint || 'Errore aggiornamento');
     }
   } catch(e) {
     toast('❌ Errore: ' + e.message, '#c0392b');
@@ -2693,18 +2693,25 @@ async function adminAddUser() {
   try {
     const session = await getSession();
     const token = session ? session.access_token : SUPABASE_KEY;
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_plans`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_user_plan`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ user_id: uuid, email: email||null, plan, notes: notes||null })
+      body: JSON.stringify({
+        p_user_id: uuid,
+        p_email: email || null,
+        p_plan: plan,
+        p_notes: notes || null
+      })
     });
     if (res.ok) {
       toast('✅ Utente aggiunto con piano ' + plan + '!');
+      document.getElementById('admin-uuid').value = '';
+      document.getElementById('admin-email').value = '';
+      document.getElementById('admin-notes').value = '';
       await loadAdminData();
     } else {
       const err = await res.json().catch(()=>({}));
@@ -2715,7 +2722,6 @@ async function adminAddUser() {
     btn.disabled = false; btn.innerHTML = '➕ Aggiungi Utente';
   }
 }
-
 // ═══════════════════════════════════════
 //  AUTH SUPABASE
 // ═══════════════════════════════════════
