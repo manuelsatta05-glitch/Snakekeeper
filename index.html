@@ -2662,15 +2662,21 @@ document.addEventListener('touchend',e=>{
 const COOKIE_KEY = 'sk_cookie_consent';
 
 function initCookieBanner() {
-  const consent = localStorage.getItem(COOKIE_KEY);
-  if (!consent) {
-    // Prima visita — mostra il banner dopo 1 secondo
-    setTimeout(() => {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }, 1000);
-  } else {
-    // Applica le preferenze salvate
-    applyCookiePrefs(JSON.parse(consent));
+  try {
+    const consent = localStorage.getItem(COOKIE_KEY);
+    if (!consent) {
+      // Prima visita — mostra il banner
+      const banner = document.getElementById('cookie-banner');
+      if (banner) {
+        banner.style.display = 'block';
+      }
+    } else {
+      applyCookiePrefs(JSON.parse(consent));
+    }
+  } catch(e) {
+    // Safari privata o localStorage non disponibile — mostra sempre il banner
+    const banner = document.getElementById('cookie-banner');
+    if (banner) banner.style.display = 'block';
   }
 }
 
@@ -2698,14 +2704,19 @@ function cookieChoice(type) {
     timestamp: Date.now(),
     version: '1.0'
   };
-  localStorage.setItem(COOKIE_KEY, JSON.stringify(prefs));
+  try {
+    localStorage.setItem(COOKIE_KEY, JSON.stringify(prefs));
+  } catch(e) {
+    // localStorage non disponibile (Safari privata) — ignora
+  }
   applyCookiePrefs(prefs);
-  // Animazione chiusura
   const banner = document.getElementById('cookie-banner');
-  banner.style.transition = 'transform .3s ease, opacity .3s ease';
-  banner.style.transform = 'translateY(100%)';
-  banner.style.opacity = '0';
-  setTimeout(() => banner.style.display = 'none', 300);
+  if (banner) {
+    banner.style.transition = 'transform .3s ease, opacity .3s ease';
+    banner.style.transform = 'translateY(100%)';
+    banner.style.opacity = '0';
+    setTimeout(() => banner.style.display = 'none', 300);
+  }
   toast('✅ Preferenze cookie salvate');
 }
 
