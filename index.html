@@ -627,6 +627,9 @@ const SB = {
   async updateSerpente(id, data) {
     return this.req(`serpenti?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data), prefer:'return=minimal' });
   },
+  async updateLog(id, data) {
+    return this.req(`logs?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data), prefer:'return=minimal' });
+  },
 };
 
 // ═══════════════════════════════════════
@@ -1001,6 +1004,7 @@ function renderDettaglio() {
       </div>
       <div class="sdh-top-row2">
         <button class="btn btn-ghost btn-sm" onclick="printLabel('${snake.id}')">🏷️ Stampa</button>
+        <button class="btn btn-ghost btn-sm" onclick="printSchedaSerpente('${snake.id}')" style="color:var(--accent-lime);border-color:var(--accent-lime)">📄 PDF</button>
         <button class="btn btn-ghost btn-sm" onclick="showVendiModal('${snake.id}')" style="color:var(--accent-gold);border-color:var(--accent-gold)">💰 Vendi</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSerpente('${snake.id}')">🗑️</button>
       </div>
@@ -1287,7 +1291,8 @@ function renderLogList(logs, type, snakeId) {
         <div class="log-date">${fmtDate(l.data)}</div>
         <div class="log-desc">${desc}${l.note?` · ${l.note}`:''}</div>
       </div>
-      <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snakeId}')">✕</button>
+      <button class="log-delete" onclick="editLogEntry('${l.id}','${snakeId}','${l.tipo}')" title="Modifica" style="color:var(--accent-gold);font-size:13px">✏️</button>
+      <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snakeId}')" title="Elimina">✕</button>
     </div>`;
   }).join('');
 }
@@ -1392,6 +1397,99 @@ async function deleteLogEntry(logId, snakeId) {
     toast('Eliminato','#c0392b');
     renderDettaglio();
   } catch(e) { toast('Errore: '+e.message,'#c0392b'); }
+}
+
+function editLogEntry(logId, snakeId, tipo) {
+  const log = _logs.find(l=>l.id===logId);
+  if (!log) return;
+  document.getElementById('edit-log-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'edit-log-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px';
+
+  let fieldsHtml = '';
+  fieldsHtml += `<div class="form-group"><label>Data</label><input type="date" id="editlog-data" value="${log.data||''}"></div>`;
+
+  if (tipo==='cibo') {
+    fieldsHtml += `
+      <div class="form-group"><label>Tipo cibo</label>
+        <select id="editlog-food-tipo">
+          ${['Topo scongelato','Topo vivo','Ratto scongelato','Ratto vivo','Pulcino','Coniglio','Altro'].map(t=>`<option ${log.food_tipo===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Peso preda (g)</label><input type="number" id="editlog-grammi" value="${log.grammi||''}" inputmode="decimal"></div>
+      <div class="form-group"><label>Quantità</label><input type="number" id="editlog-qty" value="${log.qty||1}" min="1" inputmode="numeric"></div>`;
+  } else if (tipo==='feci') {
+    fieldsHtml += `<div class="form-group"><label>Consistenza</label>
+      <select id="editlog-feci-tipo">
+        ${['Normale','Liquide','Dure','Con urati','Sanguinolente'].map(t=>`<option ${log.feci_tipo===t?'selected':''}>${t}</option>`).join('')}
+      </select></div>`;
+  } else if (tipo==='uova') {
+    fieldsHtml += `
+      <div class="form-group"><label>N° uova</label><input type="number" id="editlog-num-uova" value="${log.num_uova||''}" inputmode="numeric"></div>
+      <div class="form-group"><label>N° fertili</label><input type="number" id="editlog-fertili" value="${log.fertili||''}" inputmode="numeric"></div>
+      <div class="form-group"><label>Temp (°C)</label><input type="number" id="editlog-temp" value="${log.temp||''}" step="0.1" inputmode="decimal"></div>`;
+  } else if (tipo==='muta') {
+    fieldsHtml += `<div class="form-group"><label>Esito</label>
+      <select id="editlog-muta-tipo">
+        ${['Completa','Parziale','Problematica','In corso'].map(t=>`<option ${log.feci_tipo===t?'selected':''}>${t}</option>`).join('')}
+      </select></div>`;
+  } else if (tipo==='peso') {
+    fieldsHtml += `<div class="form-group"><label>Peso (g)</label><input type="number" id="editlog-grammi" value="${log.grammi||''}" inputmode="decimal"></div>`;
+  } else if (tipo==='pulizia') {
+    fieldsHtml += `<div class="form-group"><label>Tipo pulizia</label>
+      <select id="editlog-pulizia-tipo">
+        ${['Pulizia completa','Pulizia parziale','Cambio acqua','Disinfezione'].map(t=>`<option ${log.pulizia_tipo===t?'selected':''}>${t}</option>`).join('')}
+      </select></div>`;
+  }
+  fieldsHtml += `<div class="form-group"><label>Note</label><input type="text" id="editlog-note" value="${log.note||''}" autocomplete="off"></div>`;
+
+  const tipoLabels = {cibo:'🥩 Pasto',feci:'💩 Feci',uova:'🥚 Deposizione',muta:'🦎 Muta',peso:'⚖️ Peso',pulizia:'🧹 Pulizia'};
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:400px;width:100%;box-shadow:var(--shadow)">
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--accent-gold);margin-bottom:16px">✏️ Modifica ${tipoLabels[tipo]||'Log'}</div>
+      <div class="form-grid">${fieldsHtml}</div>
+      <div class="flex-row mt-20">
+        <button class="btn btn-primary" id="btn-save-editlog" onclick="saveEditLog('${logId}','${snakeId}','${tipo}')">💾 Salva</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('edit-log-modal').remove()">Annulla</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+}
+
+async function saveEditLog(logId, snakeId, tipo) {
+  const btn = document.getElementById('btn-save-editlog');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  const updates = { data: document.getElementById('editlog-data').value, note: document.getElementById('editlog-note').value || null };
+  if (tipo==='cibo') {
+    updates.food_tipo = document.getElementById('editlog-food-tipo').value;
+    updates.grammi = parseFloat(document.getElementById('editlog-grammi').value) || null;
+    updates.qty = parseInt(document.getElementById('editlog-qty').value) || 1;
+  } else if (tipo==='feci') {
+    updates.feci_tipo = document.getElementById('editlog-feci-tipo').value;
+  } else if (tipo==='uova') {
+    updates.num_uova = parseInt(document.getElementById('editlog-num-uova').value) || null;
+    updates.fertili = parseInt(document.getElementById('editlog-fertili').value) || null;
+    updates.temp = parseFloat(document.getElementById('editlog-temp').value) || null;
+  } else if (tipo==='muta') {
+    updates.feci_tipo = document.getElementById('editlog-muta-tipo').value;
+  } else if (tipo==='peso') {
+    updates.grammi = parseFloat(document.getElementById('editlog-grammi').value) || null;
+  } else if (tipo==='pulizia') {
+    updates.pulizia_tipo = document.getElementById('editlog-pulizia-tipo').value;
+  }
+  try {
+    await SB.updateLog(logId, updates);
+    const log = _logs.find(l=>l.id===logId);
+    if (log) Object.assign(log, updates);
+    document.getElementById('edit-log-modal').remove();
+    toast('✅ Log aggiornato!');
+    renderDettaglio();
+  } catch(e) {
+    toast('❌ '+e.message, '#c0392b');
+    btn.disabled = false; btn.innerHTML = '💾 Salva';
+  }
 }
 
 // ── MUTA LOG ──
@@ -2116,6 +2214,106 @@ function renderRegistro() {
 // ═══════════════════════════════════════
 //  STAMPA ETICHETTA + QR — NUOVA FINESTRA
 // ═══════════════════════════════════════
+// ── PDF SCHEDA SERPENTE (Pro Feature) ──
+function printSchedaSerpente(snakeId) {
+  if (!isPro()) { showUpgradeModal(); return; }
+  const snake = _snakes.find(s=>s.id===snakeId);
+  if (!snake) return;
+  const logs = logsForSnake(snake.id);
+  const foodLogs = logs.filter(l=>l.tipo==='cibo').sort((a,b)=>a.data.localeCompare(b.data));
+  const feciLogs = logs.filter(l=>l.tipo==='feci').sort((a,b)=>a.data.localeCompare(b.data));
+  const mutaLogs = logs.filter(l=>l.tipo==='muta').sort((a,b)=>a.data.localeCompare(b.data));
+  const pesoLogs = logs.filter(l=>l.tipo==='peso').sort((a,b)=>a.data.localeCompare(b.data));
+  const eggsLogs = logs.filter(l=>l.tipo==='uova').sort((a,b)=>a.data.localeCompare(b.data));
+  const totalCibo = foodLogs.reduce((s,l)=>s+(parseFloat(l.grammi)||0),0);
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(BASE_URL+'#snake='+snake.id)}&margin=2&color=0d1f0f&bgcolor=ffffff`;
+  const today = new Date().toLocaleDateString('it-IT');
+
+  const makeTable = (title, icon, rows, headers) => {
+    if (!rows.length) return '';
+    return `<div class="section"><div class="sec-title">${icon} ${title} (${rows.length})</div>
+      <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  };
+
+  const win = window.open('about:blank', '_blank');
+  if (!win) { toast('Abilita i popup per visualizzare il PDF', '#c0392b'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<title>Scheda — ${snake.nome}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', Arial, sans-serif; color: #111; background: white; font-size: 10pt; padding: 12mm; }
+  @page { size: A4; margin: 15mm 12mm; }
+  .doc-header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:5mm; border-bottom:3px solid #1a3320; margin-bottom:6mm; }
+  .doc-title { font-family:'Cinzel',serif; font-size:22pt; color:#0d1f0f; font-weight:700; }
+  .doc-sub { font-size:9pt; color:#666; margin-top:2mm; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:9pt; font-weight:600; }
+  .badge-M { background:#e3f0fb; color:#2b6cb0; }
+  .badge-F { background:#fce4ec; color:#c0392b; }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:3mm; margin-bottom:6mm; }
+  .info-item { background:#f5f8f5; border-radius:3mm; padding:3mm; }
+  .info-label { font-size:7pt; color:#888; text-transform:uppercase; letter-spacing:0.5px; }
+  .info-value { font-size:10pt; font-weight:500; margin-top:1mm; }
+  .section { margin-bottom:5mm; break-inside:avoid; }
+  .sec-title { font-family:'Cinzel',serif; font-size:12pt; color:#1a3320; margin-bottom:2mm; padding-bottom:1mm; border-bottom:1px solid #ddd; }
+  table { width:100%; border-collapse:collapse; font-size:9pt; margin-top:2mm; }
+  th { text-align:left; padding:2mm; background:#f0f4f0; color:#555; font-weight:500; font-size:8pt; text-transform:uppercase; letter-spacing:0.3px; border-bottom:1px solid #ddd; }
+  td { padding:2mm; border-bottom:1px solid #eee; }
+  .stats-row { display:flex; gap:3mm; margin-bottom:5mm; }
+  .stat-box { flex:1; background:#f5f8f5; border-radius:3mm; padding:3mm; text-align:center; }
+  .stat-num { font-size:16pt; font-weight:700; color:#1a3320; }
+  .stat-lbl { font-size:7pt; color:#888; text-transform:uppercase; }
+  .footer { margin-top:8mm; padding-top:3mm; border-top:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; font-size:8pt; color:#999; }
+  .foto-circle { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #1a3320; }
+  @media print { body { padding:0; } }
+</style></head><body>
+<div class="doc-header">
+  <div>
+    <div class="doc-title">Scheda Serpente</div>
+    <div class="doc-sub">Documento generato il ${today} — SnakeKeeper</div>
+  </div>
+  <div style="text-align:right">
+    ${snake.foto_url ? `<img src="${snake.foto_url}" class="foto-circle">` : ''}
+    <img src="${qrUrl}" style="width:50px;height:50px;margin-left:8px" alt="QR">
+  </div>
+</div>
+
+<div class="info-grid">
+  ${[['Nome',snake.nome],['Specie',snake.specie||'—'],['Morfo',snake.morfo||'—'],
+     ['Sesso',snake.sesso==='M'?'♂ Maschio':'♀ Femmina'],
+     ['Data nascita',snake.nascita?new Date(snake.nascita).toLocaleDateString('it-IT'):'—'],
+     ['Età',age(snake.nascita)],
+     ['Peso attuale',snake.peso?snake.peso+'g':'—'],['Provenienza',snake.provenienza||'—'],
+     ['Codice ICD',snake.icd]
+  ].map(([k,v])=>`<div class="info-item"><div class="info-label">${k}</div><div class="info-value">${v}</div></div>`).join('')}
+</div>
+
+<div class="stats-row">
+  ${[['Pasti tot.',foodLogs.length],['Cibo tot.',totalCibo.toFixed(0)+'g'],['Feci',feciLogs.length],
+     ['Mute',mutaLogs.length],['Pesate',pesoLogs.length],
+     ...(snake.sesso==='F'?[['Deposizioni',eggsLogs.length]]:[])
+  ].map(([l,v])=>`<div class="stat-box"><div class="stat-num">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
+</div>
+
+${snake.note ? `<div class="section"><div class="sec-title">📝 Note</div><p style="font-size:10pt;color:#444;margin-top:2mm">${snake.note}</p></div>` : ''}
+
+${makeTable('Storico Pasti','🥩', foodLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.food_tipo||'—',(l.grammi||0)+'g','×'+(l.qty||1),l.note||'']), ['Data','Tipo','Peso','Qty','Note'])}
+${makeTable('Storico Mute','🦎', mutaLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.feci_tipo||'Completa',l.note||'']), ['Data','Esito','Note'])}
+${makeTable('Storico Peso','⚖️', pesoLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),(l.grammi||0)+'g',l.note||'']), ['Data','Peso','Note'])}
+${makeTable('Storico Feci','💩', feciLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.feci_tipo||'—',l.note||'']), ['Data','Tipo','Note'])}
+${snake.sesso==='F' ? makeTable('Deposizioni','🥚', eggsLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),(l.num_uova||0)+' uova',(l.fertili||0)+' fertili',l.temp?l.temp+'°C':'—',l.note||'']), ['Data','Uova','Fertili','Temp','Note']) : ''}
+
+<div class="footer">
+  <div>SnakeKeeper — Gestionale Allevamento Serpenti<br>snakekeeper.it</div>
+  <div style="text-align:right">ICD: ${snake.icd}<br>Generato: ${today}</div>
+</div>
+</body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 600);
+}
+
 function printLabel(id) {
   const snake = _snakes.find(s => s.id === id);
   if (!snake) return;
