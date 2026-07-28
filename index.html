@@ -570,10 +570,20 @@ const STRIPE_PRICES = {
 
 const SB = {
   async req(path, opts={}) {
+    // Usa il token dell'utente loggato (per far funzionare le policy RLS)
+    // Fallback su SUPABASE_KEY se non c'è sessione
+    let token = SUPABASE_KEY;
+    try {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('auth-token'));
+      if (keys.length) {
+        const session = JSON.parse(localStorage.getItem(keys[0]));
+        if (session && session.access_token) token = session.access_token;
+      }
+    } catch(e) {}
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Prefer': opts.prefer || 'return=representation',
         ...opts.headers
