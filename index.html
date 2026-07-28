@@ -564,8 +564,9 @@ const BASE_URL = 'https://snakekeeper.it/';
 // ── STRIPE CONFIG ──────────────────────────────────────────────────────────
 const STRIPE_PK = 'pk_test_51TxoKTFXkOXN7EUyLw4pgbOi0oIBtV19KQocWnnmPnICXEP8nHxfxaMSj63Cl8Y99eGhOEuo7YNQ9ZJyNv988YS6000Mp34367';
 const STRIPE_PRICES = {
-  monthly: 'price_1TxpSvFXkOXN7EUyZKKmjo8k',  // €4.99/mese
-  yearly:  'price_1TxpVJFXkOXN7EUyIq3GWCt7'   // €47.99/anno
+  monthly:  'price_1TxpSvFXkOXN7EUyZKKmjo8k',  // €4.99/mese
+  yearly:   'price_1TxpVJFXkOXN7EUyIq3GWCt7',  // €47.99/anno
+  for_life: 'price_1TyDqtFXkOXN7EUyByG8QfLI'   // €199 una tantum
 };
 
 const SB = {
@@ -2770,15 +2771,19 @@ async function renderProfilo() {
           </div>`).join('')}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-        <button onclick="selectPlan('monthly');showUpgradeModal()" 
-          style="padding:12px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
+        <button onclick="selectPlan('monthly');showUpgradeModal()"
+          style="padding:12px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
           ⭐ €4.99/mese
         </button>
-        <button onclick="selectPlan('yearly');showUpgradeModal()" 
-          style="padding:12px;background:transparent;color:var(--accent-gold);border:2px solid var(--accent-gold);border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
+        <button onclick="selectPlan('yearly');showUpgradeModal()"
+          style="padding:12px;background:transparent;color:var(--accent-gold);border:2px solid var(--accent-gold);border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
           ⭐ €47.99/anno
         </button>
       </div>
+      <button onclick="selectPlan('for_life');showUpgradeModal()"
+        style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(90deg,var(--accent-lime),var(--accent-gold));color:#0a1a0a;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
+        ✨ For Life — €199 una tantum
+      </button>
     </div>` : ''}
 
     <!-- Card Azioni account -->
@@ -2900,7 +2905,7 @@ function showUpgradeModal() {
       </div>
 
       <!-- Scelta piano -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div id="plan-monthly" onclick="selectPlan('monthly')" style="cursor:pointer;border:2px solid var(--accent-gold);border-radius:10px;padding:14px;background:rgba(201,168,76,0.08)">
           <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Mensile</div>
           <div style="font-size:22px;font-weight:700;color:var(--accent-gold)">€4.99</div>
@@ -2911,6 +2916,19 @@ function showUpgradeModal() {
           <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Annuale</div>
           <div style="font-size:22px;font-weight:700;color:var(--text-bright)">€47.99</div>
           <div style="font-size:11px;color:var(--text-dim)">all'anno</div>
+        </div>
+      </div>
+      <div id="plan-for_life" onclick="selectPlan('for_life')" style="cursor:pointer;border:2px solid var(--border);border-radius:10px;padding:14px;position:relative;margin-bottom:16px;background:linear-gradient(135deg,rgba(109,181,109,0.05),rgba(201,168,76,0.05))">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--accent-lime),var(--accent-gold));color:#0a1a0a;font-size:10px;font-weight:700;padding:2px 14px;border-radius:20px;white-space:nowrap">✨ PAGHI UNA VOLTA</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">For Life</div>
+            <div style="font-size:22px;font-weight:700;color:var(--accent-lime)">€199</div>
+            <div style="font-size:11px;color:var(--text-dim)">una tantum — per sempre</div>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);text-align:right;line-height:1.6">
+            Tutti gli aggiornamenti<br>futuri inclusi 🐍
+          </div>
         </div>
       </div>
 
@@ -2935,19 +2953,24 @@ function selectPlan(plan) {
   _selectedPlan = plan;
   const monthly = document.getElementById('plan-monthly');
   const yearly = document.getElementById('plan-yearly');
+  const forLife = document.getElementById('plan-for_life');
   const btn = document.getElementById('btn-checkout');
+  // Reset tutti
+  [monthly, yearly, forLife].forEach(el => {
+    if(el) { el.style.border = '2px solid var(--border)'; el.style.background = 'transparent'; }
+  });
   if (plan === 'monthly') {
     monthly.style.border = '2px solid var(--accent-gold)';
     monthly.style.background = 'rgba(201,168,76,0.08)';
-    yearly.style.border = '2px solid var(--border)';
-    yearly.style.background = 'transparent';
-    btn.textContent = '⭐ Inizia con il piano Mensile';
-  } else {
+    btn.textContent = '⭐ Inizia con il piano Mensile — €4.99/mese';
+  } else if (plan === 'yearly') {
     yearly.style.border = '2px solid var(--accent-gold)';
     yearly.style.background = 'rgba(201,168,76,0.08)';
-    monthly.style.border = '2px solid var(--border)';
-    monthly.style.background = 'transparent';
-    btn.textContent = '⭐ Inizia con il piano Annuale';
+    btn.textContent = '⭐ Inizia con il piano Annuale — €47.99/anno';
+  } else if (plan === 'for_life') {
+    forLife.style.border = '2px solid var(--accent-lime)';
+    forLife.style.background = 'linear-gradient(135deg,rgba(109,181,109,0.1),rgba(201,168,76,0.1))';
+    btn.textContent = '✨ Acquista For Life — €199 una tantum';
   }
 }
 
@@ -2958,9 +2981,11 @@ async function startCheckout() {
   try {
     const stripe = Stripe(STRIPE_PK);
     const priceId = STRIPE_PRICES[_selectedPlan];
+    // For Life è un pagamento una tantum, gli altri sono abbonamenti
+    const mode = _selectedPlan === 'for_life' ? 'payment' : 'subscription';
     const { error } = await stripe.redirectToCheckout({
       lineItems: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
+      mode,
       successUrl: BASE_URL + '?checkout=success',
       cancelUrl: BASE_URL + '?checkout=cancel',
       customerEmail: _currentUser?.email || undefined,
