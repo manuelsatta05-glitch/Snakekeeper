@@ -624,6 +624,9 @@ const SB = {
   async deleteLog(id) {
     return this.req(`logs?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
   },
+  async updateSerpente(id, data) {
+    return this.req(`serpenti?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data), prefer:'return=minimal' });
+  },
 };
 
 // ═══════════════════════════════════════
@@ -859,7 +862,10 @@ function renderSerpenti() {
       return `
       <div class="snake-card" onclick="showPage('dettaglio','${s.id}')">
         <div class="snake-card-header">
-          <div><div class="snake-name">${s.nome}</div><div class="snake-code">${s.icd}</div></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            ${s.foto_url ? `<img src="${s.foto_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0">` : ''}
+            <div><div class="snake-name">${s.nome}</div><div class="snake-code">${s.icd}</div></div>
+          </div>
           <span class="badge badge-${s.sesso}">${s.sesso==='M'?'♂':'♀'}</span>
         </div>
         <div class="snake-info">
@@ -970,6 +976,8 @@ function renderDettaglio() {
   const feciLogs = logs.filter(l=>l.tipo==='feci').sort((a,b)=>b.data.localeCompare(a.data));
   const eggsLogs = logs.filter(l=>l.tipo==='uova').sort((a,b)=>b.data.localeCompare(a.data));
   const puliziaLogs = logs.filter(l=>l.tipo==='pulizia').sort((a,b)=>b.data.localeCompare(a.data));
+  const mutaLogs = logs.filter(l=>l.tipo==='muta').sort((a,b)=>b.data.localeCompare(a.data));
+  const pesoLogs = logs.filter(l=>l.tipo==='peso').sort((a,b)=>a.data.localeCompare(b.data));
   const totalFood = foodLogs.reduce((s,l)=>s+(parseFloat(l.grammi)||0),0);
   const todayVal = new Date().toISOString().split('T')[0];
 
@@ -980,7 +988,7 @@ function renderDettaglio() {
   <div class="snake-detail-header">
     <div class="sdh-top">
       <div class="sdh-top-row1">
-        <div class="snake-avatar">🐍</div>
+        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${snake.foto_url}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
         <div class="sdh-name-block">
           <div class="snake-detail-name">${snake.nome}</div>
           <div class="snake-detail-meta">
@@ -1005,6 +1013,7 @@ function renderDettaglio() {
         <div class="stat"><div class="stat-val">${feciLogs.length}</div><div class="stat-lab">Feci</div></div>
         <div class="stat"><div class="stat-val">${puliziaLogs.length}</div><div class="stat-lab">Pulizie</div></div>
         ${snake.sesso==='F'?`<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">Deposizioni</div></div>`:''}
+        <div class="stat"><div class="stat-val">${mutaLogs.length}</div><div class="stat-lab">Mute</div></div>
       </div>
       <div class="sdh-icd">${snake.icd}</div>
     </div>
@@ -1015,6 +1024,8 @@ function renderDettaglio() {
     <button class="tab" id="tab-feci" onclick="switchTab('feci')">💩 Feci</button>
     ${snake.sesso==='F'?`<button class="tab" id="tab-uova" onclick="switchTab('uova')">🥚 Uova</button>`:''}
     <button class="tab" id="tab-pulizia" onclick="switchTab('pulizia')">🧹 Pulizia</button>
+    <button class="tab" id="tab-muta" onclick="switchTab('muta')">🦎 Mute</button>
+    <button class="tab" id="tab-peso" onclick="switchTab('peso')">⚖️ Peso</button>
     <button class="tab" id="tab-info" onclick="switchTab('info')">📄 Info</button>
   </div>
 
@@ -1119,38 +1130,157 @@ function renderDettaglio() {
     </div>
   </div>
 
+  <!-- TAB MUTA -->
+  <div id="tab-content-muta" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">🦎 Registra Muta</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Data *</label><input type="date" id="muta-data" value="${todayVal}"></div>
+        <div class="form-group">
+          <label>Esito</label>
+          <select id="muta-tipo">
+            <option>Completa</option><option>Parziale</option>
+            <option>Problematica</option><option>In corso</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mt-16"><label>Note</label><input type="text" id="muta-note" placeholder="es. Muta completa in un pezzo unico" autocomplete="off"></div>
+      <button class="btn mt-16" style="background:#8e7cc3;color:#fff" id="btn-log-muta" onclick="logMuta('${snake.id}')">💾 Salva Muta</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📜 Storico Mute (${mutaLogs.length})</div>
+      ${mutaLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna muta registrata</div>':
+        mutaLogs.map(l=>\`<div class="log-entry">
+          <div class="log-icon" style="background:rgba(142,124,195,0.2)">🦎</div>
+          <div class="log-info">
+            <div class="log-date">\${fmtDate(l.data)}</div>
+            <div class="log-desc">\${l.feci_tipo||'Completa'}\${l.note?\` · \${l.note}\`:''}</div>
+          </div>
+          <button class="log-delete" onclick="deleteLogEntry('\${l.id}','\${snake.id}')">✕</button>
+        </div>\`).join('')}
+    </div>
+  </div>
+
+  <!-- TAB PESO -->
+  <div id="tab-content-peso" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">⚖️ Registra Peso</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Data *</label><input type="date" id="peso-data" value="${todayVal}"></div>
+        <div class="form-group"><label>Peso (g) *</label><input type="number" id="peso-grammi" placeholder="es. 450" inputmode="decimal"></div>
+      </div>
+      <div class="form-group mt-16"><label>Note</label><input type="text" id="peso-note" placeholder="es. Post pasto, pre muta..." autocomplete="off"></div>
+      <button class="btn mt-16" style="background:var(--accent-lime);color:#0a1a0a" id="btn-log-peso" onclick="logPeso('${snake.id}')">💾 Salva Peso</button>
+    </div>
+    \${pesoLogs.length > 0 ? \`<div class="card" style="margin-bottom:14px">
+      <div class="card-title">📈 Curva di Crescita</div>
+      <div style="position:relative;height:180px;background:var(--bg-moss);border-radius:8px;padding:12px;overflow:hidden">
+        \${(()=>{
+          const pl = pesoLogs.filter(l=>l.grammi);
+          if(pl.length<2) return '<div style="color:var(--text-dim);font-size:13px;text-align:center;padding-top:60px">Servono almeno 2 pesate per il grafico</div>';
+          const vals=pl.map(l=>l.grammi);
+          const minV=Math.min(...vals), maxV=Math.max(...vals);
+          const range=maxV-minV||1;
+          const w=100/Math.max(pl.length-1,1);
+          const points=pl.map((l,i)=>[i*w, 100-((l.grammi-minV)/range)*80-10]);
+          const path=points.map((p,i)=>((i===0?'M':'L')+p[0]+','+p[1])).join(' ');
+          return \`<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">
+            <polyline points="\${points.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="var(--accent-lime)" stroke-width="1.5" stroke-linejoin="round"/>
+            \${points.map((p,i)=>\`<circle cx="\${p[0]}" cy="\${p[1]}" r="1.5" fill="var(--accent-lime)"/>\`).join('')}
+          </svg>
+          <div style="position:absolute;top:4px;right:8px;font-size:11px;color:var(--accent-lime);font-weight:600">\${maxV}g</div>
+          <div style="position:absolute;bottom:4px;right:8px;font-size:11px;color:var(--text-dim)">\${minV}g</div>
+          <div style="position:absolute;bottom:4px;left:8px;font-size:10px;color:var(--text-dim)">\${fmtDate(pl[0].data)}</div>
+          <div style="position:absolute;bottom:4px;right:40px;font-size:10px;color:var(--text-dim)">\${fmtDate(pl[pl.length-1].data)}</div>\`;
+        })()}
+      </div>
+    </div>\` : ''}
+    <div class="card">
+      <div class="card-title">📜 Storico Pesate (\${pesoLogs.length})</div>
+      \${pesoLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna pesata registrata</div>':
+        [...pesoLogs].reverse().map(l=>\`<div class="log-entry">
+          <div class="log-icon" style="background:rgba(109,181,109,0.2)">⚖️</div>
+          <div class="log-info">
+            <div class="log-date">\${fmtDate(l.data)}</div>
+            <div class="log-desc">\${l.grammi||0}g\${l.note?\` · \${l.note}\`:''}</div>
+          </div>
+          <button class="log-delete" onclick="deleteLogEntry('\${l.id}','\${snake.id}')">✕</button>
+        </div>\`).join('')}
+    </div>
+  </div>
+
   <!-- TAB INFO -->
   <div id="tab-content-info" style="display:none">
     <div class="card">
-      <div class="card-title">📄 Scheda Anagrafica</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
-        ${[['Nome',snake.nome],['Specie',snake.specie||'—'],['Morfo',snake.morfo||'—'],
-           ['Sesso',snake.sesso==='M'?'♂ Maschio':'♀ Femmina'],
-           ['Nascita',fmtDate(snake.nascita)],['Età',age(snake.nascita)],
-           ['Peso',snake.peso?snake.peso+'g':'—'],['Provenienza',snake.provenienza||'—'],
-           ['Codice ICD',snake.icd]
-        ].map(([k,v])=>`
-          <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
-            <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${k}</div>
-            <div style="font-size:13px;color:var(--text-bright);margin-top:3px;font-weight:500;word-break:break-word">${v}</div>
-          </div>`).join('')}
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        📄 Scheda Anagrafica
+        <button class="btn btn-ghost btn-sm" onclick="toggleEditSerpente('${snake.id}')" id="btn-toggle-edit">✏️ Modifica</button>
       </div>
-      ${snake.note?`<div style="margin-top:12px;background:var(--bg-moss);border-radius:8px;padding:12px">
-        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Note</div>
-        <div style="font-size:13px;color:var(--text-mid)">${snake.note}</div>
-      </div>`:''}
+      <div id="info-view-mode">
+        ${snake.foto_url ? `<div style="text-align:center;margin-bottom:14px"><img src="${snake.foto_url}" style="width:120px;height:120px;border-radius:12px;object-fit:cover;border:2px solid var(--border)"></div>` : ''}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+          ${[['Nome',snake.nome],['Specie',snake.specie||'—'],['Morfo',snake.morfo||'—'],
+             ['Sesso',snake.sesso==='M'?'♂ Maschio':'♀ Femmina'],
+             ['Nascita',fmtDate(snake.nascita)],['Età',age(snake.nascita)],
+             ['Peso',snake.peso?snake.peso+'g':'—'],['Provenienza',snake.provenienza||'—'],
+             ['Codice ICD',snake.icd]
+          ].map(([k,v])=>`
+            <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
+              <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${k}</div>
+              <div style="font-size:13px;color:var(--text-bright);margin-top:3px;font-weight:500;word-break:break-word">${v}</div>
+            </div>`).join('')}
+        </div>
+        ${snake.note?`<div style="margin-top:12px;background:var(--bg-moss);border-radius:8px;padding:12px">
+          <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Note</div>
+          <div style="font-size:13px;color:var(--text-mid)">${snake.note}</div>
+        </div>`:''}
+      </div>
+      <div id="info-edit-mode" style="display:none">
+        <div style="text-align:center;margin-bottom:14px">
+          <div style="position:relative;display:inline-block">
+            ${snake.foto_url ? `<img id="edit-foto-preview" src="${snake.foto_url}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:2px solid var(--border)">` : `<div id="edit-foto-preview" style="width:100px;height:100px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg-moss)">📷</div>`}
+          </div>
+          <div style="margin-top:8px">
+            <label style="cursor:pointer;padding:6px 14px;background:var(--bg-moss);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-mid);font-family:'Inter',sans-serif">
+              📷 Carica foto
+              <input type="file" accept="image/*" onchange="previewFoto(this)" style="display:none" id="edit-foto-input">
+            </label>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nome</label><input type="text" id="edit-nome" value="${snake.nome}" autocomplete="off"></div>
+          <div class="form-group"><label>Specie</label><input type="text" id="edit-specie" value="${snake.specie||''}" autocomplete="off"></div>
+          <div class="form-group"><label>Morfo</label><input type="text" id="edit-morfo" value="${snake.morfo||''}" autocomplete="off"></div>
+          <div class="form-group"><label>Sesso</label>
+            <select id="edit-sesso">
+              <option value="M" ${snake.sesso==='M'?'selected':''}>Maschio</option>
+              <option value="F" ${snake.sesso==='F'?'selected':''}>Femmina</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data nascita</label><input type="date" id="edit-nascita" value="${snake.nascita||''}"></div>
+          <div class="form-group"><label>Peso (g)</label><input type="number" id="edit-peso" value="${snake.peso||''}" inputmode="decimal"></div>
+          <div class="form-group"><label>Provenienza</label><input type="text" id="edit-provenienza" value="${snake.provenienza||''}" autocomplete="off"></div>
+        </div>
+        <div class="form-group mt-16"><label>Note</label><textarea id="edit-note" rows="3" style="resize:vertical">${snake.note||''}</textarea></div>
+        <div class="flex-row mt-20">
+          <button class="btn btn-primary" id="btn-save-edit" onclick="saveEditSerpente('${snake.id}')">💾 Salva Modifiche</button>
+          <button class="btn btn-ghost" onclick="toggleEditSerpente()">Annulla</button>
+        </div>
+      </div>
     </div>
   </div>`;
 }
 
 function renderLogList(logs, type, snakeId) {
-  const icons = { food:'🥩', feci:'💩', eggs:'🥚', pulizia:'🧹' };
+  const icons = { food:'🥩', feci:'💩', eggs:'🥚', pulizia:'🧹', muta:'🦎', peso:'⚖️' };
   if (!logs.length) return '<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna registrazione</div>';
   return logs.map(l => {
     let desc = '';
     if (l.tipo==='cibo') desc=`${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g`;
     if (l.tipo==='feci') desc=`${l.feci_tipo||'—'}`;
     if (l.tipo==='uova') desc=`${l.num_uova||0} uova, ${l.fertili||0} fertili${l.temp?` — ${l.temp}°C`:''}`;
+    if (l.tipo==='muta') desc=`${l.feci_tipo||'Completa'}`;
+    if (l.tipo==='peso') desc=`${l.grammi||0}g`;
     return `<div class="log-entry">
       <div class="log-icon ${type}">${icons[type]}</div>
       <div class="log-info">
@@ -1163,7 +1293,7 @@ function renderLogList(logs, type, snakeId) {
 }
 
 function switchTab(name) {
-  ['cibo','feci','uova','pulizia','info'].forEach(t => {
+  ['cibo','feci','uova','pulizia','muta','peso','info'].forEach(t => {
     const btn=document.getElementById('tab-'+t);
     const cnt=document.getElementById('tab-content-'+t);
     if(btn) btn.classList.toggle('active',t===name);
@@ -1262,6 +1392,122 @@ async function deleteLogEntry(logId, snakeId) {
     toast('Eliminato','#c0392b');
     renderDettaglio();
   } catch(e) { toast('Errore: '+e.message,'#c0392b'); }
+}
+
+// ── MUTA LOG ──
+async function logMuta(snakeId) {
+  const data=document.getElementById('muta-data').value;
+  if(!data){toast('Inserisci la data!','#c0392b');return;}
+  const btn=document.getElementById('btn-log-muta');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const log={
+    id:'L'+Date.now()+Math.random().toString(36).slice(2,5),
+    snake_id:snakeId, tipo:'muta', data,
+    feci_tipo:document.getElementById('muta-tipo').value,
+    note:document.getElementById('muta-note').value||null,
+  };
+  try {
+    await SB.insertLog(log);
+    _logs.unshift(log);
+    toast('🦎 Muta registrata!');
+    renderDettaglio(); switchTab('muta');
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva Muta'; }
+}
+
+// ── PESO LOG ──
+async function logPeso(snakeId) {
+  const data=document.getElementById('peso-data').value;
+  const grammi=parseFloat(document.getElementById('peso-grammi').value);
+  if(!data){toast('Inserisci la data!','#c0392b');return;}
+  if(!grammi){toast('Inserisci il peso!','#c0392b');return;}
+  const btn=document.getElementById('btn-log-peso');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  const log={
+    id:'L'+Date.now()+Math.random().toString(36).slice(2,5),
+    snake_id:snakeId, tipo:'peso', data, grammi,
+    note:document.getElementById('peso-note').value||null,
+  };
+  try {
+    await SB.insertLog(log);
+    _logs.unshift(log);
+    // Aggiorna anche il peso corrente del serpente
+    const snake = _snakes.find(s=>s.id===snakeId);
+    if(snake) { snake.peso = grammi; await SB.updateSerpente(snakeId, {peso: grammi}); }
+    toast('⚖️ Peso registrato!');
+    renderDettaglio(); switchTab('peso');
+  } catch(e) { toast('Errore: '+e.message,'#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva Peso'; }
+}
+
+// ── EDIT SERPENTE ──
+let _editFotoData = null;
+
+function toggleEditSerpente(id) {
+  const viewMode = document.getElementById('info-view-mode');
+  const editMode = document.getElementById('info-edit-mode');
+  const btn = document.getElementById('btn-toggle-edit');
+  if (!viewMode || !editMode) return;
+  const isEditing = editMode.style.display !== 'none';
+  viewMode.style.display = isEditing ? '' : 'none';
+  editMode.style.display = isEditing ? 'none' : '';
+  btn.textContent = isEditing ? '✏️ Modifica' : '✕ Annulla';
+  _editFotoData = null;
+}
+
+function previewFoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Comprimi immagine client-side
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const maxSize = 400;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      _editFotoData = canvas.toDataURL('image/jpeg', 0.7);
+      const preview = document.getElementById('edit-foto-preview');
+      if (preview.tagName === 'IMG') {
+        preview.src = _editFotoData;
+      } else {
+        preview.outerHTML = `<img id="edit-foto-preview" src="${_editFotoData}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:2px solid var(--border)">`;
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveEditSerpente(snakeId) {
+  const btn = document.getElementById('btn-save-edit');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
+  const updates = {
+    nome: document.getElementById('edit-nome').value.trim(),
+    specie: document.getElementById('edit-specie').value.trim() || null,
+    morfo: document.getElementById('edit-morfo').value.trim() || null,
+    sesso: document.getElementById('edit-sesso').value,
+    nascita: document.getElementById('edit-nascita').value || null,
+    peso: parseFloat(document.getElementById('edit-peso').value) || null,
+    provenienza: document.getElementById('edit-provenienza').value.trim() || null,
+    note: document.getElementById('edit-note').value.trim() || null,
+  };
+  if (_editFotoData) updates.foto_url = _editFotoData;
+  if (!updates.nome) { toast('Il nome è obbligatorio!','#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva Modifiche'; return; }
+  try {
+    await SB.updateSerpente(snakeId, updates);
+    const snake = _snakes.find(s=>s.id===snakeId);
+    if (snake) Object.assign(snake, updates);
+    _editFotoData = null;
+    toast('✅ Serpente aggiornato!');
+    renderDettaglio();
+    switchTab('info');
+  } catch(e) {
+    toast('Errore: '+e.message,'#c0392b');
+    btn.disabled=false; btn.innerHTML='💾 Salva Modifiche';
+  }
 }
 
 async function deleteSerpente(id) {
@@ -1460,7 +1706,7 @@ function renderDettaglioVenduto() {
   <div class="snake-detail-header">
     <div class="sdh-top">
       <div class="sdh-top-row1">
-        <div class="snake-avatar">🐍</div>
+        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${snake.foto_url}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
         <div class="sdh-name-block">
           <div class="snake-detail-name">${v.nome} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
           <div class="snake-detail-meta">
