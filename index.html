@@ -2637,6 +2637,8 @@ window.addEventListener('offline', () => {
 // Wrapper Supabase con fallback offline
 const _origInsertLog = SB.insertLog.bind(SB);
 SB.insertLog = async function(log) {
+  // Assegna sempre il user_id dell'utente corrente
+  if (_currentUser && _currentUser.id && !log.user_id) log.user_id = _currentUser.id;
   if (!navigator.onLine) {
     _logs.unshift(log);
     addToOfflineQueue({ type: 'INSERT_LOG', data: log });
@@ -2647,12 +2649,21 @@ SB.insertLog = async function(log) {
 
 const _origInsertSerpente = SB.insertSerpente.bind(SB);
 SB.insertSerpente = async function(s) {
+  // Assegna sempre il user_id dell'utente corrente
+  if (_currentUser && _currentUser.id && !s.user_id) s.user_id = _currentUser.id;
   if (!navigator.onLine) {
     _snakes.push(s);
     addToOfflineQueue({ type: 'INSERT_SERPENTE', data: s });
     return [s];
   }
   return _origInsertSerpente(s);
+};
+
+const _origInsertVenduto = SB.insertVenduto.bind(SB);
+SB.insertVenduto = async function(v) {
+  // Assegna sempre il user_id dell'utente corrente
+  if (_currentUser && _currentUser.id && !v.user_id) v.user_id = _currentUser.id;
+  return _origInsertVenduto(v);
 };
 
 // ═══════════════════════════════════════
