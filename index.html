@@ -2725,8 +2725,9 @@ function resetCookieConsent() {
   document.getElementById('cookie-details').style.display = 'none';
 }
 
-// Inizializza il banner al caricamento della pagina
-document.addEventListener('DOMContentLoaded', initCookieBanner);
+// Inizializza il banner DOPO che l'app è pronta
+// (chiamato dall'init principale dopo il caricamento)
+// document.addEventListener('DOMContentLoaded', initCookieBanner); // spostato nell'init
 
 // Registra Service Worker
 if ('serviceWorker' in navigator) {
@@ -3825,6 +3826,7 @@ async function doLogin() {
     await loadAll();
     await loadUserPlan();
     showPage('dashboard');
+    setTimeout(initCookieBanner, 1500);
   } catch(e) {
     showAuthMsg('❌ ' + e.message, true);
     btn.disabled = false; btn.innerHTML = '🔓 Accedi';
@@ -4069,6 +4071,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('loading-screen').style.display = 'none';
       hideLoginScreen();
       showPage('dashboard');
+      setTimeout(initCookieBanner, 1500);
       setTimeout(() => showAuthSuccess(params.type), 300);
       return;
     }
@@ -4099,11 +4102,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         history.replaceState(null, '', window.location.pathname);
       }
       if(!checkHash()) showPage('dashboard');
+      // Mostra cookie banner dopo che l'app è caricata
+      setTimeout(initCookieBanner, 1500);
     } else {
       // Nessuna sessione — mostra login
       clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       showLoginScreen();
+      // Mostra cookie banner anche per utenti non loggati
+      setTimeout(initCookieBanner, 1500);
     }
 
   } catch(e) {
