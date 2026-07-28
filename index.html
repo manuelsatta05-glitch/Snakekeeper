@@ -3032,7 +3032,7 @@ async function loadAdminData() {
                   </td>
                   <td style="padding:12px 8px;color:var(--text-dim);font-size:12px">${p.notes||'—'}</td>
                   <td style="padding:12px 8px;text-align:right">
-                    ${p.user_id === '${_currentUser.id}' ? `<span style="font-size:11px;color:var(--accent-gold)">Tu</span>` : `
+                    ${p.user_id === '${_currentUser.id}' ? `<span style="font-size:11px;color:var(--accent-gold)">👑 Tu (Admin)</span>` : `
                     <select onchange="changePlan('${p.user_id}', this.value)" 
                       style="background:var(--bg-moss);color:var(--text-mid);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer">
                       ${['free','pro','admin','free_forever'].map(pl=>`<option value="${pl}" ${p.plan===pl?'selected':''}>${planLabels[pl]}</option>`).join('')}
