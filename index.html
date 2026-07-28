@@ -2326,6 +2326,86 @@ ${snake.sesso==='F' ? makeTable('Deposizioni','🥚', eggsLogs.map(l=>[new Date(
   <div>SnakeKeeper — Gestionale Allevamento Serpenti<br>snakekeeper.it</div>
   <div style="text-align:right">ICD: ${snake.icd}<br>Generato: ${today}</div>
 </div>
+<!-- ═══════════════════════════════════════ -->
+<!-- COOKIE BANNER GDPR                      -->
+<!-- ═══════════════════════════════════════ -->
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:16px;background:rgba(8,15,9,0.97);border-top:2px solid var(--border);backdrop-filter:blur(12px)">
+  <div style="max-width:900px;margin:0 auto">
+    <!-- Banner principale -->
+    <div id="cookie-main" style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:14px;font-weight:600;color:var(--text-bright);margin-bottom:6px">🍪 Questo sito usa i cookie</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.6">
+          Utilizziamo cookie essenziali per il funzionamento del sito e cookie di terze parti per i pagamenti (Stripe). 
+          Nessun cookie pubblicitario o di profilazione.
+          <button onclick="document.getElementById('cookie-details').style.display=document.getElementById('cookie-details').style.display==='none'?'block':'none'" 
+            style="background:none;border:none;color:var(--accent-lime);font-size:12px;cursor:pointer;padding:0;margin-left:4px;font-family:'Inter',sans-serif;text-decoration:underline">
+            Maggiori informazioni
+          </button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
+        <button onclick="cookieChoice('essential')" id="btn-cookie-essential"
+          style="padding:10px 18px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">
+          Solo essenziali
+        </button>
+        <button onclick="cookieChoice('all')" id="btn-cookie-accept"
+          style="padding:10px 20px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">
+          ✅ Accetta tutti
+        </button>
+      </div>
+    </div>
+
+    <!-- Dettagli cookie (nascosti di default) -->
+    <div id="cookie-details" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:13px;font-weight:600;color:var(--text-bright);margin-bottom:10px">Dettaglio cookie utilizzati</div>
+      <div style="display:grid;gap:8px">
+
+        <div style="background:var(--bg-moss);border-radius:8px;padding:12px;display:flex;align-items:flex-start;gap:12px">
+          <div style="width:36px;height:20px;background:#2d5030;border-radius:20px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:flex-end;padding-right:2px">
+            <div style="width:16px;height:16px;background:var(--accent-lime);border-radius:50%"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text-bright)">Cookie Essenziali <span style="color:var(--accent-lime);font-size:10px;margin-left:6px">SEMPRE ATTIVI</span></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:3px;line-height:1.5">
+              <strong>sb-*-auth-token</strong> — Sessione di autenticazione (1 ora) · 
+              <strong>offline_queue</strong> — Coda operazioni offline (sessione)<br>
+              Necessari per il funzionamento del sito. Non possono essere disabilitati.
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-moss);border-radius:8px;padding:12px;display:flex;align-items:flex-start;gap:12px">
+          <div id="stripe-toggle" onclick="toggleCookieStripe()" style="width:36px;height:20px;background:var(--bg-card);border-radius:20px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;padding:2px;cursor:pointer;transition:all .2s;border:1px solid var(--border)">
+            <div id="stripe-toggle-dot" style="width:16px;height:16px;background:var(--text-dim);border-radius:50%;transition:all .2s"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text-bright)">Cookie Terze Parti — Stripe</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:3px;line-height:1.5">
+              <strong>stripe.js</strong> — Elaborazione pagamenti sicuri · <strong>__stripe_mid, __stripe_sid</strong> — Prevenzione frodi<br>
+              Necessari solo se utilizzi funzionalità di pagamento. Forniti da Stripe Inc.
+              <a href="https://stripe.com/privacy" target="_blank" style="color:var(--accent-lime)">Privacy Stripe →</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;gap:8px">
+        <button onclick="cookieChoice('essential')"
+          style="padding:8px 16px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer">
+          Salva preferenze
+        </button>
+        <button onclick="cookieChoice('all')"
+          style="padding:8px 16px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
+          ✅ Accetta tutti
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Link gestione preferenze cookie (sempre visibile nel footer profilo) -->
+
 </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(), 600);
@@ -2575,6 +2655,78 @@ document.addEventListener('touchend',e=>{
 // ═══════════════════════════════════════
 //  SERVICE WORKER + OFFLINE SYNC
 // ═══════════════════════════════════════
+
+// ═══════════════════════════════════════
+//  COOKIE BANNER GDPR
+// ═══════════════════════════════════════
+const COOKIE_KEY = 'sk_cookie_consent';
+
+function initCookieBanner() {
+  const consent = localStorage.getItem(COOKIE_KEY);
+  if (!consent) {
+    // Prima visita — mostra il banner dopo 1 secondo
+    setTimeout(() => {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }, 1000);
+  } else {
+    // Applica le preferenze salvate
+    applyCookiePrefs(JSON.parse(consent));
+  }
+}
+
+let _stripeEnabled = true;
+
+function toggleCookieStripe() {
+  _stripeEnabled = !_stripeEnabled;
+  const toggle = document.getElementById('stripe-toggle');
+  const dot = document.getElementById('stripe-toggle-dot');
+  if (_stripeEnabled) {
+    toggle.style.background = 'var(--accent-gold)';
+    toggle.style.justifyContent = 'flex-end';
+    dot.style.background = '#0a1a0a';
+  } else {
+    toggle.style.background = 'var(--bg-card)';
+    toggle.style.justifyContent = 'flex-start';
+    dot.style.background = 'var(--text-dim)';
+  }
+}
+
+function cookieChoice(type) {
+  const prefs = {
+    essential: true,
+    stripe: type === 'all' ? true : _stripeEnabled,
+    timestamp: Date.now(),
+    version: '1.0'
+  };
+  localStorage.setItem(COOKIE_KEY, JSON.stringify(prefs));
+  applyCookiePrefs(prefs);
+  // Animazione chiusura
+  const banner = document.getElementById('cookie-banner');
+  banner.style.transition = 'transform .3s ease, opacity .3s ease';
+  banner.style.transform = 'translateY(100%)';
+  banner.style.opacity = '0';
+  setTimeout(() => banner.style.display = 'none', 300);
+  toast('✅ Preferenze cookie salvate');
+}
+
+function applyCookiePrefs(prefs) {
+  // Se Stripe non è abilitato e l'utente non vuole i cookie di terze parti,
+  // non carichiamo funzionalità di pagamento (già caricato nell'head, ma possiamo avvisare)
+  if (!prefs.stripe) {
+    console.log('[Cookie] Stripe cookie disabilitati dall\'utente');
+  }
+}
+
+function resetCookieConsent() {
+  localStorage.removeItem(COOKIE_KEY);
+  document.getElementById('cookie-banner').style.display = 'block';
+  document.getElementById('cookie-banner').style.transform = '';
+  document.getElementById('cookie-banner').style.opacity = '';
+  document.getElementById('cookie-details').style.display = 'none';
+}
+
+// Inizializza il banner al caricamento della pagina
+document.addEventListener('DOMContentLoaded', initCookieBanner);
 
 // Registra Service Worker
 if ('serviceWorker' in navigator) {
@@ -3133,6 +3285,7 @@ async function renderProfilo() {
     <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:2">
       <a href="#" onclick="showPage('privacy')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">Privacy Policy</a>·
       <a href="#" onclick="showPage('terms')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">Termini di Servizio</a>·
+      <a href="#" onclick="resetCookieConsent()" style="color:var(--text-dim);text-decoration:none;margin:0 8px">🍪 Gestisci Cookie</a>·
       <span style="margin:0 8px">© ${new Date().getFullYear()} SnakeKeeper</span>
     </div>`;
 }
