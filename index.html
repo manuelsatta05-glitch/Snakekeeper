@@ -1154,14 +1154,14 @@ function renderDettaglio() {
     <div class="card">
       <div class="card-title">📜 Storico Mute (${mutaLogs.length})</div>
       ${mutaLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna muta registrata</div>':
-        mutaLogs.map(l=>\`<div class="log-entry">
+        mutaLogs.map(l=>`<div class="log-entry">
           <div class="log-icon" style="background:rgba(142,124,195,0.2)">🦎</div>
           <div class="log-info">
-            <div class="log-date">\${fmtDate(l.data)}</div>
-            <div class="log-desc">\${l.feci_tipo||'Completa'}\${l.note?\` · \${l.note}\`:''}</div>
+            <div class="log-date">${fmtDate(l.data)}</div>
+            <div class="log-desc">${l.feci_tipo||'Completa'}${l.note?` · ${l.note}`:''}</div>
           </div>
-          <button class="log-delete" onclick="deleteLogEntry('\${l.id}','\${snake.id}')">✕</button>
-        </div>\`).join('')}
+          <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snake.id}')">✕</button>
+        </div>`).join('')}
     </div>
   </div>
 
@@ -1176,10 +1176,10 @@ function renderDettaglio() {
       <div class="form-group mt-16"><label>Note</label><input type="text" id="peso-note" placeholder="es. Post pasto, pre muta..." autocomplete="off"></div>
       <button class="btn mt-16" style="background:var(--accent-lime);color:#0a1a0a" id="btn-log-peso" onclick="logPeso('${snake.id}')">💾 Salva Peso</button>
     </div>
-    \${pesoLogs.length > 0 ? \`<div class="card" style="margin-bottom:14px">
+    ${pesoLogs.length > 0 ? `<div class="card" style="margin-bottom:14px">
       <div class="card-title">📈 Curva di Crescita</div>
       <div style="position:relative;height:180px;background:var(--bg-moss);border-radius:8px;padding:12px;overflow:hidden">
-        \${(()=>{
+        ${(()=>{
           const pl = pesoLogs.filter(l=>l.grammi);
           if(pl.length<2) return '<div style="color:var(--text-dim);font-size:13px;text-align:center;padding-top:60px">Servono almeno 2 pesate per il grafico</div>';
           const vals=pl.map(l=>l.grammi);
@@ -1188,28 +1188,28 @@ function renderDettaglio() {
           const w=100/Math.max(pl.length-1,1);
           const points=pl.map((l,i)=>[i*w, 100-((l.grammi-minV)/range)*80-10]);
           const path=points.map((p,i)=>((i===0?'M':'L')+p[0]+','+p[1])).join(' ');
-          return \`<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">
-            <polyline points="\${points.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="var(--accent-lime)" stroke-width="1.5" stroke-linejoin="round"/>
-            \${points.map((p,i)=>\`<circle cx="\${p[0]}" cy="\${p[1]}" r="1.5" fill="var(--accent-lime)"/>\`).join('')}
+          return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">
+            <polyline points="${points.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="var(--accent-lime)" stroke-width="1.5" stroke-linejoin="round"/>
+            ${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="1.5" fill="var(--accent-lime)"/>`).join('')}
           </svg>
-          <div style="position:absolute;top:4px;right:8px;font-size:11px;color:var(--accent-lime);font-weight:600">\${maxV}g</div>
-          <div style="position:absolute;bottom:4px;right:8px;font-size:11px;color:var(--text-dim)">\${minV}g</div>
-          <div style="position:absolute;bottom:4px;left:8px;font-size:10px;color:var(--text-dim)">\${fmtDate(pl[0].data)}</div>
-          <div style="position:absolute;bottom:4px;right:40px;font-size:10px;color:var(--text-dim)">\${fmtDate(pl[pl.length-1].data)}</div>\`;
+          <div style="position:absolute;top:4px;right:8px;font-size:11px;color:var(--accent-lime);font-weight:600">${maxV}g</div>
+          <div style="position:absolute;bottom:4px;right:8px;font-size:11px;color:var(--text-dim)">${minV}g</div>
+          <div style="position:absolute;bottom:4px;left:8px;font-size:10px;color:var(--text-dim)">${fmtDate(pl[0].data)}</div>
+          <div style="position:absolute;bottom:4px;right:40px;font-size:10px;color:var(--text-dim)">${fmtDate(pl[pl.length-1].data)}</div>`;
         })()}
       </div>
-    </div>\` : ''}
+    </div>` : ''}
     <div class="card">
-      <div class="card-title">📜 Storico Pesate (\${pesoLogs.length})</div>
-      \${pesoLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna pesata registrata</div>':
-        [...pesoLogs].reverse().map(l=>\`<div class="log-entry">
+      <div class="card-title">📜 Storico Pesate (${pesoLogs.length})</div>
+      ${pesoLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna pesata registrata</div>':
+        [...pesoLogs].reverse().map(l=>`<div class="log-entry">
           <div class="log-icon" style="background:rgba(109,181,109,0.2)">⚖️</div>
           <div class="log-info">
-            <div class="log-date">\${fmtDate(l.data)}</div>
-            <div class="log-desc">\${l.grammi||0}g\${l.note?\` · \${l.note}\`:''}</div>
+            <div class="log-date">${fmtDate(l.data)}</div>
+            <div class="log-desc">${l.grammi||0}g${l.note?` · ${l.note}`:''}</div>
           </div>
-          <button class="log-delete" onclick="deleteLogEntry('\${l.id}','\${snake.id}')">✕</button>
-        </div>\`).join('')}
+          <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snake.id}')">✕</button>
+        </div>`).join('')}
     </div>
   </div>
 
