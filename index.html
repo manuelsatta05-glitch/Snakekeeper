@@ -4619,19 +4619,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
       session = await withTimeout(getSession(), 8000, null);
     } catch(e) {
-      console.error('getSession errore:', e);
+      console.warn('getSession errore (probabile Safari privata):', e);
       session = null;
     }
     
     if (session && session.access_token) {
       // Utente già loggato
       _currentUser = session.user || {};
-      await loadAll();
-      await loadUserPlan();
+      try {
+        await loadAll();
+        await loadUserPlan();
+      } catch(e) {
+        console.warn('loadAll errore:', e);
+      }
       clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
       hideLoginScreen();
-      // Gestisci ritorno da Stripe Checkout
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('checkout') === 'success') {
         history.replaceState(null, '', window.location.pathname);
@@ -4640,7 +4643,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         history.replaceState(null, '', window.location.pathname);
       }
       if(!checkHash()) showPage('dashboard');
-      // Mostra cookie banner dopo che l'app è caricata
       setTimeout(initCookieBanner, 1500);
     } else {
       // Nessuna sessione — mostra landing page
@@ -4652,14 +4654,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   } catch(e) {
     clearTimeout(safetyTimeout);
-    console.error('Init errore:', e);
-    document.getElementById('loading-screen').innerHTML=`
-      <div style="text-align:center;padding:40px">
-        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
-        <h2 style="font-family:'Cinzel',serif;color:var(--accent-red);margin-bottom:8px">Errore di connessione</h2>
-        <p style="color:var(--text-dim);margin-bottom:20px;font-size:14px">${e.message}</p>
-        <button class="btn btn-primary" onclick="location.reload()">🔄 Riprova</button>
-      </div>`;
+    console.warn('Init errore generale, mostro landing:', e);
+    document.getElementById('loading-screen').style.display = 'none';
+    showLanding();
   }
 });
 </script>
