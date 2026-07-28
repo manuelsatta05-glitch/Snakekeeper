@@ -2327,6 +2327,378 @@ ${snake.sesso==='F' ? makeTable('Deposizioni','🥚', eggsLogs.map(l=>[new Date(
   <div style="text-align:right">ICD: ${snake.icd}<br>Generato: ${today}</div>
 </div>
 <!-- ═══════════════════════════════════════ -->
+<!-- LANDING PAGE                            -->
+<!-- ═══════════════════════════════════════ -->
+<div id="landing-page" style="display:none">
+<style>
+#landing-page{background:#060d07;color:#c8d5c9;font-family:'Inter',sans-serif;overflow-x:hidden}
+.lp-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,13,7,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(45,80,48,0.3);transition:all .3s}
+.lp-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.lp-logo span{font-family:'Cinzel',serif;font-size:18px;color:#c9a84c;letter-spacing:2px}
+.lp-nav-links{display:flex;align-items:center;gap:24px}
+.lp-nav-links a{color:#a0b5a1;font-size:14px;text-decoration:none;transition:color .2s}
+.lp-nav-links a:hover{color:#c8d5c9}
+.lang-switcher{display:flex;background:rgba(45,80,48,0.2);border-radius:20px;padding:3px;gap:2px}
+.lang-btn{padding:4px 12px;border-radius:16px;border:none;background:transparent;color:#6b8f6e;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.lang-active{background:#c9a84c;color:#060d07;font-weight:700}
+.lp-btn-ghost{padding:10px 20px;background:transparent;border:1px solid rgba(201,168,76,0.4);color:#c9a84c;border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.lp-btn-ghost:hover{background:rgba(201,168,76,0.1)}
+.lp-btn-primary{padding:10px 20px;background:#c9a84c;border:none;color:#060d07;border-radius:8px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.lp-btn-primary:hover{background:#e0ba5c;transform:translateY(-1px)}
+
+/* HERO */
+.lp-hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:120px 32px 80px;text-align:center;overflow:hidden}
+.lp-hero-bg{position:absolute;inset:0;overflow:hidden}
+.lp-hero-bg canvas{position:absolute;inset:0;width:100%;height:100%}
+.lp-hero-glow{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(77,222,128,0.08) 0%,transparent 70%);pointer-events:none;animation:heroGlow 4s ease-in-out infinite}
+.lp-hero-glow2{position:absolute;top:60%;left:30%;width:400px;height:300px;background:radial-gradient(ellipse,rgba(201,168,76,0.06) 0%,transparent 70%);pointer-events:none;animation:heroGlow 6s ease-in-out infinite reverse}
+@keyframes heroGlow{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
+.lp-hero-content{position:relative;z-index:2;max-width:800px}
+.lp-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(77,222,128,0.1);border:1px solid rgba(77,222,128,0.3);border-radius:20px;font-size:12px;color:#4ade80;margin-bottom:24px;animation:fadeInDown .8s ease}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.lp-hero h1{font-family:'Cinzel',serif;font-size:clamp(36px,6vw,72px);line-height:1.1;color:#fff;margin:0 0 24px;animation:fadeInUp .8s ease .1s both}
+.lp-hero h1 span{background:linear-gradient(135deg,#4ade80,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lp-hero p{font-size:clamp(16px,2vw,20px);color:#a0b5a1;line-height:1.7;margin:0 0 40px;max-width:600px;margin-left:auto;margin-right:auto;animation:fadeInUp .8s ease .2s both}
+.lp-hero-ctas{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeInUp .8s ease .3s both}
+.lp-cta-primary{padding:16px 36px;background:linear-gradient(135deg,#4ade80,#2d9b4a);border:none;color:#060d07;border-radius:12px;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(77,222,128,0.3)}
+.lp-cta-primary:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(77,222,128,0.4)}
+.lp-cta-secondary{padding:16px 36px;background:transparent;border:1px solid rgba(201,168,76,0.5);color:#c9a84c;border-radius:12px;font-size:16px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .3s}
+.lp-cta-secondary:hover{background:rgba(201,168,76,0.1);transform:translateY(-2px)}
+.lp-scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bounce 2s infinite;color:#4a6b4d;font-size:24px}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* STATS */
+.lp-stats{padding:60px 32px;background:rgba(13,31,15,0.5);border-top:1px solid rgba(45,80,48,0.2);border-bottom:1px solid rgba(45,80,48,0.2)}
+.lp-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:32px;max-width:800px;margin:0 auto;text-align:center}
+.lp-stat-num{font-family:'Cinzel',serif;font-size:36px;font-weight:700;color:#c9a84c;display:block}
+.lp-stat-lab{font-size:13px;color:#6b8f6e;margin-top:4px}
+
+/* FEATURES */
+.lp-section{padding:100px 32px;max-width:1100px;margin:0 auto}
+.lp-section-label{font-size:11px;color:#4ade80;text-transform:uppercase;letter-spacing:3px;margin-bottom:16px}
+.lp-section-title{font-family:'Cinzel',serif;font-size:clamp(24px,3vw,40px);color:#fff;margin:0 0 16px;line-height:1.2}
+.lp-section-sub{font-size:16px;color:#a0b5a1;line-height:1.7;max-width:600px;margin:0 0 60px}
+.lp-features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.lp-feature-card{background:rgba(13,31,15,0.6);border:1px solid rgba(45,80,48,0.3);border-radius:16px;padding:28px;transition:all .3s;position:relative;overflow:hidden}
+.lp-feature-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(77,222,128,0.03),transparent);opacity:0;transition:opacity .3s}
+.lp-feature-card:hover{border-color:rgba(77,222,128,0.3);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.lp-feature-card:hover::before{opacity:1}
+.lp-feature-icon{width:48px;height:48px;background:rgba(77,222,128,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.lp-feature-title{font-size:16px;font-weight:600;color:#c8d5c9;margin:0 0 8px}
+.lp-feature-desc{font-size:14px;color:#6b8f6e;line-height:1.6;margin:0}
+
+/* HOW IT WORKS */
+.lp-steps{padding:100px 32px;background:rgba(13,31,15,0.3);border-top:1px solid rgba(45,80,48,0.2);border-bottom:1px solid rgba(45,80,48,0.2)}
+.lp-steps-inner{max-width:900px;margin:0 auto;text-align:center}
+.lp-steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-top:60px;position:relative}
+.lp-step{text-align:center;padding:24px}
+.lp-step-num{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4ade80,#2d9b4a);color:#060d07;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Cinzel',serif}
+.lp-step-title{font-size:15px;font-weight:600;color:#c8d5c9;margin:0 0 8px}
+.lp-step-desc{font-size:13px;color:#6b8f6e;line-height:1.6}
+
+/* PRICING */
+.lp-pricing{padding:100px 32px;max-width:1100px;margin:0 auto;text-align:center}
+.lp-pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:60px;align-items:stretch}
+.lp-plan{background:rgba(13,31,15,0.6);border:1px solid rgba(45,80,48,0.3);border-radius:20px;padding:32px;transition:all .3s;display:flex;flex-direction:column}
+.lp-plan:hover{transform:translateY(-4px)}
+.lp-plan.featured{border-color:rgba(201,168,76,0.5);background:rgba(20,40,22,0.8);position:relative}
+.lp-plan.featured::before{content:'';position:absolute;inset:-1px;border-radius:21px;background:linear-gradient(135deg,rgba(201,168,76,0.3),rgba(77,222,128,0.1));z-index:-1}
+.lp-plan-badge{display:inline-block;padding:4px 14px;background:linear-gradient(135deg,#c9a84c,#e0ba5c);color:#060d07;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:16px}
+.lp-plan-name{font-family:'Cinzel',serif;font-size:22px;color:#fff;margin:0 0 8px}
+.lp-plan-desc{font-size:13px;color:#6b8f6e;margin:0 0 24px}
+.lp-plan-price{margin:0 0 8px}
+.lp-plan-price .amount{font-size:48px;font-weight:700;color:#c9a84c;font-family:'Cinzel',serif}
+.lp-plan-price .period{font-size:14px;color:#6b8f6e}
+.lp-plan-price .original{font-size:14px;color:#4a6b4d;text-decoration:line-through;margin-right:8px}
+.lp-plan-features{list-style:none;padding:0;margin:24px 0;text-align:left;flex:1}
+.lp-plan-features li{padding:8px 0;font-size:14px;color:#a0b5a1;border-bottom:1px solid rgba(45,80,48,0.2);display:flex;align-items:center;gap:8px}
+.lp-plan-features li::before{content:'✓';color:#4ade80;font-weight:700;flex-shrink:0}
+.lp-plan-features li.no::before{content:'✗';color:#4a6b4d}
+.lp-plan-features li.no{color:#4a6b4d}
+.lp-plan-cta{width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all .3s;border:none;margin-top:auto}
+.lp-plan-cta.free{background:rgba(45,80,48,0.3);color:#a0b5a1;border:1px solid rgba(45,80,48,0.4)}
+.lp-plan-cta.free:hover{background:rgba(45,80,48,0.5)}
+.lp-plan-cta.pro{background:linear-gradient(135deg,#c9a84c,#e0ba5c);color:#060d07}
+.lp-plan-cta.pro:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(201,168,76,0.3)}
+.lp-plan-cta.life{background:linear-gradient(135deg,#4ade80,#c9a84c);color:#060d07}
+.lp-plan-cta.life:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(77,222,128,0.3)}
+
+/* FAQ */
+.lp-faq{padding:100px 32px;max-width:800px;margin:0 auto}
+.lp-faq-item{border-bottom:1px solid rgba(45,80,48,0.3);padding:0}
+.lp-faq-q{width:100%;text-align:left;background:none;border:none;padding:20px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:15px;font-weight:500;color:#c8d5c9;font-family:'Inter',sans-serif;gap:16px}
+.lp-faq-q:hover{color:#fff}
+.lp-faq-icon{flex-shrink:0;font-size:20px;color:#4ade80;transition:transform .3s}
+.lp-faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s}
+.lp-faq-a.open{max-height:300px;padding-bottom:20px}
+.lp-faq-a p{font-size:14px;color:#6b8f6e;line-height:1.7;margin:0}
+
+/* FOOTER */
+.lp-footer{background:rgba(6,10,6,0.9);border-top:1px solid rgba(45,80,48,0.2);padding:60px 32px 32px}
+.lp-footer-inner{max-width:1100px;margin:0 auto}
+.lp-footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;margin-bottom:48px}
+.lp-footer-brand p{font-size:13px;color:#4a6b4d;line-height:1.7;margin:12px 0 0;max-width:280px}
+.lp-footer-col h4{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#4a6b4d;margin:0 0 16px}
+.lp-footer-col a{display:block;font-size:14px;color:#6b8f6e;text-decoration:none;margin-bottom:8px;transition:color .2s}
+.lp-footer-col a:hover{color:#a0b5a1}
+.lp-footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(45,80,48,0.2)}
+.lp-footer-bottom p{font-size:12px;color:#2d5030;margin:0}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* MOBILE */
+@media(max-width:768px){
+  .lp-nav{padding:14px 20px}
+  .lp-nav-links{display:none}
+  .lp-hero{padding:100px 20px 60px}
+  .lp-section,.lp-pricing,.lp-faq{padding:60px 20px}
+  .lp-steps{padding:60px 20px}
+  .lp-footer-top{grid-template-columns:1fr;gap:32px}
+  .lp-footer-bottom{flex-direction:column;text-align:center}
+}
+</style>
+
+<!-- NAV -->
+<nav class="lp-nav" id="lp-nav">
+  <a class="lp-logo" href="#">
+    <span style="font-size:28px">🐍</span>
+    <span>SNAKEKEEPER</span>
+  </a>
+  <div class="lp-nav-links">
+    <a href="#features" data-it="Funzionalità" data-en="Features" onclick="smoothScrollTo('features')">Funzionalità</a>
+    <a href="#pricing" data-it="Prezzi" data-en="Pricing" onclick="smoothScrollTo('pricing')">Prezzi</a>
+    <a href="#faq" data-it="FAQ" data-en="FAQ" onclick="smoothScrollTo('faq')">FAQ</a>
+    <div class="lang-switcher">
+      <button class="lang-btn lang-active" id="lang-it" onclick="setLandingLang('it')">IT</button>
+      <button class="lang-btn" id="lang-en" onclick="setLandingLang('en')">EN</button>
+    </div>
+    <button class="lp-btn-ghost" onclick="landingLogin()" data-it="Accedi" data-en="Sign in">Accedi</button>
+    <button class="lp-btn-primary" onclick="landingRegister()" data-it="Inizia gratis" data-en="Start free">Inizia gratis</button>
+  </div>
+  <!-- Mobile buttons -->
+  <div style="display:flex;gap:8px;align-items:center" id="lp-mobile-ctas">
+    <div class="lang-switcher">
+      <button class="lang-btn lang-active" onclick="setLandingLang('it')">IT</button>
+      <button class="lang-btn" onclick="setLandingLang('en')">EN</button>
+    </div>
+    <button class="lp-btn-primary" style="padding:8px 14px;font-size:13px" onclick="landingRegister()" data-it="Inizia" data-en="Start">Inizia</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="lp-hero">
+  <div class="lp-hero-bg">
+    <canvas id="lp-particles"></canvas>
+    <div class="lp-hero-glow"></div>
+    <div class="lp-hero-glow2"></div>
+  </div>
+  <div class="lp-hero-content">
+    <div class="lp-badge">
+      <span>🐍</span>
+      <span data-it="Il gestionale per allevatori seri" data-en="The app for serious breeders">Il gestionale per allevatori seri</span>
+    </div>
+    <h1>
+      <span data-it="Gestisci il tuo" data-en="Manage your">Gestisci il tuo</span><br>
+      <span data-it="allevamento" data-en="breeding">allevamento</span><br>
+      <span data-it="come un professionista" data-en="like a pro">come un professionista</span>
+    </h1>
+    <p data-it="SnakeKeeper è l'app che ogni allevatore di serpenti aspettava. Schede dettagliate, registro pasti, monitoraggio mute, peso e molto altro — tutto in un unico posto." data-en="SnakeKeeper is the app every snake breeder has been waiting for. Detailed profiles, feeding logs, shed tracking, weight monitoring and more — all in one place.">
+      SnakeKeeper è l'app che ogni allevatore di serpenti aspettava. Schede dettagliate, registro pasti, monitoraggio mute, peso e molto altro — tutto in un unico posto.
+    </p>
+    <div class="lp-hero-ctas">
+      <button class="lp-cta-primary" onclick="landingRegister()">
+        <span data-it="🚀 Inizia gratis — 0€" data-en="🚀 Start free — 0€">🚀 Inizia gratis — 0€</span>
+      </button>
+      <button class="lp-cta-secondary" onclick="smoothScrollTo('features')">
+        <span data-it="Scopri di più ↓" data-en="Learn more ↓">Scopri di più ↓</span>
+      </button>
+    </div>
+  </div>
+  <div class="lp-scroll-hint">↓</div>
+</section>
+
+<!-- STATS -->
+<section class="lp-stats">
+  <div class="lp-stats-grid">
+    <div><span class="lp-stat-num" data-count="100">0</span><div class="lp-stat-lab" data-it="Allevatori attivi" data-en="Active breeders">Allevatori attivi</div></div>
+    <div><span class="lp-stat-num" data-count="500">0</span><div class="lp-stat-lab" data-it="Serpenti gestiti" data-en="Snakes managed">Serpenti gestiti</div></div>
+    <div><span class="lp-stat-num" data-count="99">0</span><div class="lp-stat-lab" data-it="% uptime garantito" data-en="% uptime guaranteed">% uptime garantito</div></div>
+    <div><span class="lp-stat-num">€0</span><div class="lp-stat-lab" data-it="Per iniziare" data-en="To get started">Per iniziare</div></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="lp-section reveal" id="features">
+  <div style="text-align:center;margin-bottom:60px">
+    <div class="lp-section-label" data-it="Funzionalità" data-en="Features">Funzionalità</div>
+    <h2 class="lp-section-title" data-it="Tutto quello che ti serve" data-en="Everything you need">Tutto quello che ti serve</h2>
+    <p class="lp-section-sub" style="margin:0 auto" data-it="Progettato da zero per chi alleva serpenti. Ogni funzione nasce da un'esigenza reale." data-en="Built from scratch for snake breeders. Every feature comes from a real need.">Progettato da zero per chi alleva serpenti. Ogni funzione nasce da un'esigenza reale.</p>
+  </div>
+  <div class="lp-features-grid">
+    ${[
+      ['🐍','Schede complete','Specie, morfo, sesso, provenienza, foto e tutto quello che serve per ogni esemplare.','Complete profiles','Species, morph, sex, origin, photos and everything you need for each specimen.'],
+      ['🥩','Registro pasti','Traccia ogni pasto con tipo di preda, peso e note. Ricevi alert se un serpente non mangia.','Feeding log','Track every meal with prey type, weight and notes. Get alerts when a snake hasn\'t eaten.'],
+      ['⚖️','Monitoraggio peso','Curva di crescita nel tempo con grafico. Tieni sotto controllo la salute di ogni esemplare.','Weight tracking','Growth curve over time with chart. Monitor the health of every specimen.'],
+      ['🦎','Registro mute','Traccia ogni ecdisi con data e esito. Identifica problemi prima che diventino seri.','Shed tracking','Log every shed with date and outcome. Spot issues before they become serious.'],
+      ['📄','Export PDF','Genera una scheda professionale per ogni serpente da condividere col veterinario.','PDF export','Generate a professional profile for each snake to share with your vet.'],
+      ['📱','App mobile','Installabile su iPhone e Android come app nativa. Funziona anche offline.','Mobile app','Installable on iPhone and Android as a native app. Works offline too.'],
+      ['💰','Gestione vendite','Registra ogni vendita con acquirente, prezzo e documenti. Storico sempre disponibile.','Sales management','Log every sale with buyer, price and documents. History always available.'],
+      ['☁️','Sync in tempo reale','I tuoi dati sempre aggiornati su tutti i dispositivi, in sicurezza nel cloud.','Real-time sync','Your data always up to date across all devices, securely in the cloud.'],
+    ].map(([ico,tit,desc,titen,descen])=>`
+    <div class="lp-feature-card">
+      <div class="lp-feature-icon">${ico}</div>
+      <div class="lp-feature-title" data-it="${tit}" data-en="${titen}">${tit}</div>
+      <p class="lp-feature-desc" data-it="${desc}" data-en="${descen}">${desc}</p>
+    </div>`).join('')}
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="lp-steps reveal">
+  <div class="lp-steps-inner">
+    <div class="lp-section-label" data-it="Come funziona" data-en="How it works">Come funziona</div>
+    <h2 class="lp-section-title" data-it="Inizia in 3 minuti" data-en="Get started in 3 minutes">Inizia in 3 minuti</h2>
+    <div class="lp-steps-grid">
+      ${[
+        ['1','Registrati','Crea il tuo account gratuito. Nessuna carta richiesta.','Sign up','Create your free account. No credit card required.'],
+        ['2','Aggiungi i tuoi serpenti','Inserisci le schede dei tuoi esemplari con foto e dati.','Add your snakes','Add profiles for your specimens with photos and data.'],
+        ['3','Inizia a tracciare','Registra pasti, mute, pesi e tutto il resto in pochi tap.','Start tracking','Log feedings, sheds, weights and everything else in a few taps.'],
+      ].map(([n,tit,desc,titen,descen])=>`
+      <div class="lp-step">
+        <div class="lp-step-num">${n}</div>
+        <div class="lp-step-title" data-it="${tit}" data-en="${titen}">${tit}</div>
+        <p class="lp-step-desc" data-it="${desc}" data-en="${descen}">${desc}</p>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="lp-pricing reveal" id="pricing">
+  <div class="lp-section-label" data-it="Prezzi" data-en="Pricing">Prezzi</div>
+  <h2 class="lp-section-title" data-it="Semplice e trasparente" data-en="Simple and transparent">Semplice e trasparente</h2>
+  <p class="lp-section-sub" style="margin:0 auto 0" data-it="Inizia gratis. Passa a Pro quando vuoi. Nessun costo nascosto." data-en="Start free. Upgrade when you want. No hidden costs.">Inizia gratis. Passa a Pro quando vuoi. Nessun costo nascosto.</p>
+  <div class="lp-pricing-grid">
+    <div class="lp-plan">
+      <div class="lp-plan-name">Free</div>
+      <div class="lp-plan-desc" data-it="Per iniziare" data-en="To get started">Per iniziare</div>
+      <div class="lp-plan-price"><span class="amount">€0</span><span class="period">/mo</span></div>
+      <ul class="lp-plan-features">
+        <li data-it="Fino a 3 serpenti" data-en="Up to 3 snakes">Fino a 3 serpenti</li>
+        <li data-it="Registro pasti e mute" data-en="Feeding & shed logs">Registro pasti e mute</li>
+        <li data-it="App mobile PWA" data-en="Mobile PWA app">App mobile PWA</li>
+        <li class="no" data-it="Export PDF" data-en="PDF export">Export PDF</li>
+        <li class="no" data-it="Statistiche avanzate" data-en="Advanced stats">Statistiche avanzate</li>
+      </ul>
+      <button class="lp-plan-cta free" onclick="landingRegister()" data-it="Inizia gratis" data-en="Start free">Inizia gratis</button>
+    </div>
+    <div class="lp-plan featured">
+      <div class="lp-plan-badge" data-it="⭐ Più popolare" data-en="⭐ Most popular">⭐ Più popolare</div>
+      <div class="lp-plan-name">Pro</div>
+      <div class="lp-plan-desc" data-it="Per allevatori seri" data-en="For serious breeders">Per allevatori seri</div>
+      <div class="lp-plan-price"><span class="amount">€4.99</span><span class="period">/mo</span></div>
+      <div style="font-size:12px;color:#4a6b4d;margin-bottom:16px" data-it="oppure €47.99/anno (risparmia 20%)" data-en="or €47.99/year (save 20%)">oppure €47.99/anno (risparmia 20%)</div>
+      <ul class="lp-plan-features">
+        <li data-it="Serpenti illimitati" data-en="Unlimited snakes">Serpenti illimitati</li>
+        <li data-it="Registro pasti, mute e peso" data-en="Feeding, shed & weight logs">Registro pasti, mute e peso</li>
+        <li data-it="Export PDF professionale" data-en="Professional PDF export">Export PDF professionale</li>
+        <li data-it="Statistiche avanzate" data-en="Advanced statistics">Statistiche avanzate</li>
+        <li data-it="Backup prioritario" data-en="Priority backup">Backup prioritario</li>
+        <li data-it="Supporto dedicato" data-en="Dedicated support">Supporto dedicato</li>
+      </ul>
+      <button class="lp-plan-cta pro" onclick="landingRegister()" data-it="Inizia con Pro" data-en="Start with Pro">Inizia con Pro</button>
+    </div>
+    <div class="lp-plan">
+      <div class="lp-plan-name">For Life</div>
+      <div class="lp-plan-desc" data-it="Paghi una volta, per sempre" data-en="Pay once, forever">Paghi una volta, per sempre</div>
+      <div class="lp-plan-price"><span class="amount">€199</span></div>
+      <div style="font-size:12px;color:#4ade80;margin-bottom:16px" data-it="✨ Nessun rinnovo mai" data-en="✨ No renewals ever">✨ Nessun rinnovo mai</div>
+      <ul class="lp-plan-features">
+        <li data-it="Tutto di Pro, per sempre" data-en="Everything in Pro, forever">Tutto di Pro, per sempre</li>
+        <li data-it="Tutti gli aggiornamenti futuri" data-en="All future updates">Tutti gli aggiornamenti futuri</li>
+        <li data-it="Priorità massima sul supporto" data-en="Highest support priority">Priorità massima sul supporto</li>
+        <li data-it="Accesso anticipato a nuove feature" data-en="Early access to new features">Accesso anticipato a nuove feature</li>
+        <li data-it="Immune da variazioni di prezzo" data-en="Price increase immune">Immune da variazioni di prezzo</li>
+      </ul>
+      <button class="lp-plan-cta life" onclick="landingRegister()" data-it="Acquista For Life" data-en="Get For Life">Acquista For Life</button>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="lp-faq reveal" id="faq">
+  <div style="text-align:center;margin-bottom:60px">
+    <div class="lp-section-label">FAQ</div>
+    <h2 class="lp-section-title" data-it="Domande frequenti" data-en="Frequently asked questions">Domande frequenti</h2>
+  </div>
+  ${[
+    ['Devo inserire la carta di credito per iniziare?','No. Il piano Free è completamente gratuito e non richiede nessun metodo di pagamento.','Do I need a credit card to start?','No. The Free plan is completely free and requires no payment method.'],
+    ['Posso cancellare il mio abbonamento in qualsiasi momento?','Sì. Puoi cancellare l\'abbonamento Pro in qualsiasi momento dalla pagina Profilo. Non ci sono penali.','Can I cancel my subscription at any time?','Yes. You can cancel the Pro subscription at any time from the Profile page. No penalties.'],
+    ['I miei dati sono al sicuro?','Sì. Tutti i dati sono cifrati, accessibili solo a te, e protetti da autenticazione sicura. Non condividiamo mai i tuoi dati con terzi.','Is my data safe?','Yes. All data is encrypted, accessible only to you, and protected by secure authentication. We never share your data with third parties.'],
+    ['Funziona su iPhone e Android?','Sì. SnakeKeeper è una Progressive Web App installabile su qualsiasi dispositivo — iPhone, Android, tablet e PC.','Does it work on iPhone and Android?','Yes. SnakeKeeper is a Progressive Web App installable on any device — iPhone, Android, tablet and PC.'],
+    ['Cosa succede se supero i 3 serpenti del piano Free?','Non puoi aggiungere nuovi serpenti, ma quelli già inseriti restano visibili. Puoi passare a Pro in qualsiasi momento.','What happens if I exceed 3 snakes on the Free plan?','You can\'t add new snakes, but existing ones remain visible. You can upgrade to Pro at any time.'],
+    ['Il piano For Life include gli aggiornamenti futuri?','Sì. Paghi una volta e ricevi tutti gli aggiornamenti futuri di SnakeKeeper senza costi aggiuntivi, per sempre.','Does the For Life plan include future updates?','Yes. You pay once and receive all future SnakeKeeper updates at no extra cost, forever.'],
+  ].map(([q,a,qen,aen],i)=>`
+  <div class="lp-faq-item">
+    <button class="lp-faq-q" onclick="toggleFaq(${i})">
+      <span data-it="${q}" data-en="${qen}">${q}</span>
+      <span class="lp-faq-icon" id="faq-icon-${i}">+</span>
+    </button>
+    <div class="lp-faq-a" id="faq-ans-${i}">
+      <p data-it="${a}" data-en="${aen}">${a}</p>
+    </div>
+  </div>`).join('')}
+</section>
+
+<!-- CTA FINALE -->
+<section class="reveal" style="padding:80px 32px;text-align:center;background:linear-gradient(135deg,rgba(13,31,15,0.8),rgba(20,40,22,0.6));border-top:1px solid rgba(45,80,48,0.3);border-bottom:1px solid rgba(45,80,48,0.3)">
+  <div style="font-size:56px;margin-bottom:16px">🐍</div>
+  <h2 style="font-family:'Cinzel',serif;font-size:clamp(24px,4vw,42px);color:#fff;margin:0 0 16px">
+    <span data-it="Pronto a gestire il tuo allevamento?" data-en="Ready to manage your breeding?">Pronto a gestire il tuo allevamento?</span>
+  </h2>
+  <p style="font-size:16px;color:#a0b5a1;max-width:500px;margin:0 auto 36px" data-it="Unisciti a centinaia di allevatori che usano SnakeKeeper ogni giorno." data-en="Join hundreds of breeders who use SnakeKeeper every day.">Unisciti a centinaia di allevatori che usano SnakeKeeper ogni giorno.</p>
+  <button class="lp-cta-primary" onclick="landingRegister()">
+    <span data-it="🚀 Inizia gratis ora" data-en="🚀 Start free now">🚀 Inizia gratis ora</span>
+  </button>
+</section>
+
+<!-- FOOTER -->
+<footer class="lp-footer">
+  <div class="lp-footer-inner">
+    <div class="lp-footer-top">
+      <div class="lp-footer-brand">
+        <div style="font-family:'Cinzel',serif;font-size:20px;color:#c9a84c;display:flex;align-items:center;gap:8px"><span>🐍</span> SNAKEKEEPER</div>
+        <p data-it="Il gestionale professionale per l'allevamento di serpenti. Semplice, potente, sempre con te." data-en="The professional management app for snake breeding. Simple, powerful, always with you.">Il gestionale professionale per l'allevamento di serpenti. Semplice, potente, sempre con te.</p>
+      </div>
+      <div class="lp-footer-col">
+        <h4 data-it="Prodotto" data-en="Product">Prodotto</h4>
+        <a href="#" onclick="smoothScrollTo('features')" data-it="Funzionalità" data-en="Features">Funzionalità</a>
+        <a href="#" onclick="smoothScrollTo('pricing')" data-it="Prezzi" data-en="Pricing">Prezzi</a>
+        <a href="#" onclick="smoothScrollTo('faq')">FAQ</a>
+        <a href="#" onclick="landingLogin()" data-it="Accedi" data-en="Sign in">Accedi</a>
+      </div>
+      <div class="lp-footer-col">
+        <h4 data-it="Legale" data-en="Legal">Legale</h4>
+        <a href="#" onclick="showLegalPage('privacy')">Privacy Policy</a>
+        <a href="#" onclick="showLegalPage('terms')" data-it="Termini di Servizio" data-en="Terms of Service">Termini di Servizio</a>
+        <a href="#" onclick="resetCookieConsent()" data-it="Gestisci Cookie" data-en="Manage Cookies">Gestisci Cookie</a>
+        <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a>
+      </div>
+    </div>
+    <div class="lp-footer-bottom">
+      <p>© ${new Date().getFullYear()} SnakeKeeper · Manuel Satta · Faenza, Italia</p>
+      <p data-it="Fatto con ❤️ per gli allevatori" data-en="Made with ❤️ for breeders">Fatto con ❤️ per gli allevatori</p>
+    </div>
+  </div>
+</footer>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
 <!-- COOKIE BANNER GDPR                      -->
 <!-- ═══════════════════════════════════════ -->
 <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:16px;background:rgba(8,15,9,0.97);border-top:2px solid var(--border);backdrop-filter:blur(12px)">
@@ -2655,6 +3027,109 @@ document.addEventListener('touchend',e=>{
 // ═══════════════════════════════════════
 //  SERVICE WORKER + OFFLINE SYNC
 // ═══════════════════════════════════════
+
+// ═══════════════════════════════════════
+//  LANDING PAGE JS
+// ═══════════════════════════════════════
+function smoothScrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleFaq(i) {
+  const ans = document.getElementById('faq-ans-'+i);
+  const icon = document.getElementById('faq-icon-'+i);
+  if (!ans) return;
+  const isOpen = ans.classList.contains('open');
+  document.querySelectorAll('.lp-faq-a').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.lp-faq-icon').forEach(ic => ic.textContent = '+');
+  if (!isOpen) {
+    ans.classList.add('open');
+    if (icon) icon.textContent = '−';
+  }
+}
+
+function initParticles() {
+  const canvas = document.getElementById('lp-particles');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.5,
+      vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3,
+      o: Math.random() * .4 + .1,
+      c: Math.random() > .5 ? '#4ade80' : '#c9a84c'
+    });
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.c;
+      ctx.globalAlpha = p.o;
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function initScrollReveal() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
+function initCounters() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        const target = parseInt(el.dataset.count);
+        if (!target) return;
+        let start = 0;
+        const step = target / 60;
+        const timer = setInterval(() => {
+          start += step;
+          if (start >= target) { el.textContent = target + '+'; clearInterval(timer); }
+          else el.textContent = Math.floor(start) + '+';
+        }, 16);
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count]').forEach(el => observer.observe(el));
+}
+
+function initLandingNav() {
+  const nav = document.getElementById('lp-nav');
+  const landing = document.getElementById('landing-page');
+  if (!nav || !landing) return;
+  landing.addEventListener('scroll', () => {
+    nav.style.boxShadow = landing.scrollTop > 50 ? '0 4px 30px rgba(0,0,0,0.4)' : '';
+  });
+}
+
+function initLanding() {
+  initParticles();
+  initScrollReveal();
+  initCounters();
+  initLandingNav();
+}
 
 // ═══════════════════════════════════════
 //  COOKIE BANNER GDPR
@@ -3787,10 +4262,58 @@ function clearSession() {
   _currentUser = null;
 }
 
+function showLanding() {
+  document.getElementById('landing-page').style.display = 'block';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('mobile-nav').style.display = 'none';
+  setTimeout(initLanding, 100);
+}
+
+function hideLanding() {
+  document.getElementById('landing-page').style.display = 'none';
+}
+
+function landingLogin() {
+  hideLanding();
+  showLoginScreen();
+  setTimeout(() => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-login')?.classList.add('active');
+    document.getElementById('login-form')?.style && (document.getElementById('login-form').style.display = 'block');
+    document.getElementById('register-form')?.style && (document.getElementById('register-form').style.display = 'none');
+  }, 50);
+}
+
+function landingRegister() {
+  hideLanding();
+  showLoginScreen();
+  setTimeout(() => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-register')?.classList.add('active');
+    document.getElementById('login-form')?.style && (document.getElementById('login-form').style.display = 'none');
+    document.getElementById('register-form')?.style && (document.getElementById('register-form').style.display = 'block');
+  }, 50);
+}
+
+let _landingLang = 'it';
+function setLandingLang(lang) {
+  _landingLang = lang;
+  document.querySelectorAll('[data-it]').forEach(el => {
+    el.textContent = lang === 'it' ? el.dataset.it : el.dataset.en;
+  });
+  document.querySelectorAll('[data-it-html]').forEach(el => {
+    el.innerHTML = lang === 'it' ? el.dataset.itHtml : el.dataset.enHtml;
+  });
+  document.getElementById('lang-it')?.classList.toggle('lang-active', lang === 'it');
+  document.getElementById('lang-en')?.classList.toggle('lang-active', lang === 'en');
+}
+
 function showLoginScreen() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('mobile-nav').style.display = 'none';
+  document.getElementById('landing-page').style.display = 'none';
 }
 
 function hideLoginScreen() {
@@ -4116,11 +4639,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       // Mostra cookie banner dopo che l'app è caricata
       setTimeout(initCookieBanner, 1500);
     } else {
-      // Nessuna sessione — mostra login
+      // Nessuna sessione — mostra landing page
       clearTimeout(safetyTimeout);
       document.getElementById('loading-screen').style.display = 'none';
-      showLoginScreen();
-      // Mostra cookie banner anche per utenti non loggati
+      showLanding();
       setTimeout(initCookieBanner, 1500);
     }
 
