@@ -3370,6 +3370,16 @@ async function loadSubscriptionInfo() {
 
     const purchaseStr = info.purchaseDate ? new Date(info.purchaseDate * 1000).toLocaleDateString('it-IT') : '—';
     const renewStr = info.periodEnd ? new Date(info.periodEnd * 1000).toLocaleDateString('it-IT') : null;
+    // Fallback: se manca periodEnd ma è un abbonamento, stimalo dalla data + importo
+    let fallbackRenew = null;
+    if (!renewStr && info.isSubscription && info.purchaseDate && info.amount) {
+      const monthsToAdd = info.amount >= 40 ? 12 : 1;
+      const d = new Date(info.purchaseDate * 1000);
+      d.setMonth(d.getMonth() + monthsToAdd);
+      fallbackRenew = d.toLocaleDateString('it-IT');
+    }
+    const finalRenewStr = renewStr || fallbackRenew;
+    const dateLabel = info.cancelAtPeriodEnd ? 'Accesso fino al' : 'Prossimo rinnovo';
 
     el.innerHTML = `
       <div style="display:grid;gap:8px">
@@ -3385,15 +3395,17 @@ async function loadSubscriptionInfo() {
           <span>Importo</span>
           <strong style="color:var(--text-bright)">€${info.amount.toFixed(2)}</strong>
         </div>
-        ${renewStr ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(45,80,48,0.3)">
-          <span>Prossimo rinnovo</span>
-          <strong style="color:var(--text-bright)">${renewStr}</strong>
+        ${finalRenewStr ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(45,80,48,0.3)">
+          <span>${dateLabel}</span>
+          <strong style="color:${info.cancelAtPeriodEnd ? 'var(--accent-red)' : 'var(--accent-lime)'}">${finalRenewStr}</strong>
         </div>` : ''}
-        <div style="background:${info.refundEligible ? 'rgba(109,181,109,0.1)' : 'rgba(45,80,48,0.2)'};border-radius:8px;padding:12px;margin-top:4px">
+        ${info.cancelAtPeriodEnd ? `<div style="background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.3);border-radius:8px;padding:12px;margin-top:4px">
+          <div style="color:var(--accent-red);font-size:12px">⏱️ <strong>Abbonamento in scadenza</strong><br>Non verrà rinnovato. Manterrai l'accesso Pro fino alla data indicata.</div>
+        </div>` : `<div style="background:${info.refundEligible ? 'rgba(109,181,109,0.1)' : 'rgba(45,80,48,0.2)'};border-radius:8px;padding:12px;margin-top:4px">
           ${info.refundEligible
             ? `<div style="color:var(--accent-lime);font-size:12px">✅ <strong>Rimborso disponibile</strong><br>Hai ancora <strong>${info.refundDaysLeft} giorni</strong> per richiedere il rimborso completo.</div>`
             : `<div style="color:var(--text-dim);font-size:12px">ℹ️ Il periodo di rimborso di 14 giorni è terminato.${info.isSubscription ? ' Puoi comunque disdire: manterrai l\'accesso fino alla scadenza.' : ''}</div>`}
-        </div>
+        </div>`}
       </div>`;
   } catch(e) {
     el.innerHTML = `<div style="color:var(--accent-red);font-size:12px">Impossibile caricare i dettagli: ${e.message}</div>`;
