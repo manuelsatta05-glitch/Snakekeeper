@@ -3351,38 +3351,22 @@ function canAddSnake() {
 async function loadUserPlan() {
   if (!_currentUser || !_currentUser.id) return;
   try {
-    const session = await getSession();
-    const token = session ? session.access_token : SUPABASE_KEY;
-
-    // Prima prova: cerca per user_id con token utente
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_plans?user_id=eq.${_currentUser.id}&select=plan`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.length > 0) {
-        _userPlan = data[0].plan || 'free';
-        applyPlanUI();
-        return;
-      }
+    // Usa SB.req() che gestisce già il token correttamente
+    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan`);
+    if (data && data.length > 0) {
+      _userPlan = data[0].plan || 'free';
+      applyPlanUI();
+      return;
     }
-
-    // Fallback: controlla se è admin per email direttamente
+    // Fallback admin per email
     if (_currentUser.email === ADMIN_EMAIL) {
       _userPlan = 'admin';
       applyPlanUI();
       return;
     }
-
-    // Nessun piano trovato → free
     _userPlan = 'free';
   } catch(e) {
     console.warn('loadUserPlan errore:', e);
-    // Fallback sicuro: se è l'email admin, assegna admin
     if (_currentUser?.email === ADMIN_EMAIL) {
       _userPlan = 'admin';
     } else {
