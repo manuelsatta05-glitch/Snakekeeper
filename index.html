@@ -3376,40 +3376,39 @@ async function loadUserPlan() {
   applyPlanUI();
 }
 
-// Dopo il checkout, controlla ripetutamente finché il webhook aggiorna il piano
-async function pollPlanUpdate() {
-  const previousPlan = _userPlan;
-  // Mostra banner di attesa
+// Verifica il pagamento direttamente su Stripe e aggiorna il piano
+async function verifyAndUpdatePlan(sessionId) {
   showPaymentProcessingBanner();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId })
+    });
+    const data = await res.json();
+    console.log('verify-checkout risposta:', data);
 
-  let attempts = 0;
-  const maxAttempts = 15; // 15 tentativi × 2s = 30 secondi max
+    if (data.error) throw new Error(data.error);
 
-  const check = async () => {
-    attempts++;
-    try {
-      const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan`);
-      const newPlan = data?.[0]?.plan || 'free';
-      if (newPlan !== 'free' && newPlan !== previousPlan) {
-        // Piano aggiornato!
-        _userPlan = newPlan;
-        applyPlanUI();
-        hidePaymentProcessingBanner();
-        showPaymentSuccessModal(newPlan);
-        return;
-      }
-    } catch(e) { console.warn('pollPlan errore:', e); }
-
-    if (attempts < maxAttempts) {
-      setTimeout(check, 2000);
-    } else {
-      // Timeout — il pagamento è andato ma il webhook ci mette di più
+    if (data.paid && data.plan) {
+      _userPlan = data.plan;
+      applyPlanUI();
       hidePaymentProcessingBanner();
-      toast('✅ Pagamento ricevuto! Il piano si attiverà a breve. Ricarica tra qualche minuto.', '#6db56d');
-      await loadUserPlan();
+      showPaymentSuccessModal(data.plan);
+      // Ricarica anche dal DB per sicurezza
+      setTimeout(() => loadUserPlan(), 500);
+      return;
     }
-  };
-  check();
+
+    // Pagamento non ancora confermato — riprova
+    hidePaymentProcessingBanner();
+    toast('⏳ Pagamento in elaborazione. Ricarica tra qualche istante.', '#c9a84c');
+  } catch(e) {
+    console.error('verifyAndUpdatePlan errore:', e);
+    hidePaymentProcessingBanner();
+    toast('❌ Errore verifica: ' + e.message, '#c0392b');
+    await loadUserPlan();
+  }
 }
 
 function showPaymentProcessingBanner() {
@@ -3577,6 +3576,7 @@ async function startCheckout() {
       body: JSON.stringify({
         plan: _selectedPlan,
         email: _currentUser?.email || null,
+        userId: _currentUser?.id || null,
       })
     });
     const data = await res.json();
@@ -4254,9 +4254,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       hideLoginScreen();
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('checkout') === 'success') {
+        const sessionId = urlParams.get('session_id');
         history.replaceState(null, '', window.location.pathname);
         if(!checkHash()) showPage('dashboard');
-        setTimeout(() => pollPlanUpdate(), 800);
+        if (sessionId) {
+          setTimeout(() => verifyAndUpdatePlan(sessionId), 500);
+        } else {
+          setTimeout(() => loadUserPlan(), 1000);
+        }
       } else if (urlParams.get('checkout') === 'cancel') {
         history.replaceState(null, '', window.location.pathname);
         if(!checkHash()) showPage('dashboard');
