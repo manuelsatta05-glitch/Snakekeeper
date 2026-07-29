@@ -3506,18 +3506,22 @@ async function startCheckout() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Reindirizzamento...';
   try {
-    const stripe = Stripe(STRIPE_PK);
-    const priceId = STRIPE_PRICES[_selectedPlan];
-    // For Life è un pagamento una tantum, gli altri sono abbonamenti
-    const mode = _selectedPlan === 'for_life' ? 'payment' : 'subscription';
-    const { error } = await stripe.redirectToCheckout({
-      lineItems: [{ price: priceId, quantity: 1 }],
-      mode,
-      successUrl: BASE_URL + '?checkout=success',
-      cancelUrl: BASE_URL + '?checkout=cancel',
-      customerEmail: _currentUser?.email || undefined,
+    // Chiama la Edge Function per creare la sessione di checkout
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plan: _selectedPlan,
+        email: _currentUser?.email || null,
+      })
     });
-    if (error) throw new Error(error.message);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error('URL checkout non ricevuto');
+    }
   } catch(e) {
     toast('❌ Errore checkout: ' + e.message, '#c0392b');
     btn.disabled = false;
