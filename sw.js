@@ -1,13 +1,14 @@
 // SnakeKeeper Service Worker
-const CACHE_VERSION = 'sk-v3';  // Incrementato per forzare refresh
+const CACHE_VERSION = 'sk-v5';
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
-  '/Snakekeeper/',
-  '/Snakekeeper/index.html',
-  '/Snakekeeper/icon-192.png',
-  '/Snakekeeper/icon-512.png',
-  '/Snakekeeper/manifest.json',
+  '/',
+  '/index.html',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.json',
+  '/hero-snake.jpg',
 ];
 
 self.addEventListener('install', event => {
@@ -22,8 +23,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k.startsWith('snakekeeper-') && k !== CACHE_NAME)
-            .map(k => caches.delete(k))
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
   );
@@ -31,8 +31,9 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  
-  if (url.hostname.includes('supabase.co') || url.hostname.includes('qrserver.com') || url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
+
+  // API calls e risorse esterne — sempre network
+  if (url.hostname.includes('supabase.co') || url.hostname.includes('stripe.com') || url.hostname.includes('qrserver.com') || url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
       fetch(event.request).catch(() => {
         if (url.hostname.includes('supabase.co')) {
@@ -44,8 +45,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network-first per index.html — assicura sempre versione aggiornata
-  if (url.pathname.includes('index.html') || url.pathname.endsWith('/Snakekeeper/')) {
+  // index.html — SEMPRE network first
+  if (url.pathname === '/' || url.pathname.endsWith('index.html')) {
     event.respondWith(
       fetch(event.request).then(response => {
         const clone = response.clone();
@@ -56,6 +57,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Tutto il resto — cache first
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -67,7 +69,7 @@ self.addEventListener('fetch', event => {
         return response;
       }).catch(() => {
         if (event.request.destination === 'document') {
-          return caches.match('/Snakekeeper/');
+          return caches.match('/');
         }
         return new Response('Offline', { status: 503 });
       });
