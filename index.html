@@ -3376,6 +3376,86 @@ async function loadUserPlan() {
   applyPlanUI();
 }
 
+// Dopo il checkout, controlla ripetutamente finché il webhook aggiorna il piano
+async function pollPlanUpdate() {
+  const previousPlan = _userPlan;
+  // Mostra banner di attesa
+  showPaymentProcessingBanner();
+
+  let attempts = 0;
+  const maxAttempts = 15; // 15 tentativi × 2s = 30 secondi max
+
+  const check = async () => {
+    attempts++;
+    try {
+      const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan`);
+      const newPlan = data?.[0]?.plan || 'free';
+      if (newPlan !== 'free' && newPlan !== previousPlan) {
+        // Piano aggiornato!
+        _userPlan = newPlan;
+        applyPlanUI();
+        hidePaymentProcessingBanner();
+        showPaymentSuccessModal(newPlan);
+        return;
+      }
+    } catch(e) { console.warn('pollPlan errore:', e); }
+
+    if (attempts < maxAttempts) {
+      setTimeout(check, 2000);
+    } else {
+      // Timeout — il pagamento è andato ma il webhook ci mette di più
+      hidePaymentProcessingBanner();
+      toast('✅ Pagamento ricevuto! Il piano si attiverà a breve. Ricarica tra qualche minuto.', '#6db56d');
+      await loadUserPlan();
+    }
+  };
+  check();
+}
+
+function showPaymentProcessingBanner() {
+  document.getElementById('payment-processing')?.remove();
+  const banner = document.createElement('div');
+  banner.id = 'payment-processing';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:600;background:linear-gradient(135deg,#c9a84c,#e0ba5c);color:#0a1a0a;padding:14px;text-align:center;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+  banner.innerHTML = '<span class="spinner" style="border-color:#0a1a0a;border-top-color:transparent"></span> Stiamo attivando il tuo piano...';
+  document.body.appendChild(banner);
+}
+
+function hidePaymentProcessingBanner() {
+  document.getElementById('payment-processing')?.remove();
+}
+
+function showPaymentSuccessModal(plan) {
+  const planNames = { pro: 'Pro', for_life: 'For Life', free_forever: 'Free Forever' };
+  const modal = document.createElement('div');
+  modal.id = 'payment-success-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:700;background:rgba(8,15,9,0.95);display:flex;align-items:center;justify-content:center;padding:24px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:2px solid var(--accent-lime);border-radius:20px;padding:40px 32px;max-width:400px;width:100%;text-align:center;box-shadow:0 0 40px rgba(77,222,128,0.3);animation:successPop .5s ease">
+      <div style="font-size:64px;margin-bottom:16px;animation:successBounce .6s ease">🎉</div>
+      <div style="font-family:'Cinzel',serif;font-size:26px;color:var(--accent-lime);margin-bottom:12px">Pagamento riuscito!</div>
+      <div style="color:var(--text-mid);font-size:15px;line-height:1.7;margin-bottom:8px">
+        Benvenuto in <strong style="color:var(--accent-gold)">SnakeKeeper ${planNames[plan] || 'Pro'}</strong>! 🐍
+      </div>
+      <div style="color:var(--text-dim);font-size:13px;margin-bottom:28px">
+        Il tuo piano è ora attivo. Hai accesso a tutte le funzionalità premium.
+      </div>
+      <button onclick="document.getElementById('payment-success-modal').remove()"
+        style="width:100%;padding:14px;background:var(--accent-lime);color:#0a1a0a;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
+        Inizia a usare Pro →
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  // Aggiungi animazioni se non esistono
+  if (!document.getElementById('success-anim-style')) {
+    const style = document.createElement('style');
+    style.id = 'success-anim-style';
+    style.textContent = '@keyframes successPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}@keyframes successBounce{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}';
+    document.head.appendChild(style);
+  }
+}
+
 function applyPlanUI() {
   // Mostra/nascondi pannello admin nella nav
   const adminNavSection = document.getElementById('admin-nav-section');
@@ -4175,11 +4255,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('checkout') === 'success') {
         history.replaceState(null, '', window.location.pathname);
-        setTimeout(() => toast('🎉 Benvenuto in SnakeKeeper Pro! Il piano verrà attivato a breve.'), 500);
+        if(!checkHash()) showPage('dashboard');
+        setTimeout(() => pollPlanUpdate(), 800);
       } else if (urlParams.get('checkout') === 'cancel') {
         history.replaceState(null, '', window.location.pathname);
+        if(!checkHash()) showPage('dashboard');
+        toast('Pagamento annullato', '#c0392b');
+      } else {
+        if(!checkHash()) showPage('dashboard');
       }
-      if(!checkHash()) showPage('dashboard');
       setTimeout(initCookieBanner, 1500);
     } else {
       // Nessuna sessione — mostra landing page
