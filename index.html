@@ -872,11 +872,27 @@ function renderSerpenti() {
   let html = `
   <div class="page-header"><h2>🐍 I Miei Serpenti</h2><p>${_snakes.length} esemplari registrati</p></div>
   <div style="margin-bottom:16px"><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi</button></div>`;
+
+  const nLocked = lockedSnakesCount();
+  if (nLocked > 0) {
+    html += `<div style="margin-bottom:16px;padding:14px 16px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.35);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;min-width:210px;flex:1">
+        <div style="font-size:22px">🔒</div>
+        <div>
+          <div style="font-size:13px;color:var(--accent-gold);font-weight:700">${nLocked} ${nLocked === 1 ? 'esemplare' : 'esemplari'} in sola lettura</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;line-height:1.45">Il piano Free consente la gestione attiva dei primi ${FREE_SNAKE_LIMIT} serpenti inseriti. I dati degli altri restano salvati e consultabili.</div>
+        </div>
+      </div>
+      <button onclick="showUpgradeModal()" style="background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">⭐ Sblocca con Pro</button>
+    </div>`;
+  }
+
   if (!_snakes.length) {
     html += `<div class="empty-state"><div class="empty-icon">🐍</div><h3>Nessun serpente</h3><p>Inizia aggiungendo il primo esemplare.</p><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi</button></div>`;
   } else {
     html += '<div class="snakes-grid">' + _snakes.map(s => {
       const sl = logsForSnake(s.id);
+      const locked = !canEditSnake(s.id);
       const lastFood = sl.filter(l=>l.tipo==='cibo').sort((a,b)=>b.data.localeCompare(a.data))[0];
       const lastFece = sl.filter(l=>l.tipo==='feci').sort((a,b)=>b.data.localeCompare(a.data))[0];
       return `
@@ -886,7 +902,10 @@ function renderSerpenti() {
             ${s.foto_url ? `<img src="${s.foto_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0">` : ''}
             <div><div class="snake-name">${s.nome}</div><div class="snake-code">${s.icd}</div></div>
           </div>
-          <span class="badge badge-${s.sesso}">${s.sesso==='M'?'♂':'♀'}</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            ${locked ? `<span title="Sola lettura — passa a Pro per gestirlo" style="font-size:14px">🔒</span>` : ''}
+            <span class="badge badge-${s.sesso}">${s.sesso==='M'?'♂':'♀'}</span>
+          </div>
         </div>
         <div class="snake-info">
           <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${s.specie||'—'}</div></div>
@@ -1290,6 +1309,8 @@ function renderDettaglio() {
       </div>
     </div>
   </div>`;
+
+  applySnakeLockUI(snake.id);
 }
 
 function renderLogList(logs, type, snakeId) {
@@ -1327,6 +1348,7 @@ function switchTab(name) {
 //  LOG ACTIONS
 // ═══════════════════════════════════════
 async function logFood(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const data=document.getElementById('food-data').value;
   if(!data){toast('Inserisci la data!','#c0392b');return;}
   const btn=document.getElementById('btn-log-food');
@@ -1348,6 +1370,7 @@ async function logFood(snakeId) {
 }
 
 async function logFeci(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const data=document.getElementById('feci-data').value;
   if(!data){toast('Inserisci la data!','#c0392b');return;}
   const btn=document.getElementById('btn-log-feci');
@@ -1367,6 +1390,7 @@ async function logFeci(snakeId) {
 }
 
 async function logUova(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const data=document.getElementById('eggs-data').value;
   if(!data){toast('Inserisci la data!','#c0392b');return;}
   const btn=document.getElementById('btn-log-uova');
@@ -1388,6 +1412,7 @@ async function logUova(snakeId) {
 }
 
 async function logPulizia(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const data=document.getElementById('pulizia-data').value;
   if(!data){toast('Inserisci la data!','#c0392b');return;}
   const btn=document.getElementById('btn-log-pulizia');
@@ -1407,6 +1432,7 @@ async function logPulizia(snakeId) {
 }
 
 async function deleteLogEntry(logId, snakeId) {
+  if (!requireEditable(snakeId)) return;
   if(!confirm('Eliminare questa registrazione?')) return;
   try {
     await SB.deleteLog(logId);
@@ -1417,6 +1443,7 @@ async function deleteLogEntry(logId, snakeId) {
 }
 
 function editLogEntry(logId, snakeId, tipo) {
+  if (!requireEditable(snakeId)) return;
   const log = _logs.find(l=>l.id===logId);
   if (!log) return;
   document.getElementById('edit-log-modal')?.remove();
@@ -1476,6 +1503,7 @@ function editLogEntry(logId, snakeId, tipo) {
 }
 
 async function saveEditLog(logId, snakeId, tipo) {
+  if (!requireEditable(snakeId)) return;
   const btn = document.getElementById('btn-save-editlog');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   const updates = { data: document.getElementById('editlog-data').value, note: document.getElementById('editlog-note').value || null };
@@ -1511,6 +1539,7 @@ async function saveEditLog(logId, snakeId, tipo) {
 
 // ── MUTA LOG ──
 async function logMuta(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const data=document.getElementById('muta-data').value;
   if(!data){toast('Inserisci la data!','#c0392b');return;}
   const btn=document.getElementById('btn-log-muta');
@@ -1531,6 +1560,7 @@ async function logMuta(snakeId) {
 
 // ── PESO LOG ──
 async function logPeso(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const data=document.getElementById('peso-data').value;
   const grammi=parseFloat(document.getElementById('peso-grammi').value);
   if(!data){toast('Inserisci la data!','#c0392b');return;}
@@ -1557,6 +1587,7 @@ async function logPeso(snakeId) {
 let _editFotoData = null;
 
 function toggleEditSerpente(id) {
+  if (id && !requireEditable(id)) return;
   const viewMode = document.getElementById('info-view-mode');
   const editMode = document.getElementById('info-edit-mode');
   const btn = document.getElementById('btn-toggle-edit');
@@ -1597,6 +1628,7 @@ function previewFoto(input) {
 }
 
 async function saveEditSerpente(snakeId) {
+  if (!requireEditable(snakeId)) return;
   const btn = document.getElementById('btn-save-edit');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
   const updates = {
@@ -3093,6 +3125,7 @@ function getTermsContent() {
     <h2>4. Piani e Pagamenti</h2>
     <h3>4.1 Piano Free</h3>
     <p>Il piano gratuito consente di gestire fino a <strong>3 serpenti</strong> senza alcun costo. Non è richiesta carta di credito.</p>
+    <p>Se un utente con piano Pro torna al piano Free avendo più di 3 esemplari registrati, <strong>nessun dato viene cancellato</strong>: tutti gli esemplari e il relativo storico restano visibili e consultabili. Restano pienamente modificabili i primi 3 esemplari inseriti in ordine cronologico, mentre gli altri passano in modalità di sola lettura fino all'eventuale riattivazione di un piano a pagamento.</p>
 
     <h3>4.2 Piano Pro</h3>
     <p>Il piano Pro offre funzionalità illimitate a pagamento:</p>
@@ -3529,6 +3562,82 @@ function isAdmin() {
 function canAddSnake() {
   if (isPro()) return true;
   return _snakes.length < FREE_SNAKE_LIMIT;
+}
+
+// ═══════════════════════════════════════
+//  LIMITE FREE — SERPENTI IN SOLA LETTURA
+// ═══════════════════════════════════════
+// Su piano Free restano pienamente gestibili solo i primi FREE_SNAKE_LIMIT
+// esemplari inseriti (_snakes e' gia' ordinato per created_at.asc dal backend).
+// Tutti gli altri restano SEMPRE visibili con lo storico completo, ma in sola
+// lettura finche' l'utente non riattiva un piano Pro. Nessun dato viene perso.
+function canEditSnake(snakeId) {
+  if (isPro()) return true;
+  const idx = _snakes.findIndex(s => s.id === snakeId);
+  if (idx === -1) return true;
+  return idx < FREE_SNAKE_LIMIT;
+}
+
+function lockedSnakesCount() {
+  if (isPro()) return 0;
+  return Math.max(0, _snakes.length - FREE_SNAKE_LIMIT);
+}
+
+// Gate da chiamare all'inizio di ogni operazione di scrittura.
+function requireEditable(snakeId) {
+  if (canEditSnake(snakeId)) return true;
+  showLockedSnakeModal();
+  return false;
+}
+
+function showLockedSnakeModal() {
+  const prev = document.getElementById('locked-snake-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'locked-snake-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:430px;width:100%;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:44px;margin-bottom:10px">🔒</div>
+      <div style="font-family:'Cinzel',serif;font-size:19px;color:var(--accent-gold);margin-bottom:14px">Esemplare in sola lettura</div>
+      <p style="color:var(--text-mid);font-size:14px;line-height:1.6;margin:0 0 10px">Il piano Free permette di gestire attivamente i primi <strong style="color:var(--text-bright)">${FREE_SNAKE_LIMIT} serpenti</strong> inseriti.</p>
+      <p style="color:var(--text-mid);font-size:14px;line-height:1.6;margin:0 0 20px">Questo esemplare resta <strong style="color:var(--text-bright)">sempre visibile</strong> con tutto il suo storico, ma per aggiungere o modificare dati serve il piano Pro.</p>
+      <div class="flex-row" style="justify-content:center;gap:10px">
+        <button class="btn btn-primary" style="background:var(--accent-gold);color:#0a1a0a" onclick="document.getElementById('locked-snake-modal').remove();showUpgradeModal()">⭐ Passa a Pro</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('locked-snake-modal').remove()">Chiudi</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+// Applica lo stato "sola lettura" alla pagina di dettaglio gia' renderizzata:
+// disabilita i form di inserimento e i pulsanti di modifica/eliminazione log,
+// lasciando attivi Stampa / PDF / Vendi / Elimina serpente.
+function applySnakeLockUI(snakeId) {
+  const root = document.getElementById('main-content');
+  if (!root || canEditSnake(snakeId)) return;
+
+  root.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; });
+  root.querySelectorAll('[id^="btn-log-"], #btn-toggle-edit, #btn-save-edit, .log-delete').forEach(el => {
+    el.disabled = true;
+    el.style.opacity = '0.4';
+    el.style.cursor = 'not-allowed';
+    el.title = 'Disponibile con il piano Pro';
+  });
+
+  const banner = document.createElement('div');
+  banner.style.cssText = 'margin-bottom:14px;padding:14px 16px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.35);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;min-width:210px;flex:1">
+      <div style="font-size:22px">🔒</div>
+      <div>
+        <div style="font-size:13px;color:var(--accent-gold);font-weight:700">Esemplare in sola lettura</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:3px;line-height:1.45">Piano Free: gestione attiva limitata ai primi ${FREE_SNAKE_LIMIT} serpenti inseriti. Lo storico resta sempre consultabile.</div>
+      </div>
+    </div>
+    <button onclick="showUpgradeModal()" style="background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">⭐ Sblocca con Pro</button>`;
+  root.insertBefore(banner, root.firstChild);
 }
 
 async function loadUserPlan() {
@@ -4858,7 +4967,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-4">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-4">
-      <p data-it="Non puoi aggiungere nuovi serpenti, ma quelli già inseriti restano visibili. Puoi passare a Pro in qualsiasi momento." data-en="You can't add new snakes, but existing ones remain visible. You can upgrade to Pro at any time.">Non puoi aggiungere nuovi serpenti, ma quelli già inseriti restano visibili. Puoi passare a Pro in qualsiasi momento.</p>
+      <p data-it="Non puoi aggiungere nuovi serpenti. Tutti i tuoi esemplari restano sempre visibili con lo storico completo: i primi 3 inseriti restano modificabili, gli altri passano in sola lettura finché non attivi il piano Pro. Nessun dato viene mai cancellato." data-en="You cannot add new snakes. All your animals stay visible with their full history: the first 3 you added remain editable, the others become read-only until you activate the Pro plan. No data is ever deleted.">Non puoi aggiungere nuovi serpenti. Tutti i tuoi esemplari restano sempre visibili con lo storico completo: i primi 3 inseriti restano modificabili, gli altri passano in sola lettura finché non attivi il piano Pro. Nessun dato viene mai cancellato.</p>
     </div>
   </div>
   <div class="lp-faq-item">
