@@ -4505,6 +4505,20 @@ window.addEventListener('DOMContentLoaded', async () => {
         expires_in: parseInt(params.expires_in) || 3600,
         user: { email: params.email || '' }
       });
+
+      // IMPORTANTE: il payload del link email contiene solo l'email, non l'id
+      // utente completo. Senza l'id, ogni inserimento (serpenti/logs/venduti)
+      // verrebbe rifiutato dalle policy RLS (auth.uid() = user_id non potrebbe
+      // mai essere valorizzato). Recuperiamo quindi l'utente reale da Supabase,
+      // esattamente come fa già getSession() per il login normale.
+      try {
+        const freshSession = await withTimeout(getSession(), 8000, null);
+        if (freshSession && freshSession.user && freshSession.user.id) {
+          _currentUser = freshSession.user;
+        }
+      } catch(sessErr) {
+        console.warn('Recupero utente completo dopo link email fallito:', sessErr);
+      }
       
       // Carica dati con gestione errori
       try {
