@@ -2674,7 +2674,7 @@ function printLabel(id) {
   /* ── ETICHETTA TECA ── */
   .teca-section-label { font-size: 7pt; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3mm; }
   .teca-label {
-    width: 95mm; height: 50mm;
+    width: 100mm; height: 58mm;
     border: 2px solid #1a3320;
     border-radius: 3mm;
     padding: 3mm 3.5mm;
@@ -2684,13 +2684,14 @@ function printLabel(id) {
     position: relative;
   }
   .teca-logo {
-    position: absolute; top: 2.5mm; right: 3mm;
-    width: 10mm; height: 10mm; object-fit: contain;
-    background: white; border-radius: 1.5mm;
+    position: absolute; top: 2.5mm; right: 2.5mm;
+    width: 26mm; height: 26mm; object-fit: contain;
+    background: white; border-radius: 2mm;
+    border: 1px solid #eee;
   }
   .teca-qr-box { flex-shrink: 0; width: 35mm; display: flex; align-items: center; justify-content: center; }
   .teca-qr-box img { width: 35mm; height: 35mm; display: block; }
-  .teca-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding-right: 11mm; }
+  .teca-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding-right: 29mm; }
   .teca-nome { font-family: 'Cinzel', serif; font-size: 12pt; font-weight: 700; color: #0d1f0f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .teca-specie-s { font-size: 6.5pt; color: #555; font-style: italic; margin-top: 0.5mm; }
   .teca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 2mm; margin-top: 1mm; }
@@ -2775,7 +2776,7 @@ function printLabel(id) {
 
   <!-- ETICHETTA TECA PICCOLA -->
   <div style="width:100%">
-    <div class="teca-section-label">✂️ Ritaglia e applica sulla teca (90×44mm)</div>
+    <div class="teca-section-label">✂️ Ritaglia e applica sulla teca (100×58mm)</div>
     <div class="teca-label">
       ${_userLogo ? `<img class="teca-logo" src="${_userLogo}" alt="Logo">` : ''}
       <div class="teca-qr-box">
