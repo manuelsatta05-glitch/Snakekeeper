@@ -3870,13 +3870,16 @@ async function startCheckout() {
   btn.innerHTML = '<span class="spinner"></span> Reindirizzamento...';
   try {
     // Chiama la Edge Function per creare la sessione di checkout
+    const _authSession = await getSession();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_authSession ? _authSession.access_token : ''}`
+      },
       body: JSON.stringify({
         plan: _selectedPlan,
         email: _currentUser?.email || null,
-        userId: _currentUser?.id || null,
       })
     });
     const data = await res.json();
