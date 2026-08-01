@@ -820,10 +820,15 @@ function refreshDrawerSnakes() {
   const list = document.getElementById('drawer-snake-list');
   let html = '<div class="nav-label">I tuoi serpenti</div>';
   if (!_snakes.length) html += '<div style="padding:8px 12px;font-size:12px;color:var(--text-dim)">Nessun serpente</div>';
-  _snakes.forEach(s => {
+  const SIDEBAR_LIMIT = 5;
+  _snakes.slice(0, SIDEBAR_LIMIT).forEach(s => {
     html += `<div class="sidebar-snake-item" onclick="showPage('dettaglio','${s.id}');closeDrawer()">
       <div class="sex-dot ${esc(s.sesso)}"></div><span>${esc(s.nome)}</span></div>`;
   });
+  if (_snakes.length > SIDEBAR_LIMIT) {
+    const rest = _snakes.length - SIDEBAR_LIMIT;
+    html += `<div class="sidebar-snake-item" style="color:var(--text-dim);font-style:italic" onclick="showPage('serpenti');closeDrawer()">+ ${rest} altr${rest===1?'o':'i'}</div>`;
+  }
   list.innerHTML = html;
 }
 
@@ -853,11 +858,16 @@ function refreshSidebar() {
   if (!list) return;
   let html = '<div class="nav-label">I tuoi serpenti</div>';
   if (!_snakes.length) html += '<div style="padding:8px 12px;font-size:12px;color:var(--text-dim)">Nessun serpente</div>';
-  _snakes.forEach(s => {
+  const SIDEBAR_LIMIT = 5;
+  _snakes.slice(0, SIDEBAR_LIMIT).forEach(s => {
     const active = currentPage==='dettaglio' && currentSnakeId===s.id ? 'active' : '';
     html += `<div class="sidebar-snake-item ${active}" onclick="showPage('dettaglio','${s.id}')">
       <div class="sex-dot ${esc(s.sesso)}"></div><span>${esc(s.nome)}</span></div>`;
   });
+  if (_snakes.length > SIDEBAR_LIMIT) {
+    const rest = _snakes.length - SIDEBAR_LIMIT;
+    html += `<div class="sidebar-snake-item" style="color:var(--text-dim);font-style:italic" onclick="showPage('serpenti')">+ ${rest} altr${rest===1?'o':'i'}</div>`;
+  }
   list.innerHTML = html;
 }
 
@@ -1048,6 +1058,7 @@ async function saveSerpente() {
   const sesso = document.getElementById('f-sesso').value;
   if (!nome) { toast('Inserisci il nome!','#c0392b'); return; }
   if (!sesso) { toast('Seleziona il sesso!','#c0392b'); return; }
+  if (isNameTaken(nome)) { toast(`"${nome}" già utilizzato`, '#c0392b'); return; }
   if (!canAddSnake()) { showUpgradeModal(); return; }
   const btn = document.getElementById('btn-salva-serpente');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
@@ -1711,6 +1722,7 @@ async function saveEditSerpente(snakeId) {
   };
   if (_editFotoData) updates.foto_url = _editFotoData;
   if (!updates.nome) { toast('Il nome è obbligatorio!','#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva Modifiche'; return; }
+  if (isNameTaken(updates.nome, snakeId)) { toast(`"${updates.nome}" già utilizzato`, '#c0392b'); btn.disabled=false; btn.innerHTML='💾 Salva Modifiche'; return; }
   try {
     await SB.updateSerpente(snakeId, updates);
     const snake = _snakes.find(s=>s.id===snakeId);
@@ -3651,6 +3663,15 @@ function isAdmin() {
 function canAddSnake() {
   if (isPro()) return true;
   return _snakes.length < FREE_SNAKE_LIMIT;
+}
+
+// Controlla se il nome è già usato da un altro serpente dello stesso utente
+// (case-insensitive). excludeId serve in modifica, per non confrontare il
+// serpente con se stesso quando si salva senza cambiare nome.
+function isNameTaken(name, excludeId = null) {
+  const normalized = (name || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return _snakes.some(s => s.id !== excludeId && (s.nome || '').trim().toLowerCase() === normalized);
 }
 
 // ═══════════════════════════════════════
