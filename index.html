@@ -567,6 +567,25 @@ const SUPABASE_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhidGNleHlydmVpZndmc3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5Njc4MDYsImV4cCI6MjEwMDU0MzgwNn0.eVW5nAZeKu8NoryZUYRKsmHGoHrPV719X3cRINCUkjk';
 const BASE_URL = 'https://snakekeeper.it/';
 
+// ═══════════════════════════════════════
+//  SICUREZZA: escaping HTML (anti-XSS)
+// ═══════════════════════════════════════
+// Tutti i campi inseriti liberamente dall'utente (nome, note, specie,
+// morfo, provenienza, ecc.) vengono renderizzati dentro innerHTML.
+// Senza escaping, un valore come "<img src=x onerror=alert(1)>" salvato
+// come nome di un serpente verrebbe eseguito come codice nel browser.
+// esc() converte i caratteri pericolosi nelle entita' HTML equivalenti
+// prima di inserirli nel markup.
+function esc(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── STRIPE CONFIG ──────────────────────────────────────────────────────────
 const STRIPE_PK = 'pk_test_51TxoKTFXkOXN7EUyLw4pgbOi0oIBtV19KQocWnnmPnICXEP8nHxfxaMSj63Cl8Y99eGhOEuo7YNQ9ZJyNv988YS6000Mp34367';
 const STRIPE_PRICES = {
@@ -754,7 +773,7 @@ function refreshDrawerSnakes() {
   if (!_snakes.length) html += '<div style="padding:8px 12px;font-size:12px;color:var(--text-dim)">Nessun serpente</div>';
   _snakes.forEach(s => {
     html += `<div class="sidebar-snake-item" onclick="showPage('dettaglio','${s.id}');closeDrawer()">
-      <div class="sex-dot ${s.sesso}"></div><span>${s.nome}</span></div>`;
+      <div class="sex-dot ${esc(s.sesso)}"></div><span>${esc(s.nome)}</span></div>`;
   });
   list.innerHTML = html;
 }
@@ -788,7 +807,7 @@ function refreshSidebar() {
   _snakes.forEach(s => {
     const active = currentPage==='dettaglio' && currentSnakeId===s.id ? 'active' : '';
     html += `<div class="sidebar-snake-item ${active}" onclick="showPage('dettaglio','${s.id}')">
-      <div class="sex-dot ${s.sesso}"></div><span>${s.nome}</span></div>`;
+      <div class="sex-dot ${esc(s.sesso)}"></div><span>${esc(s.nome)}</span></div>`;
   });
   list.innerHTML = html;
 }
@@ -899,16 +918,16 @@ function renderSerpenti() {
       <div class="snake-card" onclick="showPage('dettaglio','${s.id}')">
         <div class="snake-card-header">
           <div style="display:flex;align-items:center;gap:10px">
-            ${s.foto_url ? `<img src="${s.foto_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0">` : ''}
-            <div><div class="snake-name">${s.nome}</div><div class="snake-code">${s.icd}</div></div>
+            ${s.foto_url ? `<img src="${esc(s.foto_url)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0">` : ''}
+            <div><div class="snake-name">${esc(s.nome)}</div><div class="snake-code">${s.icd}</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:7px">
             ${locked ? `<span title="Sola lettura — passa a Pro per gestirlo" style="font-size:14px">🔒</span>` : ''}
-            <span class="badge badge-${s.sesso}">${s.sesso==='M'?'♂':'♀'}</span>
+            <span class="badge badge-${esc(s.sesso)}">${s.sesso==='M'?'♂':'♀'}</span>
           </div>
         </div>
         <div class="snake-info">
-          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${s.specie||'—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${esc(s.specie||'—')}</div></div>
           <div class="snake-info-item"><div class="snake-info-label">Età</div><div class="snake-info-value">${age(s.nascita)}</div></div>
           <div class="snake-info-item"><div class="snake-info-label">Ultimo pasto</div><div class="snake-info-value" style="font-size:12px">${lastFood?fmtDate(lastFood.data):'—'}</div></div>
           <div class="snake-info-item"><div class="snake-info-label">Ultime feci</div><div class="snake-info-value" style="font-size:12px">${lastFece?fmtDate(lastFece.data):'—'}</div></div>
@@ -1027,13 +1046,13 @@ function renderDettaglio() {
   <div class="snake-detail-header">
     <div class="sdh-top">
       <div class="sdh-top-row1">
-        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${snake.foto_url}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
+        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${esc(snake.foto_url)}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
         <div class="sdh-name-block">
-          <div class="snake-detail-name">${snake.nome}</div>
+          <div class="snake-detail-name">${esc(snake.nome)}</div>
           <div class="snake-detail-meta">
-            <span class="badge badge-${snake.sesso}">${snake.sesso==='M'?'♂ Maschio':'♀ Femmina'}</span>
-            ${snake.specie?`<span>🦎 ${snake.specie}</span>`:''}
-            ${snake.morfo?`<span>🎨 ${snake.morfo}</span>`:''}
+            <span class="badge badge-${esc(snake.sesso)}">${snake.sesso==='M'?'♂ Maschio':'♀ Femmina'}</span>
+            ${snake.specie?`<span>🦎 ${esc(snake.specie)}</span>`:''}
+            ${snake.morfo?`<span>🎨 ${esc(snake.morfo)}</span>`:''}
             ${snake.nascita?`<span>🎂 ${fmtDate(snake.nascita)}</span>`:''}
           </div>
         </div>
@@ -1163,7 +1182,7 @@ function renderDettaglio() {
           <div class="log-icon" style="background:rgba(74,144,164,0.2)">🧹</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.pulizia_tipo||'Pulizia'}${l.note?` · ${l.note}`:''}</div>
+            <div class="log-desc">${l.pulizia_tipo||'Pulizia'}${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
           <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snake.id}')">✕</button>
         </div>`).join('')}
@@ -1194,7 +1213,7 @@ function renderDettaglio() {
           <div class="log-icon" style="background:rgba(142,124,195,0.2)">🦎</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.feci_tipo||'Completa'}${l.note?` · ${l.note}`:''}</div>
+            <div class="log-desc">${l.feci_tipo||'Completa'}${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
           <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snake.id}')">✕</button>
         </div>`).join('')}
@@ -1242,7 +1261,7 @@ function renderDettaglio() {
           <div class="log-icon" style="background:rgba(109,181,109,0.2)">⚖️</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.grammi||0}g${l.note?` · ${l.note}`:''}</div>
+            <div class="log-desc">${l.grammi||0}g${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
           <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snake.id}')">✕</button>
         </div>`).join('')}
@@ -1257,7 +1276,7 @@ function renderDettaglio() {
         <button class="btn btn-ghost btn-sm" onclick="toggleEditSerpente('${snake.id}')" id="btn-toggle-edit">✏️ Modifica</button>
       </div>
       <div id="info-view-mode">
-        ${snake.foto_url ? `<div style="text-align:center;margin-bottom:14px"><img src="${snake.foto_url}" style="width:120px;height:120px;border-radius:12px;object-fit:cover;border:2px solid var(--border)"></div>` : ''}
+        ${snake.foto_url ? `<div style="text-align:center;margin-bottom:14px"><img src="${esc(snake.foto_url)}" style="width:120px;height:120px;border-radius:12px;object-fit:cover;border:2px solid var(--border)"></div>` : ''}
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
           ${[['Nome',snake.nome],['Specie',snake.specie||'—'],['Morfo',snake.morfo||'—'],
              ['Sesso',snake.sesso==='M'?'♂ Maschio':'♀ Femmina'],
@@ -1272,13 +1291,13 @@ function renderDettaglio() {
         </div>
         ${snake.note?`<div style="margin-top:12px;background:var(--bg-moss);border-radius:8px;padding:12px">
           <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Note</div>
-          <div style="font-size:13px;color:var(--text-mid)">${snake.note}</div>
+          <div style="font-size:13px;color:var(--text-mid)">${esc(snake.note)}</div>
         </div>`:''}
       </div>
       <div id="info-edit-mode" style="display:none">
         <div style="text-align:center;margin-bottom:14px">
           <div style="position:relative;display:inline-block">
-            ${snake.foto_url ? `<img id="edit-foto-preview" src="${snake.foto_url}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:2px solid var(--border)">` : `<div id="edit-foto-preview" style="width:100px;height:100px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg-moss)">📷</div>`}
+            ${snake.foto_url ? `<img id="edit-foto-preview" src="${esc(snake.foto_url)}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:2px solid var(--border)">` : `<div id="edit-foto-preview" style="width:100px;height:100px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg-moss)">📷</div>`}
           </div>
           <div style="margin-top:8px">
             <label style="cursor:pointer;padding:6px 14px;background:var(--bg-moss);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-mid);font-family:'Inter',sans-serif">
@@ -1288,9 +1307,9 @@ function renderDettaglio() {
           </div>
         </div>
         <div class="form-grid">
-          <div class="form-group"><label>Nome</label><input type="text" id="edit-nome" value="${snake.nome}" autocomplete="off"></div>
-          <div class="form-group"><label>Specie</label><input type="text" id="edit-specie" value="${snake.specie||''}" autocomplete="off"></div>
-          <div class="form-group"><label>Morfo</label><input type="text" id="edit-morfo" value="${snake.morfo||''}" autocomplete="off"></div>
+          <div class="form-group"><label>Nome</label><input type="text" id="edit-nome" value="${esc(snake.nome)}" autocomplete="off"></div>
+          <div class="form-group"><label>Specie</label><input type="text" id="edit-specie" value="${esc(snake.specie||'')}" autocomplete="off"></div>
+          <div class="form-group"><label>Morfo</label><input type="text" id="edit-morfo" value="${esc(snake.morfo||'')}" autocomplete="off"></div>
           <div class="form-group"><label>Sesso</label>
             <select id="edit-sesso">
               <option value="M" ${snake.sesso==='M'?'selected':''}>Maschio</option>
@@ -1299,9 +1318,9 @@ function renderDettaglio() {
           </div>
           <div class="form-group"><label>Data nascita</label><input type="date" id="edit-nascita" value="${snake.nascita||''}"></div>
           <div class="form-group"><label>Peso (g)</label><input type="number" id="edit-peso" value="${snake.peso||''}" inputmode="decimal"></div>
-          <div class="form-group"><label>Provenienza</label><input type="text" id="edit-provenienza" value="${snake.provenienza||''}" autocomplete="off"></div>
+          <div class="form-group"><label>Provenienza</label><input type="text" id="edit-provenienza" value="${esc(snake.provenienza||'')}" autocomplete="off"></div>
         </div>
-        <div class="form-group mt-16"><label>Note</label><textarea id="edit-note" rows="3" style="resize:vertical">${snake.note||''}</textarea></div>
+        <div class="form-group mt-16"><label>Note</label><textarea id="edit-note" rows="3" style="resize:vertical">${esc(snake.note||'')}</textarea></div>
         <div class="flex-row mt-20">
           <button class="btn btn-primary" id="btn-save-edit" onclick="saveEditSerpente('${snake.id}')">💾 Salva Modifiche</button>
           <button class="btn btn-ghost" onclick="toggleEditSerpente()">Annulla</button>
@@ -1327,9 +1346,9 @@ function renderLogList(logs, type, snakeId) {
       <div class="log-icon ${type}">${icons[type]}</div>
       <div class="log-info">
         <div class="log-date">${fmtDate(l.data)}</div>
-        <div class="log-desc">${desc}${l.note?` · ${l.note}`:''}</div>
+        <div class="log-desc">${desc}${l.note?` · ${esc(l.note)}`:''}</div>
       </div>
-      <button class="log-delete" onclick="editLogEntry('${l.id}','${snakeId}','${l.tipo}')" title="Modifica" style="color:var(--accent-gold);font-size:13px">✏️</button>
+      <button class="log-delete" onclick="editLogEntry('${l.id}','${snakeId}','${esc(l.tipo)}')" title="Modifica" style="color:var(--accent-gold);font-size:13px">✏️</button>
       <button class="log-delete" onclick="deleteLogEntry('${l.id}','${snakeId}')" title="Elimina">✕</button>
     </div>`;
   }).join('');
@@ -1486,7 +1505,7 @@ function editLogEntry(logId, snakeId, tipo) {
         ${['Pulizia completa','Pulizia parziale','Cambio acqua','Disinfezione'].map(t=>`<option ${log.pulizia_tipo===t?'selected':''}>${t}</option>`).join('')}
       </select></div>`;
   }
-  fieldsHtml += `<div class="form-group"><label>Note</label><input type="text" id="editlog-note" value="${log.note||''}" autocomplete="off"></div>`;
+  fieldsHtml += `<div class="form-group"><label>Note</label><input type="text" id="editlog-note" value="${esc(log.note||'')}" autocomplete="off"></div>`;
 
   const tipoLabels = {cibo:'🥩 Pasto',feci:'💩 Feci',uova:'🥚 Deposizione',muta:'🦎 Muta',peso:'⚖️ Peso',pulizia:'🧹 Pulizia'};
   modal.innerHTML = `
@@ -1686,7 +1705,7 @@ function showVendiModal(snakeId) {
   modal.innerHTML = `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:600px;box-shadow:0 -10px 40px rgba(0,0,0,0.6);padding-bottom:calc(24px + var(--safe-bottom));max-height:90vh;overflow-y:auto">
       <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--accent-gold);margin-bottom:6px">💰 Segna come Venduto</div>
-      <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">Stai vendendo: <strong style="color:var(--text-bright)">${snake.nome}</strong></div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">Stai vendendo: <strong style="color:var(--text-bright)">${esc(snake.nome)}</strong></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="display:flex;flex-direction:column;gap:6px">
           <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Data vendita *</label>
@@ -1785,13 +1804,13 @@ function renderVenduti() {
       <div class="snake-card" style="cursor:default">
         <div class="snake-card-header">
           <div>
-            <div class="snake-name" style="display:flex;align-items:center;gap:8px">${v.nome} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
+            <div class="snake-name" style="display:flex;align-items:center;gap:8px">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
             <div class="snake-code">${v.icd}</div>
           </div>
-          <span class="badge badge-${v.sesso}">${v.sesso === 'M' ? '♂' : '♀'}</span>
+          <span class="badge badge-${esc(v.sesso)}">${v.sesso === 'M' ? '♂' : '♀'}</span>
         </div>
         <div class="snake-info">
-          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${v.specie || '—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${esc(v.specie || '—')}</div></div>
           <div class="snake-info-item"><div class="snake-info-label">Data vendita</div><div class="snake-info-value">${fmtDate(v.data_vendita)}</div></div>
           <div class="snake-info-item"><div class="snake-info-label">Acquirente</div><div class="snake-info-value">${v.acquirente || '—'}</div></div>
           <div class="snake-info-item"><div class="snake-info-label">Prezzo</div><div class="snake-info-value" style="color:var(--accent-gold)">${v.prezzo ? '€' + v.prezzo : '—'}</div></div>
@@ -1853,13 +1872,13 @@ function renderDettaglioVenduto() {
   <div class="snake-detail-header">
     <div class="sdh-top">
       <div class="sdh-top-row1">
-        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${snake.foto_url}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
+        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${esc(snake.foto_url)}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
         <div class="sdh-name-block">
-          <div class="snake-detail-name">${v.nome} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
+          <div class="snake-detail-name">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
           <div class="snake-detail-meta">
-            <span class="badge badge-${v.sesso}">${v.sesso==='M'?'♂ Maschio':'♀ Femmina'}</span>
-            ${v.specie?`<span>🦎 ${v.specie}</span>`:''}
-            ${v.morfo?`<span>🎨 ${v.morfo}</span>`:''}
+            <span class="badge badge-${esc(v.sesso)}">${v.sesso==='M'?'♂ Maschio':'♀ Femmina'}</span>
+            ${v.specie?`<span>🦎 ${esc(v.specie)}</span>`:''}
+            ${v.morfo?`<span>🎨 ${esc(v.morfo)}</span>`:''}
             ${v.nascita?`<span>🎂 ${fmtDate(v.nascita)}</span>`:''}
           </div>
         </div>
@@ -1886,7 +1905,7 @@ function renderDettaglioVenduto() {
       <div>
         <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--accent-gold);margin-bottom:4px">💰 Venduto il ${fmtDate(v.data_vendita)}</div>
         <div style="font-size:13px;color:var(--text-mid)">Acquirente: <strong style="color:var(--text-bright)">${v.acquirente||'Non specificato'}</strong></div>
-        ${v.note_vendita?`<div style="font-size:12px;color:var(--text-dim);margin-top:2px">${v.note_vendita}</div>`:''}
+        ${v.note_vendita?`<div style="font-size:12px;color:var(--text-dim);margin-top:2px">${esc(v.note_vendita)}</div>`:''}
       </div>
       <div style="font-family:'Cinzel',serif;font-size:28px;color:var(--accent-gold)">${v.prezzo?'€'+v.prezzo:'N/D'}</div>
     </div>
@@ -1909,7 +1928,7 @@ function renderDettaglioVenduto() {
           <div class="log-icon food">🥩</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g${l.note?` · ${l.note}`:''}</div>
+            <div class="log-desc">${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
         </div>`).join('')}
     </div>
@@ -1924,7 +1943,7 @@ function renderDettaglioVenduto() {
           <div class="log-icon feci">💩</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.feci_tipo||'—'}${l.note?` · ${l.note}`:''}</div>
+            <div class="log-desc">${l.feci_tipo||'—'}${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
         </div>`).join('')}
     </div>
@@ -1939,7 +1958,7 @@ function renderDettaglioVenduto() {
           <div class="log-icon eggs">🥚</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.num_uova||0} uova, ${l.fertili||0} fertili${l.temp?` — ${l.temp}°C`:''}${l.note?` · ${l.note}`:''}</div>
+            <div class="log-desc">${l.num_uova||0} uova, ${l.fertili||0} fertili${l.temp?` — ${l.temp}°C`:''}${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
         </div>`).join('')}
     </div>
@@ -1963,7 +1982,7 @@ function renderDettaglioVenduto() {
       </div>
       ${v.note?`<div style="margin-top:12px;background:var(--bg-moss);border-radius:8px;padding:12px">
         <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Note</div>
-        <div style="font-size:13px;color:var(--text-mid)">${v.note}</div>
+        <div style="font-size:13px;color:var(--text-mid)">${esc(v.note)}</div>
       </div>`:''}
     </div>
   </div>`;
@@ -2002,7 +2021,7 @@ async function printResoconto(vendutoId) {
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Resoconto — ${v.nome}</title>
+<title>Resoconto — ${esc(v.nome)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2109,10 +2128,10 @@ async function printResoconto(vendutoId) {
     <div class="snake-header">
       <div class="snake-header-info">
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
-          <div class="snake-nome">${v.nome}</div>
-          <span class="sesso-badge sesso-${v.sesso}">${v.sesso === 'M' ? '♂ Maschio' : '♀ Femmina'}</span>
+          <div class="snake-nome">${esc(v.nome)}</div>
+          <span class="sesso-badge sesso-${esc(v.sesso)}">${v.sesso === 'M' ? '♂ Maschio' : '♀ Femmina'}</span>
         </div>
-        <div class="snake-specie">${v.specie || ''}${v.morfo ? ' · ' + v.morfo : ''}</div>
+        <div class="snake-specie">${esc(v.specie || '')}${v.morfo ? ' · ' + v.morfo : ''}</div>
         <div class="snake-icd">ICD: ${v.icd}</div>
       </div>
       <img src="${qrUrl}" width="80" height="80" style="border:1px solid #ddd;border-radius:2mm" />
@@ -2120,13 +2139,13 @@ async function printResoconto(vendutoId) {
 
     <div class="data-grid">
       <div class="data-field"><span class="lbl">Data di nascita</span><span class="val">${fmtDate(v.nascita)}</span></div>
-      <div class="data-field"><span class="lbl">Provenienza</span><span class="val">${v.provenienza || '—'}</span></div>
+      <div class="data-field"><span class="lbl">Provenienza</span><span class="val">${esc(v.provenienza || '—')}</span></div>
       <div class="data-field"><span class="lbl">Peso registrato</span><span class="val">${v.peso ? v.peso + 'g' : '—'}</span></div>
       <div class="data-field"><span class="lbl">Ingresso allevamento</span><span class="val">${dataIngresso ? dataIngresso.toLocaleDateString('it-IT') : '—'}</span></div>
       <div class="data-field"><span class="lbl">Giorni in allevamento</span><span class="val green">${giorniAllevamento !== null ? giorniAllevamento + ' giorni' : '—'}</span></div>
-      <div class="data-field"><span class="lbl">Morfo</span><span class="val">${v.morfo || '—'}</span></div>
+      <div class="data-field"><span class="lbl">Morfo</span><span class="val">${esc(v.morfo || '—')}</span></div>
     </div>
-    ${v.note ? `<div style="background:#fffbf0;border-left:3px solid #c9a84c;padding:2.5mm 4mm;border-radius:0 2mm 2mm 0;margin-top:3mm;font-size:9pt;color:#555"><strong>Note:</strong> ${v.note}</div>` : ''}
+    ${v.note ? `<div style="background:#fffbf0;border-left:3px solid #c9a84c;padding:2.5mm 4mm;border-radius:0 2mm 2mm 0;margin-top:3mm;font-size:9pt;color:#555"><strong>Note:</strong> ${esc(v.note)}</div>` : ''}
   </div>
 
   <!-- STATISTICHE RIEPILOGO -->
@@ -2157,7 +2176,7 @@ async function printResoconto(vendutoId) {
           <td>${l.food_tipo || '—'}</td>
           <td style="text-align:center">${l.qty || 1}</td>
           <td style="text-align:center">${l.grammi || '—'}</td>
-          <td style="color:#888">${l.note || ''}</td>
+          <td style="color:#888">${esc(l.note || '')}</td>
         </tr>`).join('')}
         <tr style="background:#f0f7f0">
           <td colspan="3"><strong>Totale</strong></td>
@@ -2178,7 +2197,7 @@ async function printResoconto(vendutoId) {
         ${feciLogs.map(l => `<tr>
           <td>${fmtDate(l.data)}</td>
           <td>${l.feci_tipo || '—'}</td>
-          <td style="color:#888">${l.note || ''}</td>
+          <td style="color:#888">${esc(l.note || '')}</td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -2196,7 +2215,7 @@ async function printResoconto(vendutoId) {
           <td style="text-align:center">${l.num_uova || '—'}</td>
           <td style="text-align:center">${l.fertili || '—'}</td>
           <td style="text-align:center">${l.temp || '—'}</td>
-          <td style="color:#888">${l.note || ''}</td>
+          <td style="color:#888">${esc(l.note || '')}</td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -2209,7 +2228,7 @@ async function printResoconto(vendutoId) {
       <div>
         <div class="vb-title">Venduto il ${fmtDate(v.data_vendita)}</div>
         <div class="vb-data">Acquirente: ${v.acquirente || 'Non specificato'}</div>
-        ${v.note_vendita ? `<div class="vb-data">Note: ${v.note_vendita}</div>` : ''}
+        ${v.note_vendita ? `<div class="vb-data">Note: ${esc(v.note_vendita)}</div>` : ''}
       </div>
       <div class="vb-prezzo">${v.prezzo ? '€' + parseFloat(v.prezzo).toFixed(2) : 'N/D'}</div>
     </div>
@@ -2251,7 +2270,7 @@ function renderRegistro() {
         <div class="log-icon ${types[l.tipo]||'food'}">${icons[l.tipo]||'📌'}</div>
         <div class="log-info">
           <div class="log-date">${fmtDate(l.data)} · <span style="color:var(--accent-lime);cursor:pointer" onclick="showPage('dettaglio','${l.snake_id}')">${sname}</span></div>
-          <div class="log-desc">${desc}${l.note?` · ${l.note}`:''}</div>
+          <div class="log-desc">${desc}${l.note?` · ${esc(l.note)}`:''}</div>
         </div>
       </div>`;
     });
@@ -2289,7 +2308,7 @@ function printSchedaSerpente(snakeId) {
   const win = window.open('about:blank', '_blank');
   if (!win) { toast('Abilita i popup per visualizzare il PDF', '#c0392b'); return; }
   win.document.write(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-<title>Scheda — ${snake.nome}</title>
+<title>Scheda — ${esc(snake.nome)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2324,7 +2343,7 @@ function printSchedaSerpente(snakeId) {
     <div class="doc-sub">Documento generato il ${today} — SnakeKeeper</div>
   </div>
   <div style="text-align:right">
-    ${snake.foto_url ? `<img src="${snake.foto_url}" class="foto-circle">` : ''}
+    ${snake.foto_url ? `<img src="${esc(snake.foto_url)}" class="foto-circle">` : ''}
     <img src="${qrUrl}" style="width:50px;height:50px;margin-left:8px" alt="QR">
   </div>
 </div>
@@ -2346,7 +2365,7 @@ function printSchedaSerpente(snakeId) {
   ].map(([l,v])=>`<div class="stat-box"><div class="stat-num">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
 </div>
 
-${snake.note ? `<div class="section"><div class="sec-title">📝 Note</div><p style="font-size:10pt;color:#444;margin-top:2mm">${snake.note}</p></div>` : ''}
+${snake.note ? `<div class="section"><div class="sec-title">📝 Note</div><p style="font-size:10pt;color:#444;margin-top:2mm">${esc(snake.note)}</p></div>` : ''}
 
 ${makeTable('Storico Pasti','🥩', foodLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.food_tipo||'—',(l.grammi||0)+'g','×'+(l.qty||1),l.note||'']), ['Data','Tipo','Peso','Qty','Note'])}
 ${makeTable('Storico Mute','🦎', mutaLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.feci_tipo||'Completa',l.note||'']), ['Data','Esito','Note'])}
@@ -2375,7 +2394,7 @@ function printLabel(id) {
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Etichetta — ${snake.nome}</title>
+<title>Etichetta — ${esc(snake.nome)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2517,8 +2536,8 @@ function printLabel(id) {
 
     <!-- DATI SERPENTE -->
     <div class="col-info">
-      <div class="snake-nome">${snake.nome} <span class="snake-sesso">${snake.sesso === 'M' ? '♂' : '♀'}</span></div>
-      <div class="snake-specie">${snake.specie || ''}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
+      <div class="snake-nome">${esc(snake.nome)} <span class="snake-sesso">${snake.sesso === 'M' ? '♂' : '♀'}</span></div>
+      <div class="snake-specie">${esc(snake.specie || '')}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
       <div class="dati-grid">
         <div class="dati-field">
           <span class="lbl">Sesso</span>
@@ -2529,9 +2548,9 @@ function printLabel(id) {
           <span class="val">${fmtDate(snake.nascita)}</span>
         </div>
         ${snake.peso ? `<div class="dati-field"><span class="lbl">Peso</span><span class="val">${snake.peso}g</span></div>` : ''}
-        ${snake.provenienza ? `<div class="dati-field"><span class="lbl">Provenienza</span><span class="val" style="font-size:9pt">${snake.provenienza}</span></div>` : ''}
-        ${snake.morfo ? `<div class="dati-field"><span class="lbl">Morfo</span><span class="val">${snake.morfo}</span></div>` : ''}
-        ${snake.specie ? `<div class="dati-field"><span class="lbl">Specie</span><span class="val" style="font-size:9pt;font-style:italic">${snake.specie}</span></div>` : ''}
+        ${snake.provenienza ? `<div class="dati-field"><span class="lbl">Provenienza</span><span class="val" style="font-size:9pt">${esc(snake.provenienza)}</span></div>` : ''}
+        ${snake.morfo ? `<div class="dati-field"><span class="lbl">Morfo</span><span class="val">${esc(snake.morfo)}</span></div>` : ''}
+        ${snake.specie ? `<div class="dati-field"><span class="lbl">Specie</span><span class="val" style="font-size:9pt;font-style:italic">${esc(snake.specie)}</span></div>` : ''}
       </div>
       <div class="icd-box">
         <div><div class="lbl">Codice ICD</div><div class="val">${snake.icd}</div></div>
@@ -2550,14 +2569,14 @@ function printLabel(id) {
       </div>
       <div class="teca-info">
         <div>
-          <div class="teca-nome">${snake.nome} ${snake.sesso === 'M' ? '♂' : '♀'}</div>
-          <div class="teca-specie-s">${snake.specie || ''}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
+          <div class="teca-nome">${esc(snake.nome)} ${snake.sesso === 'M' ? '♂' : '♀'}</div>
+          <div class="teca-specie-s">${esc(snake.specie || '')}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
         </div>
         <div class="teca-grid">
           <div class="teca-field"><span class="lbl">Sesso</span><span class="val">${snake.sesso === 'M' ? 'Maschio' : 'Femmina'}</span></div>
           <div class="teca-field"><span class="lbl">Nascita</span><span class="val">${fmtDate(snake.nascita)}</span></div>
           ${snake.peso ? `<div class="teca-field"><span class="lbl">Peso</span><span class="val">${snake.peso}g</span></div>` : ''}
-          ${snake.provenienza ? `<div class="teca-field"><span class="lbl">Provenienza</span><span class="val">${snake.provenienza}</span></div>` : ''}
+          ${snake.provenienza ? `<div class="teca-field"><span class="lbl">Provenienza</span><span class="val">${esc(snake.provenienza)}</span></div>` : ''}
         </div>
         <div>
           <div class="teca-icd">ICD: ${snake.icd}</div>
@@ -3370,6 +3389,19 @@ async function renderProfilo() {
           🚪 Esci dall'account
         </button>
       </div>
+    </div>
+
+    <!-- Card Zona pericolosa -->
+    <div class="card" style="margin-top:16px;border:1px solid rgba(192,57,43,0.35)">
+      <div class="card-title" style="color:var(--accent-red)">⚠️ Zona pericolosa</div>
+      <p style="font-size:12px;color:var(--text-dim);line-height:1.6;margin:0 0 12px">
+        Elimina definitivamente il tuo account e tutti i dati associati: serpenti, registri, archivio venduti e abbonamento.
+        Questa azione <strong style="color:var(--text-bright)">non può essere annullata</strong>.
+      </p>
+      <button onclick="showDeleteAccountModal()"
+        style="width:100%;padding:12px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.5);color:var(--accent-red);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">
+        🗑️ Elimina account definitivamente
+      </button>
     </div>
     <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:2">
       <a href="#" onclick="showPage('privacy')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">Privacy Policy</a>·
@@ -4316,6 +4348,86 @@ async function doForgotPassword() {
     showAuthMsg('✅ Email di recupero inviata! Controlla la tua casella.');
   } catch(e) {
     showAuthMsg('❌ ' + e.message, true);
+  }
+}
+
+
+// ===========================================
+//  ELIMINAZIONE ACCOUNT (diritto alla cancellazione)
+// ===========================================
+function showDeleteAccountModal() {
+  const prev = document.getElementById('delete-account-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'delete-account-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:700;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid rgba(192,57,43,0.4);border-radius:16px;padding:28px;max-width:440px;width:100%;box-shadow:var(--shadow)">
+      <div style="font-size:40px;text-align:center;margin-bottom:10px">⚠️</div>
+      <div style="font-family:'Cinzel',serif;font-size:19px;color:var(--accent-red);margin-bottom:14px;text-align:center">Eliminare l'account?</div>
+      <p style="color:var(--text-mid);font-size:13px;line-height:1.6;margin:0 0 10px">
+        Verranno eliminati <strong style="color:var(--text-bright)">definitivamente e senza possibilità di recupero</strong>:
+      </p>
+      <ul style="color:var(--text-mid);font-size:13px;line-height:1.8;margin:0 0 16px;padding-left:20px">
+        <li>Tutti i serpenti e le loro schede</li>
+        <li>Tutti i registri (pasti, feci, pulizie, mute, pesate)</li>
+        <li>L'archivio degli esemplari venduti</li>
+        <li>L'abbonamento attivo (verrà cancellato, senza rimborso automatico per il periodo residuo)</li>
+        <li>Il tuo account di accesso</li>
+      </ul>
+      <p style="color:var(--text-mid);font-size:13px;line-height:1.6;margin:0 0 8px">
+        Per confermare, scrivi <strong style="color:var(--accent-red)">ELIMINA</strong> qui sotto:
+      </p>
+      <input type="text" id="delete-account-confirm-input" autocomplete="off"
+        style="width:100%;padding:12px;background:var(--bg-moss);border:1px solid var(--border);border-radius:8px;color:var(--text-bright);font-family:'Inter',sans-serif;font-size:14px;margin-bottom:16px;box-sizing:border-box"
+        placeholder="ELIMINA">
+      <div class="flex-row" style="justify-content:center;gap:10px">
+        <button id="btn-confirm-delete-account" onclick="doDeleteAccount()" disabled
+          style="padding:12px 20px;background:var(--accent-red);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;opacity:0.5">
+          🗑️ Elimina definitivamente
+        </button>
+        <button class="btn btn-ghost" onclick="document.getElementById('delete-account-modal').remove()">Annulla</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  // Il pulsante conferma resta disabilitato finche' il testo non corrisponde esattamente
+  const input = document.getElementById('delete-account-confirm-input');
+  const confirmBtn = document.getElementById('btn-confirm-delete-account');
+  input.addEventListener('input', function() {
+    const match = this.value.trim() === 'ELIMINA';
+    confirmBtn.disabled = !match;
+    confirmBtn.style.opacity = match ? '1' : '0.5';
+  });
+}
+
+async function doDeleteAccount() {
+  const btn = document.getElementById('btn-confirm-delete-account');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Eliminazione in corso...';
+  try {
+    const _authSession = await getSession();
+    if (!_authSession) throw new Error('Sessione non valida, effettua di nuovo il login.');
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_authSession.access_token}`
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Errore durante l\'eliminazione');
+
+    clearSession();
+    document.getElementById('delete-account-modal')?.remove();
+    alert('Il tuo account e tutti i dati associati sono stati eliminati definitivamente.');
+    window.location.href = window.location.pathname;
+  } catch (e) {
+    toast('❌ ' + e.message, '#c0392b');
+    btn.disabled = false;
+    btn.innerHTML = '🗑️ Elimina definitivamente';
   }
 }
 
