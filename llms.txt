@@ -1,0 +1,23 @@
+# SnakeKeeper
+
+> Gestionale professionale online per allevatori di serpenti. Permette di tracciare pasti, mute (ecdisi), peso, feci, pulizie e deposizioni (uova) per ogni esemplare, con schede complete, grafici di crescita ed esportazione PDF per il veterinario.
+
+SnakeKeeper (https://snakekeeper.it) è un'applicazione web per la gestione di allevamenti di serpenti (rettili), pensata per allevatori amatoriali e professionali.
+
+## Funzionalità principali
+- Registro pasti: traccia tipo di preda, peso, quantità, con alert automatici se un serpente non mangia
+- Monitoraggio mute (ecdisi): registro con date ed esiti
+- Curva di crescita: grafico del peso nel tempo
+- Registro feci e pulizie del terrario
+- Registro deposizioni/uova per la riproduzione
+- Schede complete per ogni esemplare: specie, morfo, sesso, provenienza, foto
+- Esportazione PDF professionale da condividere con il veterinario
+- Archivio esemplari venduti
+- App installabile su iPhone e Android (PWA), funziona anche offline
+- Piano gratuito disponibile fino a 3 serpenti; piani Pro per allevamenti più grandi
+
+## Pubblico
+Allevatori di serpenti (pitoni, boa, colubridi, ecc.), sia amatoriali che professionali, che vogliono sostituire quaderni cartacei o fogli Excel con uno strumento dedicato.
+
+## Lingua
+Sito e app in lingua italiana (con supporto inglese).
