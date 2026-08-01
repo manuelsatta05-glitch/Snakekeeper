@@ -3392,9 +3392,13 @@ async function loadSubscriptionInfo() {
   const el = document.getElementById('subscription-info');
   if (!el) return;
   try {
+    const _authSession = await getSession();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-subscription`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_authSession ? _authSession.access_token : ''}`
+      },
       body: JSON.stringify({ userId: _currentUser.id, action: 'info' })
     });
     const info = await res.json();
@@ -3514,9 +3518,13 @@ async function doCancelSubscription() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Elaborazione...';
   try {
+    const _authSession = await getSession();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-subscription`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_authSession ? _authSession.access_token : ''}`
+      },
       body: JSON.stringify({ userId: _currentUser.id, action: 'cancel' })
     });
     const data = await res.json();
