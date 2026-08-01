@@ -4212,6 +4212,23 @@ async function loadAdminData() {
     }
     const plans = await plansRes.json();
 
+    // Statistiche VERE di tutta la piattaforma (non solo le tue)
+    let globalStats = { serpenti_totali: '—', log_totali: '—', venduti_totali: '—', utenti_con_serpenti: '—' };
+    try {
+      const statsRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_global_app_stats`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      if (statsRes.ok) globalStats = await statsRes.json();
+    } catch(e) {
+      console.warn('Statistiche globali non disponibili:', e);
+    }
+
     const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever' };
     const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)' };
 
@@ -4304,11 +4321,13 @@ async function loadAdminData() {
     const statsGlobaliHtml = `
       <div class="card" style="margin-top:16px">
         <div class="card-title">📊 Statistiche Globali App</div>
+        <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px">Dati aggregati di tutti gli utenti della piattaforma</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
           ${[
-            ['🐍', 'Serpenti totali', _snakes.length, 'var(--accent-lime)'],
-            ['📋', 'Log totali', _logs.length, 'var(--accent-gold)'],
-            ['💰', 'Venduti totali', _venduti.length, 'var(--accent-pink)'],
+            ['🐍', 'Serpenti totali', globalStats.serpenti_totali, 'var(--accent-lime)'],
+            ['📋', 'Log totali', globalStats.log_totali, 'var(--accent-gold)'],
+            ['💰', 'Venduti totali', globalStats.venduti_totali, 'var(--accent-pink)'],
+            ['👥', 'Utenti con serpenti', globalStats.utenti_con_serpenti, 'var(--accent-lime)'],
           ].map(([ico,lab,val,col])=>`
             <div style="background:var(--bg-moss);border-radius:10px;padding:14px;text-align:center">
               <div style="font-size:20px">${ico}</div>
