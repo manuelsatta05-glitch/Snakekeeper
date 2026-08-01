@@ -1706,6 +1706,69 @@ function previewFoto(input) {
   reader.readAsDataURL(file);
 }
 
+// ═══════════════════════════════════════
+//  LOGO ALLEVAMENTO
+// ═══════════════════════════════════════
+function uploadLogo(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = async function() {
+      const canvas = document.createElement('canvas');
+      const maxSize = 400;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      // PNG per mantenere eventuale trasparenza dei loghi
+      const logoData = canvas.toDataURL('image/png');
+      try {
+        await saveLogoToServer(logoData);
+        _userLogo = logoData;
+        renderProfilo();
+        toast('🏷️ Logo caricato!');
+      } catch(err) {
+        toast('❌ Errore: ' + err.message, '#c0392b');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function removeLogo() {
+  if (!confirm('Rimuovere il logo? Non comparirà più su etichette e PDF.')) return;
+  try {
+    await saveLogoToServer(null);
+    _userLogo = null;
+    renderProfilo();
+    toast('Logo rimosso');
+  } catch(err) {
+    toast('❌ Errore: ' + err.message, '#c0392b');
+  }
+}
+
+async function saveLogoToServer(logoDataOrNull) {
+  const session = await getSession();
+  const token = session ? session.access_token : SUPABASE_KEY;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_own_logo`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ p_logo_url: logoDataOrNull })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.message || err.hint || 'Errore salvataggio logo');
+  }
+}
+
 async function saveEditSerpente(snakeId) {
   if (!requireEditable(snakeId)) return;
   const btn = document.getElementById('btn-save-edit');
@@ -2399,9 +2462,12 @@ function printSchedaSerpente(snakeId) {
   @media print { body { padding:0; } }
 </style></head><body>
 <div class="doc-header">
-  <div>
-    <div class="doc-title">Scheda Serpente</div>
-    <div class="doc-sub">Documento generato il ${today} — SnakeKeeper</div>
+  <div style="display:flex;align-items:center;gap:4mm">
+    ${_userLogo ? `<img src="${_userLogo}" style="width:16mm;height:16mm;object-fit:contain" alt="Logo allevamento">` : ''}
+    <div>
+      <div class="doc-title">Scheda Serpente</div>
+      <div class="doc-sub">Documento generato il ${today} — SnakeKeeper</div>
+    </div>
   </div>
   <div style="text-align:right">
     ${snake.foto_url ? `<img src="${esc(snake.foto_url)}" class="foto-circle">` : ''}
@@ -2528,17 +2594,23 @@ function printLabel(id) {
   /* ── ETICHETTA TECA ── */
   .teca-section-label { font-size: 7pt; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3mm; }
   .teca-label {
-    width: 90mm; height: 44mm;
+    width: 95mm; height: 50mm;
     border: 2px solid #1a3320;
     border-radius: 3mm;
     padding: 3mm 3.5mm;
     display: flex; gap: 2.5mm; align-items: stretch;
     background: white;
     box-shadow: 0 0 0 1.5mm #6db56d inset;
+    position: relative;
+  }
+  .teca-logo {
+    position: absolute; top: 2.5mm; right: 3mm;
+    width: 10mm; height: 10mm; object-fit: contain;
+    background: white; border-radius: 1.5mm;
   }
   .teca-qr-box { flex-shrink: 0; width: 35mm; display: flex; align-items: center; justify-content: center; }
   .teca-qr-box img { width: 35mm; height: 35mm; display: block; }
-  .teca-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+  .teca-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding-right: 11mm; }
   .teca-nome { font-family: 'Cinzel', serif; font-size: 12pt; font-weight: 700; color: #0d1f0f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .teca-specie-s { font-size: 6.5pt; color: #555; font-style: italic; margin-top: 0.5mm; }
   .teca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 2mm; margin-top: 1mm; }
@@ -2625,6 +2697,7 @@ function printLabel(id) {
   <div style="width:100%">
     <div class="teca-section-label">✂️ Ritaglia e applica sulla teca (90×44mm)</div>
     <div class="teca-label">
+      ${_userLogo ? `<img class="teca-logo" src="${_userLogo}" alt="Logo">` : ''}
       <div class="teca-qr-box">
         <img src="${qrSmallUrl}" alt="QR" />
       </div>
@@ -3353,6 +3426,27 @@ async function renderProfilo() {
       </div>
     </div>
 
+    <!-- Card Logo Allevamento -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">🏷️ Logo allevamento</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
+        Se carichi un logo, verrà mostrato automaticamente sull'etichetta stampabile dei serpenti e sui PDF esportati.
+        Se non lo carichi, quelle sezioni restano semplicemente senza logo.
+      </p>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div id="logo-preview-box" style="width:80px;height:80px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;background:var(--bg-moss);overflow:hidden;flex-shrink:0">
+          ${_userLogo ? `<img id="logo-preview-img" src="${esc(_userLogo)}" style="width:100%;height:100%;object-fit:contain">` : `<span style="font-size:28px">🏷️</span>`}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;text-align:center">
+            📤 ${_userLogo ? 'Cambia logo' : 'Carica logo'}
+            <input type="file" accept="image/*" onchange="uploadLogo(this)" style="display:none">
+          </label>
+          ${_userLogo ? `<button class="btn btn-ghost btn-sm" style="color:var(--accent-red);border-color:rgba(192,57,43,0.4)" onclick="removeLogo()">🗑️ Rimuovi logo</button>` : ''}
+        </div>
+      </div>
+    </div>
+
     <!-- Card Piano -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">💳 Piano attuale</div>
@@ -3651,6 +3745,7 @@ async function doCancelSubscription() {
 // ═══════════════════════════════════════
 let _currentUser = null;
 let _userPlan = 'free'; // 'free' | 'pro' | 'admin' | 'free_forever'
+let _userLogo = null; // logo allevatore, base64 compresso, null se non caricato
 const FREE_SNAKE_LIMIT = 3;
 const ADMIN_EMAIL = 'manuel.satta05@gmail.com';
 
@@ -3754,9 +3849,10 @@ async function loadUserPlan() {
   if (!_currentUser || !_currentUser.id) return;
   try {
     // Usa SB.req() che gestisce già il token correttamente
-    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan`);
+    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan,logo_url`);
     if (data && data.length > 0) {
       _userPlan = data[0].plan || 'free';
+      _userLogo = data[0].logo_url || null;
       applyPlanUI();
       return;
     }
