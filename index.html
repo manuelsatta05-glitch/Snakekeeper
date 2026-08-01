@@ -510,6 +510,15 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
             <input type="password" id="reg-password" placeholder="min. 6 caratteri" autocomplete="new-password"
               style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:16px;outline:none">
           </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">Lingua / Language</label>
+            <div style="display:flex;gap:8px">
+              <button type="button" id="reg-lang-it" onclick="selectRegLang('it')"
+                style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--accent-lime);background:rgba(109,181,109,0.15);color:var(--text-bright);font-family:'Inter',sans-serif;font-size:14px;cursor:pointer">🇮🇹 Italiano</button>
+              <button type="button" id="reg-lang-en" onclick="selectRegLang('en')"
+                style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:14px;cursor:pointer">🇬🇧 English</button>
+            </div>
+          </div>
           <button onclick="doRegister()" id="btn-register"
             style="margin-top:4px;padding:14px;background:var(--accent-lime);color:#0a1a0a;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;min-height:48px">
             🐍 Crea Account
@@ -541,12 +550,12 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
   </div>
   <nav>
     <div class="nav-label">Navigazione</div>
-    <button onclick="showPage('dashboard');closeDrawer()" id="mnav-dashboard"><span class="ico">🏠</span> Dashboard</button>
-    <button onclick="showPage('serpenti');closeDrawer()" id="mnav-serpenti"><span class="ico">🐍</span> I Miei Serpenti</button>
-    <button onclick="showPage('aggiungi');closeDrawer()" id="mnav-aggiungi"><span class="ico">➕</span> Aggiungi Serpente</button>
-    <button onclick="showPage('registro');closeDrawer()" id="mnav-registro"><span class="ico">📋</span> Registro Attività</button>
-    <button onclick="showPage('venduti');closeDrawer()" id="mnav-venduti"><span class="ico">💰</span> Venduti</button>
-    <button onclick="showPage('profilo');closeDrawer()" id="mnav-profilo"><span class="ico">👤</span> Il mio profilo</button>
+    <button onclick="showPage('dashboard');closeDrawer()" id="mnav-dashboard"><span class="ico">🏠</span><span data-it="Dashboard" data-en="Dashboard"> Dashboard</span></button>
+    <button onclick="showPage('serpenti');closeDrawer()" id="mnav-serpenti"><span class="ico">🐍</span><span data-it="I Miei Serpenti" data-en="My Snakes"> I Miei Serpenti</span></button>
+    <button onclick="showPage('aggiungi');closeDrawer()" id="mnav-aggiungi"><span class="ico">➕</span><span data-it="Aggiungi Serpente" data-en="Add Snake"> Aggiungi Serpente</span></button>
+    <button onclick="showPage('registro');closeDrawer()" id="mnav-registro"><span class="ico">📋</span><span data-it="Registro Attività" data-en="Activity Log"> Registro Attività</span></button>
+    <button onclick="showPage('venduti');closeDrawer()" id="mnav-venduti"><span class="ico">💰</span><span data-it="Venduti" data-en="Sold"> Venduti</span></button>
+    <button onclick="showPage('profilo');closeDrawer()" id="mnav-profilo"><span class="ico">👤</span><span data-it="Il mio profilo" data-en="My Profile"> Il mio profilo</span></button>
     <div id="admin-mnav-section" style="display:none">
       <div class="nav-label" style="margin-top:8px">Amministrazione</div>
       <button onclick="showPage('admin');closeDrawer()" id="mnav-admin" style="color:var(--accent-gold)"><span class="ico">👑</span> Pannello Admin</button>
@@ -565,15 +574,15 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
     </div>
     <nav>
       <div class="nav-label">Navigazione</div>
-      <button class="active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="ico">🏠</span> Dashboard</button>
-      <button onclick="showPage('serpenti')" id="nav-serpenti"><span class="ico">🐍</span> I Miei Serpenti</button>
-      <button onclick="showPage('aggiungi')" id="nav-aggiungi"><span class="ico">➕</span> Aggiungi Serpente</button>
-      <button onclick="showPage('registro')" id="nav-registro"><span class="ico">📋</span> Registro Attività</button>
-      <button onclick="showPage('venduti')" id="nav-venduti"><span class="ico">💰</span> Venduti</button>
-      <button onclick="showPage('profilo')" id="nav-profilo"><span class="ico">👤</span> Il mio profilo</button>
+      <button class="active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="ico">🏠</span><span data-it="Dashboard" data-en="Dashboard"> Dashboard</span></button>
+      <button onclick="showPage('serpenti')" id="nav-serpenti"><span class="ico">🐍</span><span data-it="I Miei Serpenti" data-en="My Snakes"> I Miei Serpenti</span></button>
+      <button onclick="showPage('aggiungi')" id="nav-aggiungi"><span class="ico">➕</span><span data-it="Aggiungi Serpente" data-en="Add Snake"> Aggiungi Serpente</span></button>
+      <button onclick="showPage('registro')" id="nav-registro"><span class="ico">📋</span><span data-it="Registro Attività" data-en="Activity Log"> Registro Attività</span></button>
+      <button onclick="showPage('venduti')" id="nav-venduti"><span class="ico">💰</span><span data-it="Venduti" data-en="Sold"> Venduti</span></button>
+      <button onclick="showPage('profilo')" id="nav-profilo"><span class="ico">👤</span><span data-it="Il mio profilo" data-en="My Profile"> Il mio profilo</span></button>
       <div id="admin-nav-section" style="display:none">
         <div class="nav-label" style="margin-top:8px">Amministrazione</div>
-        <button onclick="showPage('admin')" id="nav-admin" style="color:var(--accent-gold)"><span class="ico">👑</span> Pannello Admin</button>
+        <button onclick="showPage('admin')" id="nav-admin" style="color:var(--accent-gold)"><span class="ico">👑</span><span data-it="Pannello Admin" data-en="Admin Panel"> Pannello Admin</span></button>
       </div>
     </nav>
     <div class="sidebar-snakes" id="sidebar-snake-list"><div class="nav-label">I tuoi serpenti</div></div>
@@ -602,11 +611,11 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
 <!-- MOBILE BOTTOM NAV -->
 <div id="mobile-nav">
   <div id="mobile-nav-inner">
-    <button class="mob-nav-btn active" id="mob-dashboard" onclick="showPage('dashboard')"><span class="m-ico">🏠</span><span>Home</span></button>
-    <button class="mob-nav-btn" id="mob-serpenti" onclick="showPage('serpenti')"><span class="m-ico">🐍</span><span>Serpenti</span></button>
+    <button class="mob-nav-btn active" id="mob-dashboard" onclick="showPage('dashboard')"><span class="m-ico">🏠</span><span data-it="Home" data-en="Home">Home</span></button>
+    <button class="mob-nav-btn" id="mob-serpenti" onclick="showPage('serpenti')"><span class="m-ico">🐍</span><span data-it="Serpenti" data-en="Snakes">Serpenti</span></button>
     <button class="mob-nav-btn" id="mob-aggiungi" onclick="showPage('aggiungi')" style="color:var(--accent-gold)"><span class="m-ico" style="font-size:28px;line-height:1">＋</span></button>
-    <button class="mob-nav-btn" id="mob-registro" onclick="showPage('registro')"><span class="m-ico">📋</span><span>Registro</span></button>
-    <button class="mob-nav-btn" id="mob-drawer" onclick="openDrawer()"><span class="m-ico">☰</span><span>Menu</span></button>
+    <button class="mob-nav-btn" id="mob-registro" onclick="showPage('registro')"><span class="m-ico">📋</span><span data-it="Registro" data-en="Log">Registro</span></button>
+    <button class="mob-nav-btn" id="mob-drawer" onclick="openDrawer()"><span class="m-ico">☰</span><span data-it="Menu" data-en="Menu">Menu</span></button>
   </div>
 </div>
 
@@ -903,11 +912,11 @@ function renderDashboard() {
   const maxBar = Math.max(...chartData,1);
 
   document.getElementById('main-content').innerHTML = `
-  <div class="page-header"><h2>🌿 Dashboard</h2><p>Benvenuto nel gestionale · ☁️ Dati su Supabase</p></div>
+  <div class="page-header"><h2>🌿 Dashboard</h2><p>${t('dashboard_welcome')} · ☁️ Dati su Supabase</p></div>
   <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
-    ${[['🐍',_snakes.length,'Totale','var(--accent-gold)'],['♂️',totM,'Maschi','#5b9bd5'],
-       ['♀️',totF,'Femmine','var(--accent-pink)'],['🥩',foodMonth,'Pasti/mese','var(--accent-lime)'],
-       ['🥚',eggsTotal,'Deposizioni','var(--accent-pink)']
+    ${[['🐍',_snakes.length,t('dashboard_totale'),'var(--accent-gold)'],['♂️',totM,t('dashboard_maschi'),'#5b9bd5'],
+       ['♀️',totF,t('dashboard_femmine'),'var(--accent-pink)'],['🥩',foodMonth,t('dashboard_pasti_mese'),'var(--accent-lime)'],
+       ['🥚',eggsTotal,t('dashboard_deposizioni'),'var(--accent-pink)']
     ].map(([ico,val,lab,col])=>`
       <div class="card" style="text-align:center;padding:14px">
         <div style="font-size:28px;margin-bottom:4px">${ico}</div>
@@ -917,33 +926,33 @@ function renderDashboard() {
   </div>
   <div class="dash-bottom-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div class="card">
-      <div class="card-title">📊 Pasti (7gg)</div>
+      <div class="card-title">📊 ${t('dashboard_pasti_7gg')}</div>
       <div class="mini-chart">${chartData.map(v=>`<div class="mini-bar" style="height:${Math.max(6,(v/maxBar)*100)}%"></div>`).join('')}</div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--text-dim)">
-        ${['6g','5g','4g','3g','2g','ieri','oggi'].map(l=>`<span>${l}</span>`).join('')}
+        ${['6','5','4','3','2'].map(n=>`<span>${n}${t('dashboard_giorni_fa')}</span>`).concat([`<span>${t('dashboard_ieri')}</span>`,`<span>${t('dashboard_oggi')}</span>`]).join('')}
       </div>
     </div>
     <div class="card">
-      <div class="card-title">⚠️ Attenzione</div>
+      <div class="card-title">⚠️ ${t('dashboard_attenzione')}</div>
       ${warnings.length===0
-        ? `<div style="color:var(--text-dim);font-size:14px;padding:8px 0">✅ Tutto in regola!</div>`
+        ? `<div style="color:var(--text-dim);font-size:14px;padding:8px 0">✅ ${t('dashboard_tutto_regola')}</div>`
         : warnings.map(w=>`
           <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
             <span>🐍</span>
             <div style="flex:1;min-width:0">
-              <div style="font-size:13px;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.nome}</div>
-              <div style="font-size:10px;color:var(--accent-red)">${w.days===null?'Nessun pasto':w.days+'g fa'}</div>
+              <div style="font-size:13px;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.nome)}</div>
+              <div style="font-size:10px;color:var(--accent-red)">${w.days===null?t('dashboard_nessun_pasto'):w.days+t('dashboard_giorni_fa')}</div>
             </div>
-            <button class="btn btn-ghost btn-sm" onclick="showPage('dettaglio','${w.id}')" style="padding:6px 10px;font-size:11px">Vai</button>
+            <button class="btn btn-ghost btn-sm" onclick="showPage('dettaglio','${w.id}')" style="padding:6px 10px;font-size:11px">${t('dashboard_vai')}</button>
           </div>`).join('')}
     </div>
   </div>
   ${_snakes.length===0?`
   <div class="card mt-24" style="text-align:center;padding:40px 20px">
     <div style="font-size:56px;margin-bottom:12px">🐍</div>
-    <h3 style="font-family:'Cinzel',serif;color:var(--text-mid);margin-bottom:8px">Inizia l'allevamento</h3>
-    <p style="color:var(--text-dim);margin-bottom:18px;font-size:14px">Aggiungi il primo serpente per cominciare.</p>
-    <button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi Serpente</button>
+    <h3 style="font-family:'Cinzel',serif;color:var(--text-mid);margin-bottom:8px">${t('dashboard_inizia')}</h3>
+    <p style="color:var(--text-dim);margin-bottom:18px;font-size:14px">${t('dashboard_aggiungi_primo')}</p>
+    <button class="btn btn-primary" onclick="showPage('aggiungi')">➕ ${t('dashboard_aggiungi_serpente')}</button>
   </div>`:''}`;
 }
 
@@ -1831,6 +1840,33 @@ async function removeLogo() {
     toast('Logo rimosso');
   } catch(err) {
     toast('❌ Errore: ' + err.message, '#c0392b');
+  }
+}
+
+async function changeAppLang(lang) {
+  const prevLang = _appLang;
+  _appLang = lang; // aggiorna subito l'interfaccia, senza aspettare il server
+  applyAppLang();
+  showPage(currentPage, currentSnakeId); // ridisegna la pagina corrente nella nuova lingua
+  try {
+    const session = await getSession();
+    const token = session ? session.access_token : SUPABASE_KEY;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_own_lang`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_lang: lang })
+    });
+    if (!res.ok) throw new Error('Errore salvataggio lingua');
+    toast(lang === 'it' ? '🌐 Lingua impostata su Italiano' : '🌐 Language set to English');
+  } catch(err) {
+    _appLang = prevLang; // rollback se il salvataggio fallisce
+    applyAppLang();
+    showPage(currentPage, currentSnakeId);
+    toast('❌ ' + err.message, '#c0392b');
   }
 }
 
@@ -3510,6 +3546,17 @@ async function renderProfilo() {
       </div>
     </div>
 
+    <!-- Card Lingua -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">🌐 Lingua / Language</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="changeAppLang('it')" id="profile-lang-it"
+          style="flex:1;padding:12px;border-radius:8px;border:1px solid ${_appLang==='it'?'var(--accent-lime)':'var(--border)'};background:${_appLang==='it'?'rgba(109,181,109,0.15)':'transparent'};color:${_appLang==='it'?'var(--text-bright)':'var(--text-dim)'};font-family:'Inter',sans-serif;font-size:14px;cursor:pointer">🇮🇹 Italiano</button>
+        <button onclick="changeAppLang('en')" id="profile-lang-en"
+          style="flex:1;padding:12px;border-radius:8px;border:1px solid ${_appLang==='en'?'var(--accent-lime)':'var(--border)'};background:${_appLang==='en'?'rgba(109,181,109,0.15)':'transparent'};color:${_appLang==='en'?'var(--text-bright)':'var(--text-dim)'};font-family:'Inter',sans-serif;font-size:14px;cursor:pointer">🇬🇧 English</button>
+      </div>
+    </div>
+
     <!-- Card Logo Allevamento -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">🏷️ Logo allevamento</div>
@@ -3933,10 +3980,12 @@ async function loadUserPlan() {
   if (!_currentUser || !_currentUser.id) return;
   try {
     // Usa SB.req() che gestisce già il token correttamente
-    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan,logo_url`);
+    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan,logo_url,lang`);
     if (data && data.length > 0) {
       _userPlan = data[0].plan || 'free';
       _userLogo = data[0].logo_url || null;
+      _appLang = data[0].lang || 'it';
+      applyAppLang();
       applyPlanUI();
       return;
     }
@@ -4538,6 +4587,51 @@ function setLandingLang(lang) {
   document.getElementById('lang-en')?.classList.toggle('lang-active', lang === 'en');
 }
 
+// ═══════════════════════════════════════
+//  TRADUZIONE APP (dopo il login)
+// ═══════════════════════════════════════
+// Sistema separato da quello della landing page: qui il contenuto è per lo
+// più generato dinamicamente via JavaScript (le pagine si ricostruiscono
+// ad ogni showPage()), quindi usiamo un dizionario + funzione t(chiave)
+// per il contenuto dinamico, e gli stessi attributi data-it/data-en per
+// gli elementi statici come la barra di navigazione.
+let _appLang = 'it';
+
+const I18N = {
+  it: {
+    dashboard_welcome: 'Benvenuto nel gestionale',
+    dashboard_totale: 'Totale', dashboard_maschi: 'Maschi', dashboard_femmine: 'Femmine',
+    dashboard_pasti_mese: 'Pasti/mese', dashboard_deposizioni: 'Deposizioni',
+    dashboard_pasti_7gg: 'Pasti (7gg)', dashboard_attenzione: 'Attenzione', dashboard_nessun_pasto: 'Nessun pasto',
+    dashboard_vai: 'Vai', dashboard_giorni_fa: 'g fa', dashboard_ieri: 'ieri', dashboard_oggi: 'oggi',
+    dashboard_tutto_regola: 'Tutto in regola!', dashboard_inizia: "Inizia l'allevamento",
+    dashboard_aggiungi_primo: 'Aggiungi il primo serpente per cominciare.', dashboard_aggiungi_serpente: 'Aggiungi Serpente',
+  },
+  en: {
+    dashboard_welcome: 'Welcome to your dashboard',
+    dashboard_totale: 'Total', dashboard_maschi: 'Males', dashboard_femmine: 'Females',
+    dashboard_pasti_mese: 'Meals/month', dashboard_deposizioni: 'Clutches',
+    dashboard_pasti_7gg: 'Meals (7d)', dashboard_attenzione: 'Attention', dashboard_nessun_pasto: 'No meal logged',
+    dashboard_vai: 'Go', dashboard_giorni_fa: 'd ago', dashboard_ieri: 'yesterday', dashboard_oggi: 'today',
+    dashboard_tutto_regola: 'All good!', dashboard_inizia: 'Start your collection',
+    dashboard_aggiungi_primo: 'Add your first snake to get started.', dashboard_aggiungi_serpente: 'Add Snake',
+  }
+};
+
+function t(key) {
+  return (I18N[_appLang] && I18N[_appLang][key]) || I18N.it[key] || key;
+}
+
+// Applica la lingua corrente agli elementi statici (navigazione).
+// Le pagine generate dinamicamente (dashboard, serpenti, ecc.) si
+// auto-traducono da sole ogni volta che vengono ridisegnate, perché
+// usano t() direttamente nel loro HTML.
+function applyAppLang() {
+  document.querySelectorAll('#mobile-drawer [data-it], aside [data-it], #mobile-nav [data-it]').forEach(el => {
+    el.textContent = _appLang === 'it' ? el.dataset.it : el.dataset.en;
+  });
+}
+
 function showLoginScreen() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -4596,6 +4690,17 @@ async function doLogin() {
   }
 }
 
+let _regLang = 'it';
+function selectRegLang(lang) {
+  _regLang = lang;
+  document.getElementById('reg-lang-it').style.background = lang === 'it' ? 'rgba(109,181,109,0.15)' : 'transparent';
+  document.getElementById('reg-lang-it').style.borderColor = lang === 'it' ? 'var(--accent-lime)' : 'var(--border)';
+  document.getElementById('reg-lang-it').style.color = lang === 'it' ? 'var(--text-bright)' : 'var(--text-dim)';
+  document.getElementById('reg-lang-en').style.background = lang === 'en' ? 'rgba(109,181,109,0.15)' : 'transparent';
+  document.getElementById('reg-lang-en').style.borderColor = lang === 'en' ? 'var(--accent-lime)' : 'var(--border)';
+  document.getElementById('reg-lang-en').style.color = lang === 'en' ? 'var(--text-bright)' : 'var(--text-dim)';
+}
+
 async function doRegister() {
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
@@ -4604,7 +4709,7 @@ async function doRegister() {
   const btn = document.getElementById('btn-register');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registrazione...';
   try {
-    await authReq('signup', { email, password });
+    await authReq('signup', { email, password, data: { lang: _regLang } });
     showAuthMsg("✅ Registrazione completata! Controlla SUBITO la tua email (anche lo spam) e clicca il link per verificare l'account. Il link scade dopo un po', quindi verificalo appena possibile.");
     btn.disabled = false; btn.innerHTML = '🐍 Crea Account';
   } catch(e) {
