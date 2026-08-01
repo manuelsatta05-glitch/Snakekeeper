@@ -961,8 +961,8 @@ function renderDashboard() {
 // ═══════════════════════════════════════
 function renderSerpenti() {
   let html = `
-  <div class="page-header"><h2>🐍 I Miei Serpenti</h2><p>${_snakes.length} esemplari registrati</p></div>
-  <div style="margin-bottom:16px"><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi</button></div>`;
+  <div class="page-header"><h2>🐍 ${t('serpenti_title')}</h2><p>${_snakes.length} ${t('serpenti_count_suffix')}</p></div>
+  <div style="margin-bottom:16px"><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ ${t('serpenti_aggiungi')}</button></div>`;
 
   const nLocked = lockedSnakesCount();
   if (nLocked > 0) {
@@ -970,16 +970,16 @@ function renderSerpenti() {
       <div style="display:flex;align-items:center;gap:10px;min-width:210px;flex:1">
         <div style="font-size:22px">🔒</div>
         <div>
-          <div style="font-size:13px;color:var(--accent-gold);font-weight:700">${nLocked} ${nLocked === 1 ? 'esemplare' : 'esemplari'} in sola lettura</div>
-          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;line-height:1.45">Il piano Free consente la gestione attiva dei primi ${FREE_SNAKE_LIMIT} serpenti inseriti. I dati degli altri restano salvati e consultabili.</div>
+          <div style="font-size:13px;color:var(--accent-gold);font-weight:700">${nLocked} ${nLocked === 1 ? t('serpenti_locked_singular') : t('serpenti_locked_plural')} ${t('serpenti_locked_suffix')}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;line-height:1.45">${t('serpenti_locked_desc').replace('{N}', FREE_SNAKE_LIMIT)}</div>
         </div>
       </div>
-      <button onclick="showUpgradeModal()" style="background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">⭐ Sblocca con Pro</button>
+      <button onclick="showUpgradeModal()" style="background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">⭐ ${t('serpenti_sblocca_pro')}</button>
     </div>`;
   }
 
   if (!_snakes.length) {
-    html += `<div class="empty-state"><div class="empty-icon">🐍</div><h3>Nessun serpente</h3><p>Inizia aggiungendo il primo esemplare.</p><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ Aggiungi</button></div>`;
+    html += `<div class="empty-state"><div class="empty-icon">🐍</div><h3>${t('serpenti_empty_title')}</h3><p>${t('serpenti_empty_desc')}</p><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ ${t('serpenti_aggiungi')}</button></div>`;
   } else {
     html += '<div class="snakes-grid">' + _snakes.map(s => {
       const sl = logsForSnake(s.id);
@@ -994,18 +994,18 @@ function renderSerpenti() {
             <div><div class="snake-name">${esc(s.nome)}</div><div class="snake-code">${s.icd}</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:7px">
-            ${locked ? `<span title="Sola lettura — passa a Pro per gestirlo" style="font-size:14px">🔒</span>` : ''}
+            ${locked ? `<span title="${t('serpenti_locked_tooltip')}" style="font-size:14px">🔒</span>` : ''}
             <span class="badge badge-${esc(s.sesso)}">${s.sesso==='M'?'♂':'♀'}</span>
           </div>
         </div>
         <div class="snake-info">
-          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${esc(s.specie||'—')}</div></div>
-          <div class="snake-info-item"><div class="snake-info-label">Età</div><div class="snake-info-value">${age(s.nascita)}</div></div>
-          <div class="snake-info-item"><div class="snake-info-label">Ultimo pasto</div><div class="snake-info-value" style="font-size:12px">${lastFood?fmtDate(lastFood.data):'—'}</div></div>
-          <div class="snake-info-item"><div class="snake-info-label">Ultime feci</div><div class="snake-info-value" style="font-size:12px">${lastFece?fmtDate(lastFece.data):'—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('serpenti_specie')}</div><div class="snake-info-value">${esc(s.specie||'—')}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('serpenti_eta')}</div><div class="snake-info-value">${age(s.nascita)}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('serpenti_ultimo_pasto')}</div><div class="snake-info-value" style="font-size:12px">${lastFood?fmtDate(lastFood.data):'—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('serpenti_ultime_feci')}</div><div class="snake-info-value" style="font-size:12px">${lastFece?fmtDate(lastFece.data):'—'}</div></div>
         </div>
         <div class="snake-card-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-green btn-sm" onclick="showPage('dettaglio','${s.id}')">📋 Dettagli</button>
+          <button class="btn btn-green btn-sm" onclick="showPage('dettaglio','${s.id}')">📋 ${t('serpenti_dettagli')}</button>
           <button class="btn btn-ghost btn-sm" onclick="printLabel('${s.id}')">🏷️</button>
           <button class="btn btn-danger btn-sm" onclick="deleteSerpente('${s.id}')">🗑️</button>
         </div>
@@ -1023,7 +1023,7 @@ function renderAggiungi() {
   const limitBadge = !isPro() ? `
     <div style="margin-bottom:16px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div>
-        <div style="font-size:12px;color:var(--text-dim)">Piano Free · <strong style="color:var(--text-mid)">${_snakes.length}/${FREE_SNAKE_LIMIT}</strong> serpenti usati</div>
+        <div style="font-size:12px;color:var(--text-dim)">${t('aggiungi_piano_free')} · <strong style="color:var(--text-mid)">${_snakes.length}/${FREE_SNAKE_LIMIT}</strong> ${t('aggiungi_serpenti_usati')}</div>
         <div style="margin-top:4px;background:var(--bg-moss);border-radius:4px;height:4px;width:180px">
           <div style="height:4px;border-radius:4px;background:${_snakes.length>=FREE_SNAKE_LIMIT?'var(--accent-red)':'var(--accent-lime)'};width:${Math.min(100,(_snakes.length/FREE_SNAKE_LIMIT)*100)}%"></div>
         </div>
@@ -1031,47 +1031,47 @@ function renderAggiungi() {
       <button onclick="showUpgradeModal()" style="background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">⭐ Pro</button>
     </div>` : '';
   document.getElementById('main-content').innerHTML = `
-  <div class="page-header"><h2>➕ Nuovo Serpente</h2><p>Registra un nuovo esemplare</p></div>
+  <div class="page-header"><h2>➕ ${t('aggiungi_title')}</h2><p>${t('aggiungi_subtitle')}</p></div>
   ${limitBadge}
   <div class="card">
-    <div class="card-title">🐍 Dati Anagrafici</div>
+    <div class="card-title">🐍 ${t('aggiungi_dati_anagrafici')}</div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>Foto (opzionale)</label>
+      <label>${t('aggiungi_foto_opz')}</label>
       <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
         <div id="add-foto-preview" style="width:90px;height:90px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-moss);flex-shrink:0">📷</div>
         <label class="btn btn-ghost btn-sm" style="cursor:pointer">
-          📤 Carica foto
+          📤 ${t('aggiungi_carica_foto')}
           <input type="file" accept="image/*" onchange="previewFotoAdd(this)" style="display:none">
         </label>
       </div>
     </div>
     <div class="form-grid">
-      <div class="form-group"><label>Nome *</label><input type="text" id="f-nome" placeholder="es. Kaa" autocomplete="off"></div>
-      <div class="form-group"><label>Specie</label><input type="text" id="f-specie" placeholder="es. Python regius" autocomplete="off"></div>
-      <div class="form-group"><label>Morfo / Varietà</label><input type="text" id="f-morfo" placeholder="es. Albino, Pastel..." autocomplete="off"></div>
+      <div class="form-group"><label>${t('aggiungi_nome')}</label><input type="text" id="f-nome" placeholder="${t('aggiungi_ph_nome')}" autocomplete="off"></div>
+      <div class="form-group"><label>${t('aggiungi_specie')}</label><input type="text" id="f-specie" placeholder="${t('aggiungi_ph_specie')}" autocomplete="off"></div>
+      <div class="form-group"><label>${t('aggiungi_morfo')}</label><input type="text" id="f-morfo" placeholder="${t('aggiungi_ph_morfo')}" autocomplete="off"></div>
       <div class="form-group">
-        <label>Sesso *</label>
+        <label>${t('aggiungi_sesso')}</label>
         <select id="f-sesso">
-          <option value="">— Seleziona —</option>
-          <option value="M">♂ Maschio</option>
-          <option value="F">♀ Femmina</option>
+          <option value="">${t('aggiungi_seleziona')}</option>
+          <option value="M">♂ ${t('aggiungi_maschio')}</option>
+          <option value="F">♀ ${t('aggiungi_femmina')}</option>
         </select>
       </div>
-      <div class="form-group"><label>Data di nascita</label><input type="date" id="f-nascita"></div>
-      <div class="form-group"><label>Peso attuale (g)</label><input type="number" id="f-peso" placeholder="es. 450" inputmode="decimal"></div>
-      <div class="form-group"><label>Provenienza</label><input type="text" id="f-provenienza" placeholder="es. Allevamento XYZ" autocomplete="off"></div>
+      <div class="form-group"><label>${t('aggiungi_nascita')}</label><input type="date" id="f-nascita"></div>
+      <div class="form-group"><label>${t('aggiungi_peso')}</label><input type="number" id="f-peso" placeholder="${t('aggiungi_ph_peso')}" inputmode="decimal"></div>
+      <div class="form-group"><label>${t('aggiungi_provenienza')}</label><input type="text" id="f-provenienza" placeholder="${t('aggiungi_ph_provenienza')}" autocomplete="off"></div>
       <div class="form-group">
-        <label>Codice ICD</label>
+        <label>${t('aggiungi_icd')}</label>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="f-icd" style="flex:1" autocomplete="off">
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('f-icd').value=genICD()" style="flex-shrink:0">🔄</button>
         </div>
       </div>
     </div>
-    <div class="form-group mt-16"><label>Note</label><textarea id="f-note" rows="3" placeholder="Eventuali annotazioni..." style="resize:vertical"></textarea></div>
+    <div class="form-group mt-16"><label>${t('aggiungi_note')}</label><textarea id="f-note" rows="3" placeholder="${t('aggiungi_note_ph')}" style="resize:vertical"></textarea></div>
     <div class="flex-row mt-20">
-      <button class="btn btn-primary" id="btn-salva-serpente" onclick="saveSerpente()">💾 Salva</button>
-      <button class="btn btn-ghost" onclick="showPage('serpenti')">Annulla</button>
+      <button class="btn btn-primary" id="btn-salva-serpente" onclick="saveSerpente()">💾 ${t('aggiungi_salva')}</button>
+      <button class="btn btn-ghost" onclick="showPage('serpenti')">${t('aggiungi_annulla')}</button>
     </div>
   </div>`;
   document.getElementById('f-icd').value = genICD();
@@ -1080,9 +1080,9 @@ function renderAggiungi() {
 async function saveSerpente() {
   const nome = document.getElementById('f-nome').value.trim();
   const sesso = document.getElementById('f-sesso').value;
-  if (!nome) { toast('Inserisci il nome!','#c0392b'); return; }
-  if (!sesso) { toast('Seleziona il sesso!','#c0392b'); return; }
-  if (isNameTaken(nome)) { toast(`"${nome}" già utilizzato`, '#c0392b'); return; }
+  if (!nome) { toast(t('err_nome_richiesto'),'#c0392b'); return; }
+  if (!sesso) { toast(t('err_sesso_richiesto'),'#c0392b'); return; }
+  if (isNameTaken(nome)) { toast(`"${nome}" ${t('err_nome_usato')}`, '#c0392b'); return; }
   if (!canAddSnake()) { showUpgradeModal(); return; }
   const btn = document.getElementById('btn-salva-serpente');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
@@ -4606,6 +4606,24 @@ const I18N = {
     dashboard_vai: 'Vai', dashboard_giorni_fa: 'g fa', dashboard_ieri: 'ieri', dashboard_oggi: 'oggi',
     dashboard_tutto_regola: 'Tutto in regola!', dashboard_inizia: "Inizia l'allevamento",
     dashboard_aggiungi_primo: 'Aggiungi il primo serpente per cominciare.', dashboard_aggiungi_serpente: 'Aggiungi Serpente',
+    serpenti_title: 'I Miei Serpenti', serpenti_count_suffix: 'esemplari registrati', serpenti_aggiungi: 'Aggiungi',
+    serpenti_locked_singular: 'esemplare', serpenti_locked_plural: 'esemplari', serpenti_locked_suffix: 'in sola lettura',
+    serpenti_locked_desc: 'Il piano Free consente la gestione attiva dei primi {N} serpenti inseriti. I dati degli altri restano salvati e consultabili.',
+    serpenti_sblocca_pro: 'Sblocca con Pro', serpenti_empty_title: 'Nessun serpente',
+    serpenti_empty_desc: 'Inizia aggiungendo il primo esemplare.', serpenti_specie: 'Specie', serpenti_eta: 'Età',
+    serpenti_ultimo_pasto: 'Ultimo pasto', serpenti_ultime_feci: 'Ultime feci', serpenti_dettagli: 'Dettagli',
+    serpenti_locked_tooltip: 'Sola lettura — passa a Pro per gestirlo',
+    aggiungi_title: 'Nuovo Serpente', aggiungi_subtitle: 'Registra un nuovo esemplare',
+    aggiungi_piano_free: 'Piano Free', aggiungi_serpenti_usati: 'serpenti usati',
+    aggiungi_foto_opz: 'Foto (opzionale)', aggiungi_carica_foto: 'Carica foto',
+    aggiungi_dati_anagrafici: 'Dati Anagrafici', aggiungi_nome: 'Nome *', aggiungi_specie: 'Specie',
+    aggiungi_morfo: 'Morfo / Varietà', aggiungi_sesso: 'Sesso *', aggiungi_seleziona: '— Seleziona —',
+    aggiungi_maschio: 'Maschio', aggiungi_femmina: 'Femmina', aggiungi_nascita: 'Data di nascita',
+    aggiungi_peso: 'Peso attuale (g)', aggiungi_provenienza: 'Provenienza', aggiungi_icd: 'Codice ICD',
+    aggiungi_note: 'Note', aggiungi_note_ph: 'Eventuali annotazioni...', aggiungi_salva: 'Salva', aggiungi_annulla: 'Annulla',
+    aggiungi_ph_nome: 'es. Kaa', aggiungi_ph_specie: 'es. Python regius', aggiungi_ph_morfo: 'es. Albino, Pastel...',
+    aggiungi_ph_peso: 'es. 450', aggiungi_ph_provenienza: 'es. Allevamento XYZ',
+    err_nome_richiesto: 'Inserisci il nome!', err_sesso_richiesto: 'Seleziona il sesso!', err_nome_usato: 'già utilizzato',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -4615,6 +4633,24 @@ const I18N = {
     dashboard_vai: 'Go', dashboard_giorni_fa: 'd ago', dashboard_ieri: 'yesterday', dashboard_oggi: 'today',
     dashboard_tutto_regola: 'All good!', dashboard_inizia: 'Start your collection',
     dashboard_aggiungi_primo: 'Add your first snake to get started.', dashboard_aggiungi_serpente: 'Add Snake',
+    serpenti_title: 'My Snakes', serpenti_count_suffix: 'snakes registered', serpenti_aggiungi: 'Add',
+    serpenti_locked_singular: 'snake', serpenti_locked_plural: 'snakes', serpenti_locked_suffix: 'in read-only mode',
+    serpenti_locked_desc: 'The Free plan allows active management of the first {N} snakes added. Data for the others remains saved and viewable.',
+    serpenti_sblocca_pro: 'Unlock with Pro', serpenti_empty_title: 'No snakes yet',
+    serpenti_empty_desc: 'Start by adding your first snake.', serpenti_specie: 'Species', serpenti_eta: 'Age',
+    serpenti_ultimo_pasto: 'Last meal', serpenti_ultime_feci: 'Last feces', serpenti_dettagli: 'Details',
+    serpenti_locked_tooltip: 'Read-only — upgrade to Pro to manage it',
+    aggiungi_title: 'New Snake', aggiungi_subtitle: 'Register a new animal',
+    aggiungi_piano_free: 'Free plan', aggiungi_serpenti_usati: 'snakes used',
+    aggiungi_foto_opz: 'Photo (optional)', aggiungi_carica_foto: 'Upload photo',
+    aggiungi_dati_anagrafici: 'Basic Info', aggiungi_nome: 'Name *', aggiungi_specie: 'Species',
+    aggiungi_morfo: 'Morph / Variety', aggiungi_sesso: 'Sex *', aggiungi_seleziona: '— Select —',
+    aggiungi_maschio: 'Male', aggiungi_femmina: 'Female', aggiungi_nascita: 'Date of birth',
+    aggiungi_peso: 'Current weight (g)', aggiungi_provenienza: 'Origin', aggiungi_icd: 'ICD Code',
+    aggiungi_note: 'Notes', aggiungi_note_ph: 'Any notes...', aggiungi_salva: 'Save', aggiungi_annulla: 'Cancel',
+    aggiungi_ph_nome: 'e.g. Kaa', aggiungi_ph_specie: 'e.g. Python regius', aggiungi_ph_morfo: 'e.g. Albino, Pastel...',
+    aggiungi_ph_peso: 'e.g. 450', aggiungi_ph_provenienza: 'e.g. XYZ Breeder',
+    err_nome_richiesto: 'Enter a name!', err_sesso_richiesto: 'Select a sex!', err_nome_usato: 'already in use',
   }
 };
 
