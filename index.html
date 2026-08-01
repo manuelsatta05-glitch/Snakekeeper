@@ -4345,7 +4345,7 @@ function showLoginScreen() {
 function hideLoginScreen() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-  document.getElementById('mobile-nav').style.display = 'block';
+  document.getElementById('mobile-nav').style.display = '';
   // Mostra email utente nella sidebar
   if (_currentUser) {
     const el = document.getElementById('user-info');
