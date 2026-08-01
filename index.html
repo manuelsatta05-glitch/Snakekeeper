@@ -84,6 +84,7 @@
 </style>
 
 <title>SnakeKeeper — Gestionale Allevamento Serpenti</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 /* Minimal QR Code generator — pure JS, no dependencies (MIT) */
@@ -1006,6 +1007,7 @@ function renderSerpenti() {
 //  AGGIUNGI SERPENTE
 // ═══════════════════════════════════════
 function renderAggiungi() {
+  _addFotoData = null;
   const limitBadge = !isPro() ? `
     <div style="margin-bottom:16px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div>
@@ -1021,6 +1023,16 @@ function renderAggiungi() {
   ${limitBadge}
   <div class="card">
     <div class="card-title">🐍 Dati Anagrafici</div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Foto (opzionale)</label>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+        <div id="add-foto-preview" style="width:90px;height:90px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-moss);flex-shrink:0">📷</div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+          📤 Carica foto
+          <input type="file" accept="image/*" onchange="previewFotoAdd(this)" style="display:none">
+        </label>
+      </div>
+    </div>
     <div class="form-grid">
       <div class="form-group"><label>Nome *</label><input type="text" id="f-nome" placeholder="es. Kaa" autocomplete="off"></div>
       <div class="form-group"><label>Specie</label><input type="text" id="f-specie" placeholder="es. Python regius" autocomplete="off"></div>
@@ -1071,10 +1083,12 @@ async function saveSerpente() {
     provenienza: document.getElementById('f-provenienza').value.trim() || null,
     icd: document.getElementById('f-icd').value.trim() || genICD(),
     note: document.getElementById('f-note').value.trim() || null,
+    foto_url: _addFotoData || null,
   };
   try {
     await SB.insertSerpente(snake);
     _snakes.push(snake);
+    _addFotoData = null;
     toast('🐍 Serpente salvato nel cloud!');
     showPage('dettaglio', snake.id);
   } catch(e) {
@@ -1664,6 +1678,7 @@ async function logPeso(snakeId) {
 
 // ── EDIT SERPENTE ──
 let _editFotoData = null;
+let _addFotoData = null;
 
 function toggleEditSerpente(id) {
   if (id && !requireEditable(id)) return;
@@ -1676,6 +1691,30 @@ function toggleEditSerpente(id) {
   editMode.style.display = isEditing ? 'none' : '';
   btn.textContent = isEditing ? '✏️ Modifica' : '✕ Annulla';
   _editFotoData = null;
+}
+
+function previewFotoAdd(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const maxSize = 400;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      _addFotoData = canvas.toDataURL('image/jpeg', 0.7);
+      const preview = document.getElementById('add-foto-preview');
+      preview.innerHTML = `<img src="${_addFotoData}" style="width:100%;height:100%;border-radius:10px;object-fit:cover">`;
+      preview.style.border = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function previewFoto(input) {
@@ -1709,22 +1748,37 @@ function previewFoto(input) {
 // ═══════════════════════════════════════
 //  LOGO ALLEVAMENTO
 // ═══════════════════════════════════════
+// Disegna un'immagine (già caricata, es. <img> o <canvas> sorgente) centrata
+// su un canvas quadrato, mantenendo le proporzioni originali (nessun taglio,
+// nessuna deformazione) — è questo che garantisce che il logo risulti sempre
+// centrato ovunque venga mostrato (etichetta, PDF, anteprima profilo).
+function centerOnSquareCanvas(source, srcW, srcH, size = 400) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  // Sfondo trasparente: si adatta sia a sfondi bianchi (etichetta/PDF) che scuri (anteprima nel profilo)
+  ctx.clearRect(0, 0, size, size);
+  const scale = Math.min(size / srcW, size / srcH);
+  const w = srcW * scale, h = srcH * scale;
+  const x = (size - w) / 2, y = (size - h) / 2;
+  ctx.drawImage(source, x, y, w, h);
+  return canvas.toDataURL('image/png');
+}
+
 function uploadLogo(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+
+  if (file.type === 'application/pdf') {
+    uploadLogoFromPdf(file);
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = function(e) {
     const img = new Image();
     img.onload = async function() {
-      const canvas = document.createElement('canvas');
-      const maxSize = 400;
-      let w = img.width, h = img.height;
-      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
-      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      // PNG per mantenere eventuale trasparenza dei loghi
-      const logoData = canvas.toDataURL('image/png');
+      const logoData = centerOnSquareCanvas(img, img.width, img.height);
       try {
         await saveLogoToServer(logoData);
         _userLogo = logoData;
@@ -1737,6 +1791,32 @@ function uploadLogo(input) {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+async function uploadLogoFromPdf(file) {
+  try {
+    toast('📄 Lettura PDF in corso...', 'var(--accent-lime)');
+    if (typeof pdfjsLib === 'undefined') throw new Error('Libreria PDF non disponibile, ricarica la pagina');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const page = await pdf.getPage(1); // usa sempre la prima pagina del PDF come logo
+
+    const viewport = page.getViewport({ scale: 2 }); // scala 2x per una resa nitida
+    const renderCanvas = document.createElement('canvas');
+    renderCanvas.width = viewport.width;
+    renderCanvas.height = viewport.height;
+    await page.render({ canvasContext: renderCanvas.getContext('2d'), viewport }).promise;
+
+    const logoData = centerOnSquareCanvas(renderCanvas, renderCanvas.width, renderCanvas.height);
+    await saveLogoToServer(logoData);
+    _userLogo = logoData;
+    renderProfilo();
+    toast('🏷️ Logo caricato dal PDF!');
+  } catch(err) {
+    toast('❌ Errore lettura PDF: ' + err.message, '#c0392b');
+  }
 }
 
 async function removeLogo() {
@@ -3430,8 +3510,8 @@ async function renderProfilo() {
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">🏷️ Logo allevamento</div>
       <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
-        Se carichi un logo, verrà mostrato automaticamente sull'etichetta stampabile dei serpenti e sui PDF esportati.
-        Se non lo carichi, quelle sezioni restano semplicemente senza logo.
+        Se carichi un logo (immagine o PDF), verrà mostrato automaticamente sull'etichetta stampabile dei serpenti e sui PDF esportati.
+        Il logo viene centrato automaticamente. Se non lo carichi, quelle sezioni restano semplicemente senza logo.
       </p>
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <div id="logo-preview-box" style="width:80px;height:80px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;background:var(--bg-moss);overflow:hidden;flex-shrink:0">
@@ -3440,7 +3520,7 @@ async function renderProfilo() {
         <div style="display:flex;flex-direction:column;gap:8px">
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;text-align:center">
             📤 ${_userLogo ? 'Cambia logo' : 'Carica logo'}
-            <input type="file" accept="image/*" onchange="uploadLogo(this)" style="display:none">
+            <input type="file" accept="image/*,application/pdf" onchange="uploadLogo(this)" style="display:none">
           </label>
           ${_userLogo ? `<button class="btn btn-ghost btn-sm" style="color:var(--accent-red);border-color:rgba(192,57,43,0.4)" onclick="removeLogo()">🗑️ Rimuovi logo</button>` : ''}
         </div>
