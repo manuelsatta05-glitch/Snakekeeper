@@ -5571,6 +5571,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 #landing-page{background:#060d07;color:#c8d5c9;font-family:'Inter',sans-serif;overflow-x:hidden}
 .lp-nav{position:sticky;top:0;left:0;right:0;z-index:100;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,13,7,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(45,80,48,0.3);transition:all .3s}
 .lp-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+#lp-mobile-ctas{display:none}
 .lp-logo span{font-family:'Cinzel',serif;font-size:18px;color:#c9a84c;letter-spacing:2px}
 .lp-nav-links{display:flex;align-items:center;gap:24px}
 .lp-nav-links a{color:#a0b5a1;font-size:14px;text-decoration:none;transition:color .2s}
@@ -5693,6 +5694,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 @media(max-width:768px){
   .lp-nav{padding:14px 20px}
   .lp-nav-links{display:none}
+  #lp-mobile-ctas{display:flex}
   .lp-hero{padding:100px 20px 60px}
   .lp-section,.lp-pricing,.lp-faq{padding:60px 20px}
   .lp-steps{padding:60px 20px}
@@ -5720,7 +5722,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     <button class="lp-btn-primary" onclick="landingRegister()" data-it="Inizia gratis" data-en="Start free">Inizia gratis</button>
   </div>
   <!-- Mobile buttons -->
-  <div style="display:flex;gap:8px;align-items:center" id="lp-mobile-ctas">
+  <div style="gap:8px;align-items:center" id="lp-mobile-ctas">
     <div class="lang-switcher">
       <button class="lang-btn lang-active" onclick="setLandingLang('it')">IT</button>
       <button class="lang-btn" onclick="setLandingLang('en')">EN</button>
