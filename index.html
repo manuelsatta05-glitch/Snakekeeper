@@ -2036,30 +2036,30 @@ function renderVenduti() {
   const totIncasso = _venduti.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
   let html = `
   <div class="page-header">
-    <h2>💰 Serpenti Venduti</h2>
-    <p>${_venduti.length} esemplari venduti · Incasso totale: <strong style="color:var(--accent-gold)">€${totIncasso.toFixed(2)}</strong></p>
+    <h2>💰 ${t('venduti_title')}</h2>
+    <p>${_venduti.length} ${t('venduti_count')} · ${t('venduti_incasso')} <strong style="color:var(--accent-gold)">€${totIncasso.toFixed(2)}</strong></p>
   </div>`;
 
   if (!_venduti.length) {
-    html += `<div class="empty-state"><div class="empty-icon">💰</div><h3>Nessuna vendita</h3><p>I serpenti venduti appariranno qui con tutto il loro storico.</p></div>`;
+    html += `<div class="empty-state"><div class="empty-icon">💰</div><h3>${t('venduti_empty_title')}</h3><p>${t('venduti_empty_desc')}</p></div>`;
   } else {
     html += '<div class="snakes-grid">' + _venduti.map(v => `
       <div class="snake-card" style="cursor:default">
         <div class="snake-card-header">
           <div>
-            <div class="snake-name" style="display:flex;align-items:center;gap:8px">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
+            <div class="snake-name" style="display:flex;align-items:center;gap:8px">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t('venduti_badge')}</span></div>
             <div class="snake-code">${v.icd}</div>
           </div>
           <span class="badge badge-${esc(v.sesso)}">${v.sesso === 'M' ? '♂' : '♀'}</span>
         </div>
         <div class="snake-info">
-          <div class="snake-info-item"><div class="snake-info-label">Specie</div><div class="snake-info-value">${esc(v.specie || '—')}</div></div>
-          <div class="snake-info-item"><div class="snake-info-label">Data vendita</div><div class="snake-info-value">${fmtDate(v.data_vendita)}</div></div>
-          <div class="snake-info-item"><div class="snake-info-label">Acquirente</div><div class="snake-info-value">${v.acquirente || '—'}</div></div>
-          <div class="snake-info-item"><div class="snake-info-label">Prezzo</div><div class="snake-info-value" style="color:var(--accent-gold)">${v.prezzo ? '€' + v.prezzo : '—'}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('serpenti_specie')}</div><div class="snake-info-value">${esc(v.specie || '—')}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('venduti_data_vendita')}</div><div class="snake-info-value">${fmtDate(v.data_vendita)}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('venduti_acquirente')}</div><div class="snake-info-value">${esc(v.acquirente || '—')}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('venduti_prezzo')}</div><div class="snake-info-value" style="color:var(--accent-gold)">${v.prezzo ? '€' + v.prezzo : '—'}</div></div>
         </div>
         <div class="snake-card-actions">
-          <button class="btn btn-ghost btn-sm vend-detail-btn" data-id="${v.id}">📋 Dettaglio</button>
+          <button class="btn btn-ghost btn-sm vend-detail-btn" data-id="${v.id}">📋 ${t('serpenti_dettagli')}</button>
           <button class="btn btn-primary btn-sm vend-pdf-btn" data-id="${v.id}">📄 PDF</button>
           <button class="btn btn-danger btn-sm vend-del-btn" data-id="${v.id}">🗑️</button>
         </div>
@@ -2079,11 +2079,11 @@ function renderVenduti() {
 }
 
 async function deleteVenduto(id) {
-  if (!confirm('Eliminare questo record dalla lista venduti?')) return;
+  if (!confirm(t('err_elimina_venduto'))) return;
   try {
     await SB.deleteVenduto(id);
     _venduti = _venduti.filter(v => v.id !== id);
-    toast('Eliminato', '#c0392b');
+    toast(t('eliminato'), '#c0392b');
     renderVenduti();
   } catch(e) { toast('Errore: ' + e.message, '#c0392b'); }
 }
@@ -2108,18 +2108,18 @@ function renderDettaglioVenduto() {
 
   let html = `
   <div style="margin-bottom:14px">
-    <button class="btn btn-ghost btn-sm" onclick="showPage('venduti')">← Indietro</button>
+    <button class="btn btn-ghost btn-sm" onclick="showPage('venduti')">← ${t('det_indietro')}</button>
   </div>
 
   <!-- HEADER -->
   <div class="snake-detail-header">
     <div class="sdh-top">
       <div class="sdh-top-row1">
-        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${snake.foto_url ? `<img src="${esc(snake.foto_url)}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
+        <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${v.foto_url ? `<img src="${esc(v.foto_url)}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
         <div class="sdh-name-block">
-          <div class="snake-detail-name">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">VENDUTO</span></div>
+          <div class="snake-detail-name">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t('venduti_badge')}</span></div>
           <div class="snake-detail-meta">
-            <span class="badge badge-${esc(v.sesso)}">${v.sesso==='M'?'♂ Maschio':'♀ Femmina'}</span>
+            <span class="badge badge-${esc(v.sesso)}">${v.sesso==='M'?'♂ '+t('aggiungi_maschio'):'♀ '+t('aggiungi_femmina')}</span>
             ${v.specie?`<span>🦎 ${esc(v.specie)}</span>`:''}
             ${v.morfo?`<span>🎨 ${esc(v.morfo)}</span>`:''}
             ${v.nascita?`<span>🎂 ${fmtDate(v.nascita)}</span>`:''}
@@ -2132,11 +2132,11 @@ function renderDettaglioVenduto() {
     </div>
     <div class="sdh-bottom">
       <div class="snake-stats">
-        <div class="stat"><div class="stat-val">${foodLogs.length}</div><div class="stat-lab">Pasti</div></div>
-        <div class="stat"><div class="stat-val">${totalFood.toFixed(0)}g</div><div class="stat-lab">Cibo tot.</div></div>
-        <div class="stat"><div class="stat-val">${feciLogs.length}</div><div class="stat-lab">Feci</div></div>
-        ${v.sesso==='F'?`<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">Deposizioni</div></div>`:''}
-        ${giorniAllevamento!==null?`<div class="stat"><div class="stat-val">${giorniAllevamento}</div><div class="stat-lab">Giorni</div></div>`:''}
+        <div class="stat"><div class="stat-val">${foodLogs.length}</div><div class="stat-lab">${t('det_pasti')}</div></div>
+        <div class="stat"><div class="stat-val">${totalFood.toFixed(0)}g</div><div class="stat-lab">${t('det_cibo_tot')}</div></div>
+        <div class="stat"><div class="stat-val">${feciLogs.length}</div><div class="stat-lab">${t('det_feci')}</div></div>
+        ${v.sesso==='F'?`<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">${t('dashboard_deposizioni')}</div></div>`:''}
+        ${giorniAllevamento!==null?`<div class="stat"><div class="stat-val">${giorniAllevamento}</div><div class="stat-lab">${t('dv_giorni')}</div></div>`:''}
       </div>
       <div class="sdh-icd">${v.icd}</div>
     </div>
@@ -2146,8 +2146,8 @@ function renderDettaglioVenduto() {
   <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,var(--bg-moss),var(--bg-card2));border-color:var(--accent-gold)">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
       <div>
-        <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--accent-gold);margin-bottom:4px">💰 Venduto il ${fmtDate(v.data_vendita)}</div>
-        <div style="font-size:13px;color:var(--text-mid)">Acquirente: <strong style="color:var(--text-bright)">${v.acquirente||'Non specificato'}</strong></div>
+        <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--accent-gold);margin-bottom:4px">💰 ${t('dv_venduto_il')} ${fmtDate(v.data_vendita)}</div>
+        <div style="font-size:13px;color:var(--text-mid)">${t('venduti_acquirente')}: <strong style="color:var(--text-bright)">${esc(v.acquirente)||t('dv_non_specificato')}</strong></div>
         ${v.note_vendita?`<div style="font-size:12px;color:var(--text-dim);margin-top:2px">${esc(v.note_vendita)}</div>`:''}
       </div>
       <div style="font-family:'Cinzel',serif;font-size:28px;color:var(--accent-gold)">${v.prezzo?'€'+v.prezzo:'N/D'}</div>
@@ -2156,22 +2156,22 @@ function renderDettaglioVenduto() {
 
   <!-- TABS LOG -->
   <div class="tabs">
-    <button class="tab active" id="tab-cibo" onclick="switchTab('cibo')">🥩 Pasti (${foodLogs.length})</button>
-    <button class="tab" id="tab-feci" onclick="switchTab('feci')">💩 Feci (${feciLogs.length})</button>
-    ${v.sesso==='F'?`<button class="tab" id="tab-uova" onclick="switchTab('uova')">🥚 Uova (${eggsLogs.length})</button>`:''}
-    <button class="tab" id="tab-info" onclick="switchTab('info')">📄 Info</button>
+    <button class="tab active" id="tab-cibo" onclick="switchTab('cibo')">🥩 ${t('det_tab_pasti')} (${foodLogs.length})</button>
+    <button class="tab" id="tab-feci" onclick="switchTab('feci')">💩 ${t('det_tab_feci')} (${feciLogs.length})</button>
+    ${v.sesso==='F'?`<button class="tab" id="tab-uova" onclick="switchTab('uova')">🥚 ${t('det_tab_uova')} (${eggsLogs.length})</button>`:''}
+    <button class="tab" id="tab-info" onclick="switchTab('info')">📄 ${t('det_tab_info')}</button>
   </div>
 
   <!-- CIBO -->
   <div id="tab-content-cibo">
     <div class="card">
-      <div class="card-title">🥩 Storico Alimentazione</div>
-      ${foodLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessun pasto registrato</div>':
+      <div class="card-title">🥩 ${t('dv_storico_alimentazione')}</div>
+      ${foodLogs.length===0?`<div style="color:var(--text-dim);font-size:14px;padding:10px 0">${t('dv_nessun_pasto')}</div>`:
         foodLogs.map(l=>`<div class="log-entry">
           <div class="log-icon food">🥩</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g${l.note?` · ${esc(l.note)}`:''}</div>
+            <div class="log-desc">${l.food_tipo||t('log_cibo_default')} ×${l.qty||1} — ${l.grammi||0}g${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
         </div>`).join('')}
     </div>
@@ -2180,8 +2180,8 @@ function renderDettaglioVenduto() {
   <!-- FECI -->
   <div id="tab-content-feci" style="display:none">
     <div class="card">
-      <div class="card-title">💩 Storico Feci</div>
-      ${feciLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna registrazione</div>':
+      <div class="card-title">💩 ${t('dv_storico_feci')}</div>
+      ${feciLogs.length===0?`<div style="color:var(--text-dim);font-size:14px;padding:10px 0">${t('nessuna_registrazione')}</div>`:
         feciLogs.map(l=>`<div class="log-entry">
           <div class="log-icon feci">💩</div>
           <div class="log-info">
@@ -2195,13 +2195,13 @@ function renderDettaglioVenduto() {
   <!-- UOVA -->
   ${v.sesso==='F'?`<div id="tab-content-uova" style="display:none">
     <div class="card">
-      <div class="card-title">🥚 Storico Deposizioni</div>
-      ${eggsLogs.length===0?'<div style="color:var(--text-dim);font-size:14px;padding:10px 0">Nessuna deposizione</div>':
+      <div class="card-title">🥚 ${t('dv_storico_deposizioni')}</div>
+      ${eggsLogs.length===0?`<div style="color:var(--text-dim);font-size:14px;padding:10px 0">${t('dv_nessuna_deposizione')}</div>`:
         eggsLogs.map(l=>`<div class="log-entry">
           <div class="log-icon eggs">🥚</div>
           <div class="log-info">
             <div class="log-date">${fmtDate(l.data)}</div>
-            <div class="log-desc">${l.num_uova||0} uova, ${l.fertili||0} fertili${l.temp?` — ${l.temp}°C`:''}${l.note?` · ${esc(l.note)}`:''}</div>
+            <div class="log-desc">${l.num_uova||0} ${t('log_uova_desc')}, ${l.fertili||0} ${t('log_fertili_desc')}${l.temp?` — ${l.temp}°C`:''}${l.note?` · ${esc(l.note)}`:''}</div>
           </div>
         </div>`).join('')}
     </div>
@@ -2210,21 +2210,21 @@ function renderDettaglioVenduto() {
   <!-- INFO -->
   <div id="tab-content-info" style="display:none">
     <div class="card">
-      <div class="card-title">📄 Scheda Anagrafica</div>
+      <div class="card-title">📄 ${t('scheda_anagrafica')}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
-        ${[['Nome',v.nome],['Specie',v.specie||'—'],['Morfo',v.morfo||'—'],
-           ['Sesso',v.sesso==='M'?'♂ Maschio':'♀ Femmina'],
-           ['Nascita',fmtDate(v.nascita)],['Peso',v.peso?v.peso+'g':'—'],
-           ['Provenienza',v.provenienza||'—'],['Codice ICD',v.icd],
-           ['Giorni in allevamento',giorniAllevamento!==null?giorniAllevamento+'gg':'—']
+        ${[[t('lbl_nome'),v.nome],[t('lbl_specie'),v.specie||'—'],[t('lbl_morfo'),v.morfo||'—'],
+           [t('lbl_sesso'),v.sesso==='M'?'♂ '+t('aggiungi_maschio'):'♀ '+t('aggiungi_femmina')],
+           [t('lbl_nascita'),fmtDate(v.nascita)],[t('lbl_peso'),v.peso?v.peso+'g':'—'],
+           [t('lbl_provenienza'),v.provenienza||'—'],[t('lbl_icd'),v.icd],
+           [t('dv_giorni_allevamento'),giorniAllevamento!==null?giorniAllevamento+'gg':'—']
         ].map(([k,val])=>`
           <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
             <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${k}</div>
-            <div style="font-size:13px;color:var(--text-bright);margin-top:3px;font-weight:500;word-break:break-word">${val}</div>
+            <div style="font-size:13px;color:var(--text-bright);margin-top:3px;font-weight:500;word-break:break-word">${esc(val)}</div>
           </div>`).join('')}
       </div>
       ${v.note?`<div style="margin-top:12px;background:var(--bg-moss);border-radius:8px;padding:12px">
-        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Note</div>
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${t('label_note')}</div>
         <div style="font-size:13px;color:var(--text-mid)">${esc(v.note)}</div>
       </div>`:''}
     </div>
@@ -2497,22 +2497,22 @@ function renderRegistro() {
   const snakeMap = {}; _snakes.forEach(s=>snakeMap[s.id]=s);
   const icons={cibo:'🥩',feci:'💩',uova:'🥚',pulizia:'🧹'};
   const types={cibo:'food',feci:'feci',uova:'eggs',pulizia:'pulizia'};
-  let html = `<div class="page-header"><h2>📋 Registro</h2><p>Ultime ${logs.length} attività</p></div><div class="card">`;
+  let html = `<div class="page-header"><h2>📋 ${t('registro_title')}</h2><p>${t('registro_ultime').replace('{N}', logs.length)}</p></div><div class="card">`;
   if(!logs.length) {
-    html+=`<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna attività</h3><p>Le attività appariranno qui.</p></div>`;
+    html+=`<div class="empty-state"><div class="empty-icon">📋</div><h3>${t('registro_empty_title')}</h3><p>${t('registro_empty_desc')}</p></div>`;
   } else {
     logs.forEach(l=>{
       const snake=snakeMap[l.snake_id];
       const sname=snake?snake.nome:'?';
       let desc='';
-      if(l.tipo==='cibo') desc=`${l.food_tipo||'Cibo'} ×${l.qty||1} — ${l.grammi||0}g`;
-      if(l.tipo==='feci') desc=`Feci: ${l.feci_tipo||'—'}`;
-      if(l.tipo==='uova') desc=`Deposizione: ${l.num_uova||0} uova`;
-      if(l.tipo==='pulizia') desc=`Pulizia: ${l.pulizia_tipo||'—'}`;
+      if(l.tipo==='cibo') desc=`${l.food_tipo||t('log_cibo_default')} ×${l.qty||1} — ${l.grammi||0}g`;
+      if(l.tipo==='feci') desc=`${t('log_feci_prefix')}${l.feci_tipo||'—'}`;
+      if(l.tipo==='uova') desc=`${t('log_deposizione_prefix')}${l.num_uova||0} ${t('log_uova_desc')}`;
+      if(l.tipo==='pulizia') desc=`${t('log_pulizia_prefix')}${l.pulizia_tipo||'—'}`;
       html+=`<div class="log-entry">
         <div class="log-icon ${types[l.tipo]||'food'}">${icons[l.tipo]||'📌'}</div>
         <div class="log-info">
-          <div class="log-date">${fmtDate(l.data)} · <span style="color:var(--accent-lime);cursor:pointer" onclick="showPage('dettaglio','${l.snake_id}')">${sname}</span></div>
+          <div class="log-date">${fmtDate(l.data)} · <span style="color:var(--accent-lime);cursor:pointer" onclick="showPage('dettaglio','${l.snake_id}')">${esc(sname)}</span></div>
           <div class="log-desc">${desc}${l.note?` · ${esc(l.note)}`:''}</div>
         </div>
       </div>`;
@@ -4651,6 +4651,17 @@ const I18N = {
     lbl_peso: 'Peso', lbl_provenienza: 'Provenienza', lbl_icd: 'Codice ICD', lbl_data_nascita: 'Data nascita',
     err_data_richiesta: 'Inserisci la data!',
     log_cibo_default: 'Cibo', log_uova_desc: 'uova', log_fertili_desc: 'fertili',
+    registro_title: 'Registro', registro_ultime: 'Ultime {N} attività',
+    registro_empty_title: 'Nessuna attività', registro_empty_desc: 'Le attività appariranno qui.',
+    log_feci_prefix: 'Feci: ', log_deposizione_prefix: 'Deposizione: ', log_pulizia_prefix: 'Pulizia: ',
+    venduti_title: 'Serpenti Venduti', venduti_count: 'esemplari venduti', venduti_incasso: 'Incasso totale:',
+    venduti_empty_title: 'Nessuna vendita', venduti_empty_desc: "I serpenti venduti appariranno qui con tutto il loro storico.",
+    venduti_badge: 'VENDUTO', venduti_data_vendita: 'Data vendita', venduti_acquirente: 'Acquirente', venduti_prezzo: 'Prezzo',
+    err_elimina_venduto: 'Eliminare questo record dalla lista venduti?', eliminato: 'Eliminato',
+    dv_venduto_il: 'Venduto il', dv_non_specificato: 'Non specificato', dv_giorni: 'Giorni',
+    dv_storico_alimentazione: 'Storico Alimentazione', dv_nessun_pasto: 'Nessun pasto registrato',
+    dv_storico_feci: 'Storico Feci', dv_storico_deposizioni: 'Storico Deposizioni', dv_nessuna_deposizione: 'Nessuna deposizione',
+    dv_giorni_allevamento: 'Giorni in allevamento',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -4705,6 +4716,17 @@ const I18N = {
     lbl_peso: 'Weight', lbl_provenienza: 'Origin', lbl_icd: 'ICD Code', lbl_data_nascita: 'Date of birth',
     err_data_richiesta: 'Enter a date!',
     log_cibo_default: 'Food', log_uova_desc: 'eggs', log_fertili_desc: 'fertile',
+    registro_title: 'Log', registro_ultime: 'Last {N} activities',
+    registro_empty_title: 'No activity yet', registro_empty_desc: 'Activity will show up here.',
+    log_feci_prefix: 'Feces: ', log_deposizione_prefix: 'Clutch: ', log_pulizia_prefix: 'Cleaning: ',
+    venduti_title: 'Sold Snakes', venduti_count: 'snakes sold', venduti_incasso: 'Total revenue:',
+    venduti_empty_title: 'No sales yet', venduti_empty_desc: 'Sold snakes will show up here with their full history.',
+    venduti_badge: 'SOLD', venduti_data_vendita: 'Sale date', venduti_acquirente: 'Buyer', venduti_prezzo: 'Price',
+    err_elimina_venduto: 'Delete this record from the sold list?', eliminato: 'Deleted',
+    dv_venduto_il: 'Sold on', dv_non_specificato: 'Not specified', dv_giorni: 'Days',
+    dv_storico_alimentazione: 'Feeding History', dv_nessun_pasto: 'No meals logged',
+    dv_storico_feci: 'Feces History', dv_storico_deposizioni: 'Clutch History', dv_nessuna_deposizione: 'No clutches',
+    dv_giorni_allevamento: 'Days in collection',
   }
 };
 
