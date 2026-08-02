@@ -2099,7 +2099,8 @@ function renderVenduti() {
       return { label, count: inMonth.length, incasso, onclick: `setVendutiMonth(${idx})`, active };
     });
   }
-  const maxIncasso = Math.max(1, ...chartBars.map(b => b.incasso));
+  const maxBarValue = Math.max(0, ...chartBars.map(b => b.incasso));
+  const maxIncasso = maxBarValue + 5000; // margine fisso richiesto, cosi' la barra piu' alta non tocca mai il bordo
 
   let html = `
   <div class="page-header">
