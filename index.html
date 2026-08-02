@@ -2953,27 +2953,6 @@ function initScrollReveal() {
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
 
-function initCounters() {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        const el = e.target;
-        const target = parseInt(el.dataset.count);
-        if (!target) return;
-        let start = 0;
-        const step = target / 60;
-        const timer = setInterval(() => {
-          start += step;
-          if (start >= target) { el.textContent = target + '+'; clearInterval(timer); }
-          else el.textContent = Math.floor(start) + '+';
-        }, 16);
-        observer.unobserve(el);
-      }
-    });
-  }, { threshold: 0.5 });
-  document.querySelectorAll('[data-count]').forEach(el => observer.observe(el));
-}
-
 function initLandingNav() {
   const nav = document.getElementById('lp-nav');
   const landing = document.getElementById('landing-page');
@@ -2986,7 +2965,6 @@ function initLandingNav() {
 function initLanding() {
   initParticles();
   initScrollReveal();
-  initCounters();
   initLandingNav();
 }
 
@@ -5787,9 +5765,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 <!-- STATS -->
 <section class="lp-stats">
   <div class="lp-stats-grid">
-    <div><span class="lp-stat-num" data-count="100">0</span><div class="lp-stat-lab" data-it="Allevatori attivi" data-en="Active breeders">Allevatori attivi</div></div>
-    <div><span class="lp-stat-num" data-count="500">0</span><div class="lp-stat-lab" data-it="Serpenti gestiti" data-en="Snakes managed">Serpenti gestiti</div></div>
-    <div><span class="lp-stat-num" data-count="99">0</span><div class="lp-stat-lab" data-it="% uptime garantito" data-en="% uptime guaranteed">% uptime garantito</div></div>
+    <div><span class="lp-stat-num" style="font-size:30px">🔒</span><div class="lp-stat-lab" data-it="Conforme al GDPR" data-en="GDPR compliant">Conforme al GDPR</div></div>
+    <div><span class="lp-stat-num" style="font-size:30px">↩️</span><div class="lp-stat-lab" data-it="Rimborso 14 giorni" data-en="14-day refund">Rimborso 14 giorni</div></div>
+    <div><span class="lp-stat-num" style="font-size:30px">📱</span><div class="lp-stat-lab" data-it="Funziona offline" data-en="Works offline">Funziona offline</div></div>
     <div><span class="lp-stat-num">€0</span><div class="lp-stat-lab" data-it="Per iniziare" data-en="To get started">Per iniziare</div></div>
   </div>
 </section>
@@ -5840,8 +5818,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     </div>
     <div class="lp-feature-card">
       <div class="lp-feature-icon">☁️</div>
-      <div class="lp-feature-title" data-it="Sync in tempo reale" data-en="Real-time sync">Sync in tempo reale</div>
-      <p class="lp-feature-desc" data-it="I tuoi dati sempre aggiornati su tutti i dispositivi, in sicurezza nel cloud." data-en="Your data always up to date across all devices, securely in the cloud.">I tuoi dati sempre aggiornati su tutti i dispositivi, in sicurezza nel cloud.</p>
+      <div class="lp-feature-title" data-it="Sync automatico nel cloud" data-en="Automatic cloud sync">Sync automatico nel cloud</div>
+      <p class="lp-feature-desc" data-it="Ogni modifica viene salvata subito nel cloud. Accedi ai tuoi dati aggiornati da qualsiasi dispositivo, in sicurezza." data-en="Every change is saved to the cloud right away. Access your up-to-date data from any device, securely.">Ogni modifica viene salvata subito nel cloud. Accedi ai tuoi dati aggiornati da qualsiasi dispositivo, in sicurezza.</p>
     </div>
   
   </div>
@@ -6023,7 +6001,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   <h2 style="font-family:'Cinzel',serif;font-size:clamp(24px,4vw,42px);color:#fff;margin:0 0 16px">
     <span data-it="Pronto a gestire il tuo allevamento?" data-en="Ready to manage your breeding?">Pronto a gestire il tuo allevamento?</span>
   </h2>
-  <p style="font-size:16px;color:#a0b5a1;max-width:500px;margin:0 auto 36px" data-it="Unisciti a centinaia di allevatori che usano SnakeKeeper ogni giorno." data-en="Join hundreds of breeders who use SnakeKeeper every day.">Unisciti a centinaia di allevatori che usano SnakeKeeper ogni giorno.</p>
+  <p style="font-size:16px;color:#a0b5a1;max-width:500px;margin:0 auto 36px" data-it="Inizia oggi a gestire il tuo allevamento come un professionista, gratis." data-en="Start managing your collection like a pro today, for free.">Inizia oggi a gestire il tuo allevamento come un professionista, gratis.</p>
   <button class="lp-cta-primary" onclick="landingRegister()">
     <span data-it="🚀 Inizia gratis ora" data-en="🚀 Start free now">🚀 Inizia gratis ora</span>
   </button>
