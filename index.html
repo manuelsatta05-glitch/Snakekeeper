@@ -2253,18 +2253,19 @@ async function printResoconto(vendutoId) {
   const giorniAllevamento = dataIngresso ? Math.floor((dataVendita - dataIngresso) / 86400000) : null;
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(BASE_URL + '#snake=' + v.snake_id)}&margin=2&color=0d1f0f&bgcolor=ffffff`;
+  const dateLocale = _appLang==='it' ? 'it-IT' : 'en-GB';
 
   // Apri PDF in nuova tab (compatibile Safari iOS)
   const win = window.open('about:blank', '_blank');
   if (!win) {
-    toast('Abilita i popup per Safari per visualizzare il PDF', '#c0392b');
+    toast(t('pdf_no_popup'), '#c0392b');
     return;
   }
   win.document.write(`<!DOCTYPE html>
-<html lang="it">
+<html lang="${_appLang}">
 <head>
 <meta charset="UTF-8">
-<title>Resoconto — ${esc(v.nome)}</title>
+<title>${t('pdf_resoconto_vita')} — ${esc(v.nome)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2348,8 +2349,8 @@ async function printResoconto(vendutoId) {
 <body>
 
 <div class="no-print">
-  <button class="btn-print" onclick="window.print()">🖨️ Stampa / Salva PDF</button>
-  <button class="btn-close" onclick="window.close()">✕ Chiudi</button>
+  <button class="btn-print" onclick="window.print()">🖨️ ${t('pdf_stampa_salva')}</button>
+  <button class="btn-close" onclick="window.close()">✕ ${t('pdf_chiudi')}</button>
 </div>
 
 <div style="padding: 0">
@@ -2357,12 +2358,12 @@ async function printResoconto(vendutoId) {
   <!-- HEADER DOCUMENTO -->
   <div class="doc-header">
     <div>
-      <div class="doc-title">Resoconto Esemplare</div>
-      <div class="doc-sub">Storico completo vita in allevamento · Generato il ${new Date().toLocaleDateString('it-IT')}</div>
+      <div class="doc-title">${t('pdf_resoconto_esemplare')}</div>
+      <div class="doc-sub">${t('pdf_storico_completo')} · ${t('pdf_generato_footer')} ${new Date().toLocaleDateString(dateLocale)}</div>
     </div>
     <div class="doc-logo">
       <strong>🐍 SnakeKeeper</strong>
-      Gestionale Allevamento Serpenti
+      ${t('pdf_gestionale_sub')}
     </div>
   </div>
 
@@ -2372,57 +2373,57 @@ async function printResoconto(vendutoId) {
       <div class="snake-header-info">
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
           <div class="snake-nome">${esc(v.nome)}</div>
-          <span class="sesso-badge sesso-${esc(v.sesso)}">${v.sesso === 'M' ? '♂ Maschio' : '♀ Femmina'}</span>
+          <span class="sesso-badge sesso-${esc(v.sesso)}">${v.sesso === 'M' ? '♂ '+t('aggiungi_maschio') : '♀ '+t('aggiungi_femmina')}</span>
         </div>
-        <div class="snake-specie">${esc(v.specie || '')}${v.morfo ? ' · ' + v.morfo : ''}</div>
+        <div class="snake-specie">${esc(v.specie || '')}${v.morfo ? ' · ' + esc(v.morfo) : ''}</div>
         <div class="snake-icd">ICD: ${v.icd}</div>
       </div>
       <img src="${qrUrl}" width="80" height="80" style="border:1px solid #ddd;border-radius:2mm" />
     </div>
 
     <div class="data-grid">
-      <div class="data-field"><span class="lbl">Data di nascita</span><span class="val">${fmtDate(v.nascita)}</span></div>
-      <div class="data-field"><span class="lbl">Provenienza</span><span class="val">${esc(v.provenienza || '—')}</span></div>
-      <div class="data-field"><span class="lbl">Peso registrato</span><span class="val">${v.peso ? v.peso + 'g' : '—'}</span></div>
-      <div class="data-field"><span class="lbl">Ingresso allevamento</span><span class="val">${dataIngresso ? dataIngresso.toLocaleDateString('it-IT') : '—'}</span></div>
-      <div class="data-field"><span class="lbl">Giorni in allevamento</span><span class="val green">${giorniAllevamento !== null ? giorniAllevamento + ' giorni' : '—'}</span></div>
-      <div class="data-field"><span class="lbl">Morfo</span><span class="val">${esc(v.morfo || '—')}</span></div>
+      <div class="data-field"><span class="lbl">${t('lbl_data_nascita')}</span><span class="val">${fmtDate(v.nascita)}</span></div>
+      <div class="data-field"><span class="lbl">${t('lbl_provenienza')}</span><span class="val">${esc(v.provenienza || '—')}</span></div>
+      <div class="data-field"><span class="lbl">${t('pdf_peso_registrato')}</span><span class="val">${v.peso ? v.peso + 'g' : '—'}</span></div>
+      <div class="data-field"><span class="lbl">${t('pdf_ingresso_allevamento')}</span><span class="val">${dataIngresso ? dataIngresso.toLocaleDateString(dateLocale) : '—'}</span></div>
+      <div class="data-field"><span class="lbl">${t('pdf_giorni_allevamento')}</span><span class="val green">${giorniAllevamento !== null ? giorniAllevamento + ' ' + t('pdf_giorni_suffix') : '—'}</span></div>
+      <div class="data-field"><span class="lbl">${t('lbl_morfo')}</span><span class="val">${esc(v.morfo || '—')}</span></div>
     </div>
-    ${v.note ? `<div style="background:#fffbf0;border-left:3px solid #c9a84c;padding:2.5mm 4mm;border-radius:0 2mm 2mm 0;margin-top:3mm;font-size:9pt;color:#555"><strong>Note:</strong> ${esc(v.note)}</div>` : ''}
+    ${v.note ? `<div style="background:#fffbf0;border-left:3px solid #c9a84c;padding:2.5mm 4mm;border-radius:0 2mm 2mm 0;margin-top:3mm;font-size:9pt;color:#555"><strong>${t('label_note')}:</strong> ${esc(v.note)}</div>` : ''}
   </div>
 
   <!-- STATISTICHE RIEPILOGO -->
   <div class="section">
-    <div class="section-title">📊 Riepilogo Attività</div>
+    <div class="section-title">📊 ${t('pdf_riepilogo_attivita')}</div>
     <div class="stats-row">
-      <div class="stat-box"><div class="sv">${foodLogs.length}</div><div class="sl">Pasti totali</div></div>
-      <div class="stat-box"><div class="sv">${totalCibo.toFixed(0)}g</div><div class="sl">Cibo somministrato</div></div>
-      <div class="stat-box"><div class="sv">${feciLogs.length}</div><div class="sl">Feci registrate</div></div>
-      ${v.sesso === 'F' ? `<div class="stat-box"><div class="sv">${eggsLogs.length}</div><div class="sl">Deposizioni</div></div>` : ''}
-      ${giorniAllevamento ? `<div class="stat-box"><div class="sv">${foodLogs.length > 0 ? (giorniAllevamento / foodLogs.length).toFixed(0) : '—'}</div><div class="sl">Giorni tra pasti</div></div>` : ''}
+      <div class="stat-box"><div class="sv">${foodLogs.length}</div><div class="sl">${t('pdf_pasti_totali')}</div></div>
+      <div class="stat-box"><div class="sv">${totalCibo.toFixed(0)}g</div><div class="sl">${t('pdf_cibo_somministrato')}</div></div>
+      <div class="stat-box"><div class="sv">${feciLogs.length}</div><div class="sl">${t('pdf_feci_registrate')}</div></div>
+      ${v.sesso === 'F' ? `<div class="stat-box"><div class="sv">${eggsLogs.length}</div><div class="sl">${t('pdf_deposizioni')}</div></div>` : ''}
+      ${giorniAllevamento ? `<div class="stat-box"><div class="sv">${foodLogs.length > 0 ? (giorniAllevamento / foodLogs.length).toFixed(0) : '—'}</div><div class="sl">${t('pdf_giorni_tra_pasti')}</div></div>` : ''}
     </div>
   </div>
 
   <!-- STORICO ALIMENTAZIONE -->
   ${foodLogs.length > 0 ? `
   <div class="section">
-    <div class="section-title">🥩 Storico Alimentazione</div>
+    <div class="section-title">🥩 ${t('pdf_storico_pasti')}</div>
     <table class="log-table">
       <thead>
         <tr>
-          <th>Data</th><th>Tipo di cibo</th><th>Qty</th><th>Peso (g)</th><th>Note</th>
+          <th>${t('pdf_col_data')}</th><th>${t('tipo_cibo')}</th><th>${t('pdf_col_qty')}</th><th>${t('pdf_col_peso')} (g)</th><th>${t('pdf_col_note')}</th>
         </tr>
       </thead>
       <tbody>
         ${foodLogs.map(l => `<tr>
           <td>${fmtDate(l.data)}</td>
-          <td>${l.food_tipo || '—'}</td>
+          <td>${esc(l.food_tipo) || '—'}</td>
           <td style="text-align:center">${l.qty || 1}</td>
           <td style="text-align:center">${l.grammi || '—'}</td>
           <td style="color:#888">${esc(l.note || '')}</td>
         </tr>`).join('')}
         <tr style="background:#f0f7f0">
-          <td colspan="3"><strong>Totale</strong></td>
+          <td colspan="3"><strong>${t('pdf_totale')}</strong></td>
           <td style="text-align:center"><strong>${totalCibo.toFixed(0)}g</strong></td>
           <td></td>
         </tr>
@@ -2433,13 +2434,13 @@ async function printResoconto(vendutoId) {
   <!-- STORICO FECI -->
   ${feciLogs.length > 0 ? `
   <div class="section">
-    <div class="section-title">💩 Storico Feci</div>
+    <div class="section-title">💩 ${t('pdf_storico_feci')}</div>
     <table class="log-table">
-      <thead><tr><th>Data</th><th>Consistenza</th><th>Note</th></tr></thead>
+      <thead><tr><th>${t('pdf_col_data')}</th><th>${t('consistenza')}</th><th>${t('pdf_col_note')}</th></tr></thead>
       <tbody>
         ${feciLogs.map(l => `<tr>
           <td>${fmtDate(l.data)}</td>
-          <td>${l.feci_tipo || '—'}</td>
+          <td>${esc(l.feci_tipo) || '—'}</td>
           <td style="color:#888">${esc(l.note || '')}</td>
         </tr>`).join('')}
       </tbody>
@@ -2449,9 +2450,9 @@ async function printResoconto(vendutoId) {
   <!-- STORICO DEPOSIZIONI (solo femmine) -->
   ${v.sesso === 'F' && eggsLogs.length > 0 ? `
   <div class="section">
-    <div class="section-title">🥚 Storico Deposizioni</div>
+    <div class="section-title">🥚 ${t('pdf_deposizioni')}</div>
     <table class="log-table">
-      <thead><tr><th>Data</th><th>Uova deposte</th><th>Fertili</th><th>Temp. (°C)</th><th>Note</th></tr></thead>
+      <thead><tr><th>${t('pdf_col_data')}</th><th>${t('pdf_uova_deposte')}</th><th>${t('pdf_col_fertili')}</th><th>${t('pdf_temp_c')}</th><th>${t('pdf_col_note')}</th></tr></thead>
       <tbody>
         ${eggsLogs.map(l => `<tr>
           <td>${fmtDate(l.data)}</td>
@@ -2466,12 +2467,12 @@ async function printResoconto(vendutoId) {
 
   <!-- BOX VENDITA -->
   <div class="section">
-    <div class="section-title">💰 Dettagli Vendita</div>
+    <div class="section-title">💰 ${t('pdf_dettagli_vendita')}</div>
     <div class="vendita-box">
       <div>
-        <div class="vb-title">Venduto il ${fmtDate(v.data_vendita)}</div>
-        <div class="vb-data">Acquirente: ${v.acquirente || 'Non specificato'}</div>
-        ${v.note_vendita ? `<div class="vb-data">Note: ${esc(v.note_vendita)}</div>` : ''}
+        <div class="vb-title">${t('dv_venduto_il')} ${fmtDate(v.data_vendita)}</div>
+        <div class="vb-data">${t('venduti_acquirente')}: ${esc(v.acquirente) || t('dv_non_specificato')}</div>
+        ${v.note_vendita ? `<div class="vb-data">${t('label_note')}: ${esc(v.note_vendita)}</div>` : ''}
       </div>
       <div class="vb-prezzo">${v.prezzo ? '€' + parseFloat(v.prezzo).toFixed(2) : 'N/D'}</div>
     </div>
@@ -2479,8 +2480,8 @@ async function printResoconto(vendutoId) {
 
   <!-- FOOTER -->
   <div class="doc-footer">
-    <span>SnakeKeeper — Gestionale Allevamento Serpenti</span>
-    <span>ICD: ${v.icd} · Documento generato il ${new Date().toLocaleDateString('it-IT')}</span>
+    <span>SnakeKeeper — ${t('pdf_gestionale_sub')}</span>
+    <span>ICD: ${v.icd} · ${t('pdf_doc_generato')} ${new Date().toLocaleDateString(dateLocale)}</span>
   </div>
 
 </div>
@@ -2539,7 +2540,8 @@ function printSchedaSerpente(snakeId) {
   const totalCibo = foodLogs.reduce((s,l)=>s+(parseFloat(l.grammi)||0),0);
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(BASE_URL+'#snake='+snake.id)}&margin=2&color=0d1f0f&bgcolor=ffffff`;
-  const today = new Date().toLocaleDateString('it-IT');
+  const dateLocale = _appLang==='it' ? 'it-IT' : 'en-GB';
+  const today = new Date().toLocaleDateString(dateLocale);
 
   const makeTable = (title, icon, rows, headers) => {
     if (!rows.length) return '';
@@ -2549,9 +2551,9 @@ function printSchedaSerpente(snakeId) {
   };
 
   const win = window.open('about:blank', '_blank');
-  if (!win) { toast('Abilita i popup per visualizzare il PDF', '#c0392b'); return; }
-  win.document.write(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-<title>Scheda — ${esc(snake.nome)}</title>
+  if (!win) { toast(t('pdf_no_popup'), '#c0392b'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="${_appLang}"><head><meta charset="UTF-8">
+<title>${t('pdf_scheda_titolo_tab')} — ${esc(snake.nome)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2582,10 +2584,10 @@ function printSchedaSerpente(snakeId) {
 </style></head><body>
 <div class="doc-header">
   <div style="display:flex;align-items:center;gap:4mm">
-    ${_userLogo ? `<img src="${_userLogo}" style="width:16mm;height:16mm;object-fit:contain" alt="Logo allevamento">` : ''}
+    ${_userLogo ? `<img src="${_userLogo}" style="width:16mm;height:16mm;object-fit:contain" alt="Logo">` : ''}
     <div>
-      <div class="doc-title">Scheda Serpente</div>
-      <div class="doc-sub">Documento generato il ${today} — SnakeKeeper</div>
+      <div class="doc-title">${t('pdf_scheda_serpente')}</div>
+      <div class="doc-sub">${t('pdf_doc_generato')} ${today} — SnakeKeeper</div>
     </div>
   </div>
   <div style="text-align:right">
@@ -2595,33 +2597,33 @@ function printSchedaSerpente(snakeId) {
 </div>
 
 <div class="info-grid">
-  ${[['Nome',snake.nome],['Specie',snake.specie||'—'],['Morfo',snake.morfo||'—'],
-     ['Sesso',snake.sesso==='M'?'♂ Maschio':'♀ Femmina'],
-     ['Data nascita',snake.nascita?new Date(snake.nascita).toLocaleDateString('it-IT'):'—'],
-     ['Età',age(snake.nascita)],
-     ['Peso attuale',snake.peso?snake.peso+'g':'—'],['Provenienza',snake.provenienza||'—'],
-     ['Codice ICD',snake.icd]
-  ].map(([k,v])=>`<div class="info-item"><div class="info-label">${k}</div><div class="info-value">${v}</div></div>`).join('')}
+  ${[[t('lbl_nome'),snake.nome],[t('lbl_specie'),snake.specie||'—'],[t('lbl_morfo'),snake.morfo||'—'],
+     [t('lbl_sesso'),snake.sesso==='M'?'♂ '+t('aggiungi_maschio'):'♀ '+t('aggiungi_femmina')],
+     [t('lbl_data_nascita'),snake.nascita?new Date(snake.nascita).toLocaleDateString(dateLocale):'—'],
+     [t('serpenti_eta'),age(snake.nascita)],
+     [t('pdf_peso_attuale'),snake.peso?snake.peso+'g':'—'],[t('lbl_provenienza'),snake.provenienza||'—'],
+     [t('lbl_icd'),snake.icd]
+  ].map(([k,v])=>`<div class="info-item"><div class="info-label">${k}</div><div class="info-value">${esc(v)}</div></div>`).join('')}
 </div>
 
 <div class="stats-row">
-  ${[['Pasti tot.',foodLogs.length],['Cibo tot.',totalCibo.toFixed(0)+'g'],['Feci',feciLogs.length],
-     ['Mute',mutaLogs.length],['Pesate',pesoLogs.length],
-     ...(snake.sesso==='F'?[['Deposizioni',eggsLogs.length]]:[])
+  ${[[t('pdf_pasti_tot'),foodLogs.length],[t('det_cibo_tot'),totalCibo.toFixed(0)+'g'],[t('det_feci'),feciLogs.length],
+     [t('det_mute'),mutaLogs.length],[t('pdf_pesate'),pesoLogs.length],
+     ...(snake.sesso==='F'?[[t('pdf_deposizioni'),eggsLogs.length]]:[])
   ].map(([l,v])=>`<div class="stat-box"><div class="stat-num">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
 </div>
 
-${snake.note ? `<div class="section"><div class="sec-title">📝 Note</div><p style="font-size:10pt;color:#444;margin-top:2mm">${esc(snake.note)}</p></div>` : ''}
+${snake.note ? `<div class="section"><div class="sec-title">📝 ${t('label_note')}</div><p style="font-size:10pt;color:#444;margin-top:2mm">${esc(snake.note)}</p></div>` : ''}
 
-${makeTable('Storico Pasti','🥩', foodLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.food_tipo||'—',(l.grammi||0)+'g','×'+(l.qty||1),l.note||'']), ['Data','Tipo','Peso','Qty','Note'])}
-${makeTable('Storico Mute','🦎', mutaLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.feci_tipo||'Completa',l.note||'']), ['Data','Esito','Note'])}
-${makeTable('Storico Peso','⚖️', pesoLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),(l.grammi||0)+'g',l.note||'']), ['Data','Peso','Note'])}
-${makeTable('Storico Feci','💩', feciLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),l.feci_tipo||'—',l.note||'']), ['Data','Tipo','Note'])}
-${snake.sesso==='F' ? makeTable('Deposizioni','🥚', eggsLogs.map(l=>[new Date(l.data).toLocaleDateString('it-IT'),(l.num_uova||0)+' uova',(l.fertili||0)+' fertili',l.temp?l.temp+'°C':'—',l.note||'']), ['Data','Uova','Fertili','Temp','Note']) : ''}
+${makeTable(t('pdf_storico_pasti'),'🥩', foodLogs.map(l=>[new Date(l.data).toLocaleDateString(dateLocale),esc(l.food_tipo)||t('log_cibo_default'),(l.grammi||0)+'g','×'+(l.qty||1),esc(l.note)||'']), [t('pdf_col_data'),t('pdf_col_tipo'),t('pdf_col_peso'),t('pdf_col_qty'),t('pdf_col_note')])}
+${makeTable(t('pdf_storico_mute'),'🦎', mutaLogs.map(l=>[new Date(l.data).toLocaleDateString(dateLocale),esc(l.feci_tipo)||t('muta_completa'),esc(l.note)||'']), [t('pdf_col_data'),t('pdf_col_esito'),t('pdf_col_note')])}
+${makeTable(t('pdf_storico_peso'),'⚖️', pesoLogs.map(l=>[new Date(l.data).toLocaleDateString(dateLocale),(l.grammi||0)+'g',esc(l.note)||'']), [t('pdf_col_data'),t('pdf_col_peso'),t('pdf_col_note')])}
+${makeTable(t('pdf_storico_feci'),'💩', feciLogs.map(l=>[new Date(l.data).toLocaleDateString(dateLocale),esc(l.feci_tipo)||'—',esc(l.note)||'']), [t('pdf_col_data'),t('pdf_col_tipo'),t('pdf_col_note')])}
+${snake.sesso==='F' ? makeTable(t('pdf_deposizioni'),'🥚', eggsLogs.map(l=>[new Date(l.data).toLocaleDateString(dateLocale),(l.num_uova||0),(l.fertili||0),l.temp?l.temp+'°C':'—',esc(l.note)||'']), [t('pdf_col_data'),t('pdf_col_uova'),t('pdf_col_fertili'),t('pdf_col_temp'),t('pdf_col_note')]) : ''}
 
 <div class="footer">
-  <div>SnakeKeeper — Gestionale Allevamento Serpenti<br>snakekeeper.it</div>
-  <div style="text-align:right">ICD: ${snake.icd}<br>Generato: ${today}</div>
+  <div>SnakeKeeper — ${t('pdf_gestionale_sub')}<br>snakekeeper.it</div>
+  <div style="text-align:right">ICD: ${snake.icd}<br>${t('pdf_generato_footer')} ${today}</div>
 </div>
 </body></html>`);
   win.document.close();
@@ -2637,10 +2639,10 @@ function printLabel(id) {
   const qrLargeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(url) + '&margin=4&color=0d1f0f&bgcolor=ffffff';
 
   const printHTML = `<!DOCTYPE html>
-<html lang="it">
+<html lang="${_appLang}">
 <head>
 <meta charset="UTF-8">
-<title>Etichetta — ${esc(snake.nome)}</title>
+<title>${_appLang==='it'?'Etichetta':'Label'} — ${esc(snake.nome)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2762,8 +2764,8 @@ function printLabel(id) {
 <body>
 
 <div class="no-print">
-  <button class="btn-print" onclick="window.print()">🖨️ Stampa / Salva PDF</button>
-  <button class="btn-close" onclick="window.close()">✕ Chiudi</button>
+  <button class="btn-print" onclick="window.print()">🖨️ ${t('pdf_stampa_salva')}</button>
+  <button class="btn-close" onclick="window.close()">✕ ${t('pdf_chiudi')}</button>
 </div>
 
 <div class="page">
@@ -2771,7 +2773,7 @@ function printLabel(id) {
   <!-- INTESTAZIONE -->
   <div class="header">
     <div class="header-logo">🐍 SnakeKeeper</div>
-    <div class="header-sub">Gestionale Allevamento Serpenti<br>Scheda esemplare</div>
+    <div class="header-sub">${t('pdf_gestionale_sub')}<br>${t('pdf_scheda_esemplare')}</div>
   </div>
 
   <!-- 2 COLONNE: QR GRANDE + DATI -->
@@ -2779,34 +2781,34 @@ function printLabel(id) {
 
     <!-- QR GRANDE -->
     <div class="col-qr">
-      <div class="col-qr-label">Scansiona per aprire la scheda</div>
+      <div class="col-qr-label">${t('pdf_scansiona_apri')}</div>
       <div class="qr-border">
         <img src="${qrLargeUrl}" alt="QR Code" />
         <div class="qr-icd">${snake.icd}</div>
       </div>
-      <div class="qr-hint">📷 Inquadra con la fotocamera<br>per aprire su qualsiasi smartphone</div>
+      <div class="qr-hint">${t('pdf_inquadra_camera')}</div>
     </div>
 
     <!-- DATI SERPENTE -->
     <div class="col-info">
       <div class="snake-nome">${esc(snake.nome)} <span class="snake-sesso">${snake.sesso === 'M' ? '♂' : '♀'}</span></div>
-      <div class="snake-specie">${esc(snake.specie || '')}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
+      <div class="snake-specie">${esc(snake.specie || '')}${snake.morfo ? ' · ' + esc(snake.morfo) : ''}</div>
       <div class="dati-grid">
         <div class="dati-field">
-          <span class="lbl">Sesso</span>
-          <span class="val">${snake.sesso === 'M' ? 'Maschio' : 'Femmina'}</span>
+          <span class="lbl">${t('lbl_sesso')}</span>
+          <span class="val">${snake.sesso === 'M' ? t('aggiungi_maschio') : t('aggiungi_femmina')}</span>
         </div>
         <div class="dati-field">
-          <span class="lbl">Data di nascita</span>
+          <span class="lbl">${t('lbl_data_nascita')}</span>
           <span class="val">${fmtDate(snake.nascita)}</span>
         </div>
-        ${snake.peso ? `<div class="dati-field"><span class="lbl">Peso</span><span class="val">${snake.peso}g</span></div>` : ''}
-        ${snake.provenienza ? `<div class="dati-field"><span class="lbl">Provenienza</span><span class="val" style="font-size:9pt">${esc(snake.provenienza)}</span></div>` : ''}
-        ${snake.morfo ? `<div class="dati-field"><span class="lbl">Morfo</span><span class="val">${esc(snake.morfo)}</span></div>` : ''}
-        ${snake.specie ? `<div class="dati-field"><span class="lbl">Specie</span><span class="val" style="font-size:9pt;font-style:italic">${esc(snake.specie)}</span></div>` : ''}
+        ${snake.peso ? `<div class="dati-field"><span class="lbl">${t('lbl_peso')}</span><span class="val">${snake.peso}g</span></div>` : ''}
+        ${snake.provenienza ? `<div class="dati-field"><span class="lbl">${t('lbl_provenienza')}</span><span class="val" style="font-size:9pt">${esc(snake.provenienza)}</span></div>` : ''}
+        ${snake.morfo ? `<div class="dati-field"><span class="lbl">${t('lbl_morfo')}</span><span class="val">${esc(snake.morfo)}</span></div>` : ''}
+        ${snake.specie ? `<div class="dati-field"><span class="lbl">${t('lbl_specie')}</span><span class="val" style="font-size:9pt;font-style:italic">${esc(snake.specie)}</span></div>` : ''}
       </div>
       <div class="icd-box">
-        <div><div class="lbl">Codice ICD</div><div class="val">${snake.icd}</div></div>
+        <div><div class="lbl">${t('lbl_icd')}</div><div class="val">${snake.icd}</div></div>
       </div>
     </div>
   </div>
@@ -2815,7 +2817,7 @@ function printLabel(id) {
 
   <!-- ETICHETTA TECA PICCOLA -->
   <div style="width:100%">
-    <div class="teca-section-label">✂️ Ritaglia e applica sulla teca (100×58mm)</div>
+    <div class="teca-section-label">${t('pdf_ritaglia_prefix')} (100×58mm)</div>
     <div class="teca-label">
       ${_userLogo ? `<img class="teca-logo" src="${_userLogo}" alt="Logo">` : ''}
       <div class="teca-qr-box">
@@ -2824,17 +2826,17 @@ function printLabel(id) {
       <div class="teca-info">
         <div>
           <div class="teca-nome">${esc(snake.nome)} ${snake.sesso === 'M' ? '♂' : '♀'}</div>
-          <div class="teca-specie-s">${esc(snake.specie || '')}${snake.morfo ? ' · ' + snake.morfo : ''}</div>
+          <div class="teca-specie-s">${esc(snake.specie || '')}${snake.morfo ? ' · ' + esc(snake.morfo) : ''}</div>
         </div>
         <div class="teca-grid">
-          <div class="teca-field"><span class="lbl">Sesso</span><span class="val">${snake.sesso === 'M' ? 'Maschio' : 'Femmina'}</span></div>
-          <div class="teca-field"><span class="lbl">Nascita</span><span class="val">${fmtDate(snake.nascita)}</span></div>
-          ${snake.peso ? `<div class="teca-field"><span class="lbl">Peso</span><span class="val">${snake.peso}g</span></div>` : ''}
-          ${snake.provenienza ? `<div class="teca-field"><span class="lbl">Provenienza</span><span class="val">${esc(snake.provenienza)}</span></div>` : ''}
+          <div class="teca-field"><span class="lbl">${t('lbl_sesso')}</span><span class="val">${snake.sesso === 'M' ? t('aggiungi_maschio') : t('aggiungi_femmina')}</span></div>
+          <div class="teca-field"><span class="lbl">${t('pdf_nascita_short')}</span><span class="val">${fmtDate(snake.nascita)}</span></div>
+          ${snake.peso ? `<div class="teca-field"><span class="lbl">${t('lbl_peso')}</span><span class="val">${snake.peso}g</span></div>` : ''}
+          ${snake.provenienza ? `<div class="teca-field"><span class="lbl">${t('lbl_provenienza')}</span><span class="val">${esc(snake.provenienza)}</span></div>` : ''}
         </div>
         <div>
           <div class="teca-icd">ICD: ${snake.icd}</div>
-          <div class="teca-scan">📷 Scansiona il QR per aprire la scheda completa</div>
+          <div class="teca-scan">📷 ${t('pdf_scansiona_qr')}</div>
         </div>
       </div>
     </div>
@@ -2842,8 +2844,8 @@ function printLabel(id) {
 
   <!-- FOOTER -->
   <div class="footer">
-    <div class="footer-text">SnakeKeeper — Gestionale Allevamento Serpenti</div>
-    <div class="footer-text">Generato il ${new Date().toLocaleDateString('it-IT')}</div>
+    <div class="footer-text">SnakeKeeper — ${t('pdf_gestionale_sub')}</div>
+    <div class="footer-text">${t('pdf_generato_footer')} ${new Date().toLocaleDateString(_appLang==='it'?'it-IT':'en-GB')}</div>
   </div>
 
 </div>
@@ -3192,7 +3194,10 @@ function showLegalPage(page) {
   const modal = document.createElement('div');
   modal.id = 'legal-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:999;background:var(--bg-deep);overflow-y:auto;padding:24px';
-  const content = page === 'privacy' ? getPrivacyContent() : getTermsContent();
+  const legalLang = (typeof _appLang !== 'undefined' && _appLang) ? _appLang : (typeof _landingLang !== 'undefined' ? _landingLang : 'it');
+  const content = page === 'privacy'
+    ? (legalLang === 'en' ? getPrivacyContentEN() : getPrivacyContent())
+    : (legalLang === 'en' ? getTermsContentEN() : getTermsContent());
   modal.innerHTML = `
     <div style="max-width:760px;margin:0 auto">
       <button onclick="document.getElementById('legal-modal').remove()"
@@ -3495,19 +3500,296 @@ function getTermsContent() {
   </div>`;
 }
 
+// ═══════════════════════════════════════
+//  VERSIONI INGLESI — PRIVACY POLICY E TERMINI
+// ═══════════════════════════════════════
+// Traduzione professionale, non letterale: terminologia GDPR ufficiale
+// in inglese (es. "right to erasure" invece di traduzione parola-per-parola),
+// tutti i numeri/importi/scadenze identici all'originale italiano.
+function getPrivacyContentEN() {
+  const today = new Date().toLocaleDateString('en-GB');
+  return getLegalStyles() + `
+  <div class="legal-doc">
+    <h1>🔒 Privacy Policy</h1>
+    <div class="legal-meta">
+      Last updated: ${today} · Version 1.0<br>
+      Document compliant with Regulation (EU) 2016/679 (GDPR)
+    </div>
+
+    <div class="highlight">
+      <strong style="color:var(--text-bright)">In short:</strong> SnakeKeeper only collects the data strictly necessary to operate the service. We never sell your data to third parties. You have full control over your data and can request its deletion at any time.
+    </div>
+
+    <h2>1. Data Controller</h2>
+    <p>The controller for the processing of personal data is:</p>
+    <ul>
+      <li><strong>Controller:</strong> Manuel Satta</li>
+      <li><strong>Address:</strong> Via Comerio 9, 48018 Faenza (RA), Italy</li>
+      <li><strong>Website:</strong> <a href="https://snakekeeper.it">snakekeeper.it</a></li>
+      <li><strong>Email:</strong> <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a></li>
+    </ul>
+
+    <h2>2. Data We Collect and Purposes</h2>
+    <h3>2.1 Registration data</h3>
+    <p>When you register, we collect:</p>
+    <ul>
+      <li><strong>Email address</strong> — to identify your account and send service communications</li>
+      <li><strong>Password</strong> — stored in encrypted form (bcrypt hashing), never in plain text</li>
+    </ul>
+    <p><strong>Legal basis:</strong> performance of a contract (Art. 6(1)(b) GDPR)</p>
+
+    <h3>2.2 Data entered by the user</h3>
+    <p>Data relating to snakes (profile sheets, feeding logs, weights, sheds, sales) is entered voluntarily by the user. This data:</p>
+    <ul>
+      <li>Belongs exclusively to the user</li>
+      <li>Is not accessible to other users</li>
+      <li>Is not analysed or used for commercial purposes</li>
+      <li>Can be deleted by the user at any time</li>
+    </ul>
+    <p><strong>Legal basis:</strong> performance of a contract (Art. 6(1)(b) GDPR)</p>
+
+    <h3>2.3 Payment data</h3>
+    <p>Payments are handled by <strong>Stripe Inc.</strong>, a PCI-DSS certified provider. SnakeKeeper <strong>does not collect or store</strong> credit card data or banking information. Stripe may collect:</p>
+    <ul>
+      <li>Payment card details (handled exclusively by Stripe)</li>
+      <li>Billing address</li>
+      <li>Data necessary to prevent fraud</li>
+    </ul>
+    <p>For more information: <a href="https://stripe.com/privacy" target="_blank">stripe.com/privacy</a></p>
+    <p><strong>Legal basis:</strong> performance of a contract (Art. 6(1)(b) GDPR)</p>
+
+    <h3>2.4 Technical data</h3>
+    <p>Like most web services, we automatically collect:</p>
+    <ul>
+      <li>IP address (anonymised)</li>
+      <li>Browser and device type</li>
+      <li>Pages visited and session duration</li>
+      <li>Date and time of access</li>
+    </ul>
+    <p><strong>Legal basis:</strong> legitimate interest (Art. 6(1)(f) GDPR) for the security and operation of the service</p>
+
+    <h2>3. Cookies and Similar Technologies</h2>
+    <table>
+      <tr><th>Cookie</th><th>Type</th><th>Duration</th><th>Purpose</th></tr>
+      <tr><td>sb-*-auth-token</td><td>Essential</td><td>1 hour</td><td>Supabase authentication session</td></tr>
+      <tr><td>offline_queue</td><td>Technical</td><td>Session</td><td>Offline operations queue</td></tr>
+      <tr><td>stripe.js</td><td>Third-party</td><td>Varies</td><td>Secure payment processing</td></tr>
+    </table>
+    <p>We do not use profiling or advertising-tracking cookies.</p>
+
+    <h2>4. Data Retention</h2>
+    <p>Data is retained for the following periods:</p>
+    <ul>
+      <li><strong>Account data:</strong> for the duration of the contractual relationship, plus 12 months after cancellation</li>
+      <li><strong>Data entered by the user:</strong> until deleted by the user or upon account deletion</li>
+      <li><strong>Payment data (Stripe):</strong> in accordance with Stripe's policies and applicable tax obligations (generally 10 years)</li>
+      <li><strong>Technical logs:</strong> 30 days</li>
+    </ul>
+
+    <h2>5. Sharing With Third Parties</h2>
+    <p>Your data is never sold, rented, or shared with third parties for marketing purposes. We only share it with:</p>
+    <ul>
+      <li><strong>Supabase Inc.</strong> — database hosting and authentication (servers located in the EU)</li>
+      <li><strong>Stripe Inc.</strong> — payment processing</li>
+      <li><strong>Resend Inc.</strong> — transactional email delivery</li>
+      <li><strong>GitHub Inc.</strong> — website hosting (GitHub Pages)</li>
+    </ul>
+    <p>All providers are GDPR-compliant and, where applicable, comply with the relevant EU-US data transfer frameworks.</p>
+
+    <h2>6. Your Rights (GDPR)</h2>
+    <p>Under the GDPR, you have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> — request a copy of all your personal data</li>
+      <li><strong>Rectification</strong> — correct inaccurate or incomplete data</li>
+      <li><strong>Erasure ("right to be forgotten")</strong> — request the deletion of all your data</li>
+      <li><strong>Portability</strong> — receive your data in a structured, commonly used, machine-readable format</li>
+      <li><strong>Objection</strong> — object to processing carried out on the basis of legitimate interest</li>
+      <li><strong>Restriction</strong> — restrict processing in certain circumstances</li>
+    </ul>
+    <p>To exercise these rights, write to <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a>. We will respond within 30 days.</p>
+    <p>You also have the right to lodge a complaint with the <strong>Italian Data Protection Authority</strong> (Garante per la Protezione dei Dati Personali) (<a href="https://www.garanteprivacy.it" target="_blank">garanteprivacy.it</a>), or with the data protection authority of your own EU member state.</p>
+
+    <h2>7. Data Security</h2>
+    <p>We adopt the following security measures:</p>
+    <ul>
+      <li>Encrypted connections via TLS/HTTPS</li>
+      <li>Passwords stored using bcrypt hashing</li>
+      <li>Data access restricted to the owning user via Row Level Security (RLS)</li>
+      <li>Session tokens with automatic expiry</li>
+      <li>No sensitive data stored in plain text</li>
+    </ul>
+
+    <h2>8. International Data Transfers</h2>
+    <p>Some providers (Stripe, GitHub) are based in the USA. Such transfers take place in compliance with the GDPR through the Standard Contractual Clauses (SCC) approved by the European Commission.</p>
+
+    <h2>9. Children</h2>
+    <p>SnakeKeeper is not intended for children under the age of 16. We do not knowingly collect data from children. If you believe a child has created an account, please contact us at <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a>.</p>
+
+    <h2>10. Changes to This Privacy Policy</h2>
+    <p>We reserve the right to update this Privacy Policy. In the event of material changes, we will notify users by email with at least 15 days' notice. The date of the last update is always shown at the top of this document.</p>
+
+    <h2>11. Contact</h2>
+    <p>For any question regarding privacy: <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a></p>
+  </div>`;
+}
+
+function getTermsContentEN() {
+  const today = new Date().toLocaleDateString('en-GB');
+  return getLegalStyles() + `
+  <div class="legal-doc">
+    <h1>📋 Terms of Service</h1>
+    <div class="legal-meta">
+      Last updated: ${today} · Version 1.0<br>
+      Please read carefully before using the service
+    </div>
+
+    <div class="highlight">
+      <strong style="color:var(--text-bright)">In short:</strong> SnakeKeeper is a management service for snake breeders. We offer a free plan (up to 3 snakes) and paid plans with advanced features. You can cancel your account at any time.
+    </div>
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>By using SnakeKeeper ("the Service", "the Platform"), available at <a href="https://snakekeeper.it">snakekeeper.it</a>, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the Service.</p>
+    <p>The Service is provided by SnakeKeeper ("we", "us", "our"). These Terms constitute a legally binding agreement between you and SnakeKeeper.</p>
+
+    <h2>2. Description of the Service</h2>
+    <p>SnakeKeeper is a web application for the professional management of snake breeding collections. The Service allows you to:</p>
+    <ul>
+      <li>Record and manage profile sheets for your snakes</li>
+      <li>Track feeding, weight, shedding, and health status</li>
+      <li>Manage the sale of animals</li>
+      <li>Generate reports and profile sheets in PDF format</li>
+      <li>Access your data offline via PWA technology</li>
+    </ul>
+
+    <h2>3. Account and Registration</h2>
+    <h3>3.1 Creating an account</h3>
+    <p>To use the Service you must create an account by providing a valid email address and password. You are responsible for:</p>
+    <ul>
+      <li>Providing accurate and up-to-date information</li>
+      <li>Keeping your login credentials confidential</li>
+      <li>All activity that takes place under your account</li>
+      <li>Notifying us immediately of any unauthorised access</li>
+    </ul>
+
+    <h3>3.2 Age requirements</h3>
+    <p>You must be at least 16 years old to create an account. If you are under 16, you may only use the Service with the consent of a parent or legal guardian.</p>
+
+    <h3>3.3 One account per person</h3>
+    <p>Only one account per individual is permitted. Creating multiple accounts is prohibited.</p>
+
+    <h2>4. Plans and Payments</h2>
+    <h3>4.1 Free Plan</h3>
+    <p>The free plan allows you to manage up to <strong>3 snakes</strong> at no cost. No credit card is required.</p>
+    <p>If a Pro user reverts to the Free plan while having more than 3 registered animals, <strong>no data is deleted</strong>: all animals and their full history remain visible and accessible. The first 3 animals added, in chronological order, remain fully editable, while the others switch to read-only mode until a paid plan is reactivated.</p>
+
+    <h3>4.2 Pro Plan</h3>
+    <p>The Pro plan offers unlimited features for a fee:</p>
+    <ul>
+      <li><strong>Monthly:</strong> €4.99/month, automatically renewed every month</li>
+      <li><strong>Annual:</strong> €47.99/year, automatically renewed every year</li>
+    </ul>
+
+    <h3>4.3 For Life Plan</h3>
+    <p>The For Life plan is a <strong>one-time purchase of €199</strong> that guarantees unlimited access to all current and future features of the Service, with no recurring renewals.</p>
+
+    <h3>4.4 Payments and billing</h3>
+    <p>Payments are securely processed by Stripe Inc. By subscribing to a paid plan, you authorise automatic billing according to the frequency you have chosen. Prices are inclusive of VAT where applicable.</p>
+
+    <h3>4.5 Refunds</h3>
+    <div class="highlight">
+      <strong style="color:var(--text-bright)">14-day guarantee:</strong> for all plans, within 14 days of purchase you can request a <strong>full refund</strong> directly from the Profile page, with no need to contact support and without providing a reason.
+    </div>
+    <ul>
+      <li><strong>Within 14 days (all plans):</strong> automatic full refund. Premium access ends immediately and the amount is credited back to the original payment method within 3-5 business days.</li>
+      <li><strong>After 14 days — Pro Plan (monthly/annual):</strong> no refund, but you may cancel at any time. You will retain Pro access until the end of the period you have already paid for, and no further charges will be made.</li>
+      <li><strong>After 14 days — For Life Plan:</strong> as this is a final one-time purchase, no refund is available beyond the guarantee period.</li>
+    </ul>
+    <p>Cancellation is carried out from <strong>Profile → Manage subscription</strong>. For assistance: <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a></p>
+    <p>To request a refund: <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a></p>
+
+    <h3>4.6 Price changes</h3>
+    <p>We reserve the right to change prices with at least 30 days' notice by email. Changes do not apply to active subscriptions until the next renewal. The For Life plan is not subject to price changes.</p>
+
+    <h2>5. Ownership of Content</h2>
+    <h3>5.1 Your data</h3>
+    <p>All data you enter into the Service (snake profiles, logs, photos, notes) belongs to you. You grant us a limited licence to store and process it solely for the purpose of providing the Service to you.</p>
+
+    <h3>5.2 Data export</h3>
+    <p>You can export your data in PDF format at any time using the feature built into the Service. Upon request, we can provide a complete export in JSON format within 30 days.</p>
+
+    <h3>5.3 SnakeKeeper's intellectual property</h3>
+    <p>The code, design, logos, and all elements of the Service are the property of SnakeKeeper and are protected by copyright law. You may not copy, modify, or distribute the Service without written authorisation.</p>
+
+    <h2>6. Acceptable Use</h2>
+    <p>You agree not to use the Service to:</p>
+    <ul>
+      <li>Engage in illegal activity or activity that infringes the rights of third parties</li>
+      <li>Enter false, misleading, or offensive content</li>
+      <li>Attempt to access other users' data</li>
+      <li>Overload or compromise the Service's infrastructure</li>
+      <li>Use unauthorised bots, scrapers, or automated tools</li>
+      <li>Register or sell CITES-protected snakes without the necessary legal permits</li>
+    </ul>
+    <p>We reserve the right to suspend or terminate the account of anyone who violates these rules.</p>
+
+    <h2>7. Service Availability</h2>
+    <p>We work to ensure maximum availability of the Service, but we cannot guarantee 100% uptime. We reserve the right to:</p>
+    <ul>
+      <li>Carry out scheduled maintenance with advance notice</li>
+      <li>Temporarily suspend the Service for technical reasons</li>
+      <li>Modify or discontinue features with reasonable notice</li>
+    </ul>
+    <p>In the event of a prolonged outage (over 72 hours), Pro subscribers will receive a proportional credit on their next renewal.</p>
+
+    <h2>8. Limitation of Liability</h2>
+    <p>To the extent permitted by applicable law, SnakeKeeper is not liable for:</p>
+    <ul>
+      <li>Data loss caused by events outside our control</li>
+      <li>Indirect, incidental, or consequential damages</li>
+      <li>Decisions made by the user based on data entered into the Service</li>
+      <li>Service interruptions due to force majeure</li>
+    </ul>
+    <p>SnakeKeeper's maximum liability to you is limited to the amount you paid in the previous 12 months.</p>
+
+    <h2>9. Account Termination</h2>
+    <h3>9.1 Termination by the user</h3>
+    <p>You may delete your account at any time from the Profile page or by contacting <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a>. Deletion is immediate and results in:</p>
+    <ul>
+      <li>Immediate termination of access to the Service</li>
+      <li>Deletion of all your data within 30 days</li>
+      <li>Termination of any active subscriptions (with no refund for the remaining period)</li>
+    </ul>
+
+    <h3>9.2 Termination by us</h3>
+    <p>We reserve the right to suspend or delete accounts that violate these Terms, with 48 hours' notice except in serious cases.</p>
+
+    <h2>10. Governing Law and Jurisdiction</h2>
+    <p>These Terms are governed by Italian law. For any dispute, the competent court is that of the consumer user's place of residence, pursuant to the Italian Consumer Code (Legislative Decree No. 206/2005).</p>
+    <p>For disputes involving EU consumers, the European Commission's ODR platform is available at: <a href="https://ec.europa.eu/consumers/odr" target="_blank">ec.europa.eu/consumers/odr</a></p>
+
+    <h2>11. Changes to These Terms</h2>
+    <p>We may modify these Terms with at least 30 days' notice by email. By continuing to use the Service after the effective date of the changes, you accept the new Terms.</p>
+
+    <h2>12. Contact</h2>
+    <p>For general assistance: <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a><br>
+    For legal and privacy matters: <a href="mailto:snakekeeper.it@gmail.com">snakekeeper.it@gmail.com</a><br>
+    Website: <a href="https://snakekeeper.it">snakekeeper.it</a></p>
+  </div>`;
+}
+
 function renderPrivacy() {
   document.getElementById('main-content').innerHTML = `
-    <div class="page-header"><h2>🔒 Privacy Policy</h2><p>Informativa sul trattamento dei dati personali</p></div>
+    <div class="page-header"><h2>🔒 Privacy Policy</h2><p>${_appLang==='en' ? 'Information on the processing of personal data' : 'Informativa sul trattamento dei dati personali'}</p></div>
     <div class="card">
-      ${getPrivacyContent()}
+      ${_appLang==='en' ? getPrivacyContentEN() : getPrivacyContent()}
     </div>`;
 }
 
 function renderTerms() {
   document.getElementById('main-content').innerHTML = `
-    <div class="page-header"><h2>📋 Termini di Servizio</h2><p>Condizioni generali di utilizzo</p></div>
+    <div class="page-header"><h2>📋 ${_appLang==='en' ? 'Terms of Service' : 'Termini di Servizio'}</h2><p>${_appLang==='en' ? 'General terms and conditions of use' : 'Condizioni generali di utilizzo'}</p></div>
     <div class="card">
-      ${getTermsContent()}
+      ${_appLang==='en' ? getTermsContentEN() : getTermsContent()}
     </div>`;
 }
 
@@ -4688,6 +4970,28 @@ const I18N = {
     zona_pericolosa_desc: "Elimina definitivamente il tuo account e tutti i dati associati: serpenti, registri, archivio venduti e abbonamento. Questa azione non può essere annullata.",
     elimina_account_btn: 'Elimina account definitivamente',
     privacy_policy: 'Privacy Policy', termini_servizio: 'Termini di Servizio', gestisci_cookie: 'Gestisci Cookie',
+    pdf_scheda_serpente: 'Scheda Serpente', pdf_doc_generato: 'Documento generato il',
+    pdf_pasti_tot: 'Pasti tot.', pdf_pesate: 'Pesate', pdf_peso_attuale: 'Peso attuale',
+    pdf_storico_pasti: 'Storico Pasti', pdf_storico_mute: 'Storico Mute', pdf_storico_peso: 'Storico Peso',
+    pdf_storico_feci: 'Storico Feci', pdf_deposizioni: 'Deposizioni',
+    pdf_col_data: 'Data', pdf_col_tipo: 'Tipo', pdf_col_peso: 'Peso', pdf_col_qty: 'Qty', pdf_col_note: 'Note',
+    pdf_col_esito: 'Esito', pdf_col_uova: 'Uova', pdf_col_fertili: 'Fertili', pdf_col_temp: 'Temp',
+    pdf_generato_footer: 'Generato:', pdf_no_popup: 'Abilita i popup per visualizzare il PDF',
+    pdf_gestionale_sub: 'Gestionale Allevamento Serpenti', pdf_scheda_titolo_tab: 'Scheda',
+    pdf_venduto_a: 'Venduto a', pdf_acquirente: 'Acquirente', pdf_prezzo_vendita: 'Prezzo di vendita',
+    pdf_giorni_allevamento: 'Giorni in allevamento', pdf_riepilogo_vendita: 'Riepilogo Vendita',
+    pdf_resoconto_vita: 'Resoconto Vita', pdf_scansiona_qr: 'Scansiona il QR per la scheda completa',
+    pdf_resoconto_esemplare: 'Resoconto Esemplare', pdf_storico_completo: 'Storico completo vita in allevamento',
+    pdf_stampa_salva: 'Stampa / Salva PDF', pdf_chiudi: 'Chiudi',
+    pdf_peso_registrato: 'Peso registrato', pdf_ingresso_allevamento: 'Ingresso allevamento',
+    pdf_riepilogo_attivita: 'Riepilogo Attività', pdf_pasti_totali: 'Pasti totali',
+    pdf_cibo_somministrato: 'Cibo somministrato', pdf_feci_registrate: 'Feci registrate',
+    pdf_giorni_tra_pasti: 'Giorni tra pasti', pdf_totale: 'Totale', pdf_uova_deposte: 'Uova deposte',
+    pdf_temp_c: 'Temp. (°C)', pdf_dettagli_vendita: 'Dettagli Vendita', pdf_giorni_suffix: 'giorni',
+    pdf_scansiona_apri: 'Scansiona per aprire la scheda',
+    pdf_inquadra_camera: '📷 Inquadra con la fotocamera<br>per aprire su qualsiasi smartphone',
+    pdf_scheda_esemplare: 'Scheda esemplare', pdf_ritaglia_prefix: '✂️ Ritaglia e applica sulla teca',
+    pdf_nascita_short: 'Nascita',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -4781,6 +5085,28 @@ const I18N = {
     zona_pericolosa_desc: 'Permanently delete your account and all associated data: snakes, logs, sold archive and subscription. This action cannot be undone.',
     elimina_account_btn: 'Permanently delete account',
     privacy_policy: 'Privacy Policy', termini_servizio: 'Terms of Service', gestisci_cookie: 'Manage Cookies',
+    pdf_scheda_serpente: 'Snake Profile', pdf_doc_generato: 'Document generated on',
+    pdf_pasti_tot: 'Total meals', pdf_pesate: 'Weigh-ins', pdf_peso_attuale: 'Current weight',
+    pdf_storico_pasti: 'Feeding History', pdf_storico_mute: 'Shed History', pdf_storico_peso: 'Weight History',
+    pdf_storico_feci: 'Feces History', pdf_deposizioni: 'Clutches',
+    pdf_col_data: 'Date', pdf_col_tipo: 'Type', pdf_col_peso: 'Weight', pdf_col_qty: 'Qty', pdf_col_note: 'Notes',
+    pdf_col_esito: 'Outcome', pdf_col_uova: 'Eggs', pdf_col_fertili: 'Fertile', pdf_col_temp: 'Temp',
+    pdf_generato_footer: 'Generated:', pdf_no_popup: 'Please enable pop-ups to view the PDF',
+    pdf_gestionale_sub: 'Snake Breeding Management', pdf_scheda_titolo_tab: 'Profile',
+    pdf_venduto_a: 'Sold to', pdf_acquirente: 'Buyer', pdf_prezzo_vendita: 'Sale price',
+    pdf_giorni_allevamento: 'Days in collection', pdf_riepilogo_vendita: 'Sale Summary',
+    pdf_resoconto_vita: 'Life Summary', pdf_scansiona_qr: 'Scan the QR code for the full profile',
+    pdf_resoconto_esemplare: 'Animal Report', pdf_storico_completo: 'Complete life history in the collection',
+    pdf_stampa_salva: 'Print / Save PDF', pdf_chiudi: 'Close',
+    pdf_peso_registrato: 'Recorded weight', pdf_ingresso_allevamento: 'Added to collection',
+    pdf_riepilogo_attivita: 'Activity Summary', pdf_pasti_totali: 'Total meals',
+    pdf_cibo_somministrato: 'Food given', pdf_feci_registrate: 'Feces logged',
+    pdf_giorni_tra_pasti: 'Days between meals', pdf_totale: 'Total', pdf_uova_deposte: 'Eggs laid',
+    pdf_temp_c: 'Temp. (°C)', pdf_dettagli_vendita: 'Sale Details', pdf_giorni_suffix: 'days',
+    pdf_scansiona_apri: 'Scan to open the profile',
+    pdf_inquadra_camera: '📷 Point your camera at it<br>to open on any smartphone',
+    pdf_scheda_esemplare: 'Animal Profile', pdf_ritaglia_prefix: '✂️ Cut out and attach to the enclosure',
+    pdf_nascita_short: 'Born',
   }
 };
 
