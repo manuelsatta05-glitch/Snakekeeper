@@ -2086,7 +2086,7 @@ function renderVenduti() {
   // ── Costruzione barre del grafico ──
   let chartBars = [];
   if (_vendutiFilterYear === 'all') {
-    chartBars = years.map(y => {
+    chartBars = [...years].sort((a, b) => a.localeCompare(b)).map(y => {
       const inYear = _venduti.filter(v => v.data_vendita && v.data_vendita.slice(0, 4) === y);
       const incasso = inYear.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
       return { label: y, count: inYear.length, incasso, onclick: `setVendutiYear('${y}')`, active: false };
