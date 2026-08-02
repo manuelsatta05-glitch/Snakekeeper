@@ -2121,6 +2121,7 @@ function renderVenduti() {
     html += `
     <div class="card" style="margin-bottom:20px">
       <div class="card-title">📊 ${t('venduti_grafico_title')}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:-8px;margin-bottom:4px">${t('venduti_grafico_hint')}</div>
       <div style="margin-top:16px">
         <div style="display:flex">
           <div style="position:relative;width:46px;height:${chartH}px;flex-shrink:0">
@@ -5100,6 +5101,7 @@ const I18N = {
     venduti_filtro_anno: 'Anno', venduti_tutti_anni: 'Tutti gli anni',
     venduti_filtro_mese: 'Mese', venduti_tutti_mesi: 'Tutti i mesi',
     venduti_reset_filtri: '✕ Rimuovi filtri', venduti_grafico_title: 'Andamento vendite',
+    venduti_grafico_hint: '💡 Grafico interattivo — clicca le barre per applicare il filtro',
     venduti_vendite_label: 'vendite', venduti_nessuna_nel_periodo: 'Nessuna vendita in questo periodo.',
   },
   en: {
@@ -5219,6 +5221,7 @@ const I18N = {
     venduti_filtro_anno: 'Year', venduti_tutti_anni: 'All years',
     venduti_filtro_mese: 'Month', venduti_tutti_mesi: 'All months',
     venduti_reset_filtri: '✕ Clear filters', venduti_grafico_title: 'Sales trend',
+    venduti_grafico_hint: '💡 Interactive chart — click a bar to apply the filter',
     venduti_vendite_label: 'sales', venduti_nessuna_nel_periodo: 'No sales in this period.',
   }
 };
