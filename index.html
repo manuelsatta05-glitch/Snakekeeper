@@ -2110,6 +2110,8 @@ function renderVenduti() {
   // ── Grafico ──
   if (years.length > 0) {
     const chartH = 140;
+    const labelReserve = 20; // spazio riservato in alto per il numero vendite, cosi' la barra al 100% non sfora
+    const barZoneH = chartH - labelReserve;
     const ySteps = 4; // 5 etichette: 100%, 75%, 50%, 25%, 0%
     const fmtEuroAxis = (val) => val >= 1000 ? '€' + (val / 1000).toFixed(1).replace('.0', '') + 'k' : '€' + Math.round(val);
     const yLabels = [];
@@ -2119,9 +2121,6 @@ function renderVenduti() {
     <div class="card" style="margin-bottom:20px">
       <div class="card-title">📊 ${t('venduti_grafico_title')}</div>
       <div style="margin-top:16px">
-        <div style="display:flex;gap:6px;padding-left:46px">
-          ${chartBars.map(b => `<div style="flex:1;min-width:30px;text-align:center;font-size:10px;color:var(--text-dim);height:14px">${b.count > 0 ? b.count : ''}</div>`).join('')}
-        </div>
         <div style="display:flex">
           <div style="position:relative;width:46px;height:${chartH}px;flex-shrink:0">
             ${yLabels.map((val, i) => `<div style="position:absolute;top:${(i / ySteps) * 100}%;transform:translateY(-50%);right:8px;font-size:9px;color:var(--text-dim);white-space:nowrap">${fmtEuroAxis(val)}</div>`).join('')}
@@ -2133,7 +2132,8 @@ function renderVenduti() {
             <div style="position:relative;display:flex;align-items:flex-end;gap:6px;height:100%;padding-right:2px">
               ${chartBars.map(b => `
                 <div class="venduti-bar-col" onclick="${b.onclick}" title="${b.count} ${t('venduti_vendite_label')} · €${b.incasso.toFixed(2)}">
-                  <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(3, (b.incasso / maxIncasso) * 100)}%"></div>
+                  <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:3px;line-height:1">${b.count > 0 ? b.count : ''}</div>
+                  <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(3, (b.incasso / maxIncasso) * barZoneH)}px"></div>
                 </div>`).join('')}
             </div>
           </div>
