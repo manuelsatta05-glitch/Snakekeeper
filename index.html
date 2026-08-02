@@ -396,6 +396,10 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
 
   .mini-chart { background: var(--bg-moss); border-radius: 8px; height: 80px; display: flex; align-items: flex-end; gap: 4px; padding: 12px 12px 8px; overflow: hidden; }
   .mini-bar { background: var(--accent-lime); border-radius: 3px 3px 0 0; flex: 1; opacity: 0.8; min-width: 6px; }
+  .venduti-bar-col { flex: 1; min-width: 30px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+  .venduti-bar { width: 100%; background: var(--accent-lime); opacity: 0.75; border-radius: 4px 4px 0 0; transition: opacity .15s; }
+  .venduti-bar-col:hover .venduti-bar { opacity: 1; }
+  .venduti-bar-active { background: var(--accent-gold) !important; opacity: 1 !important; }
 
   /* Spinner inline */
   .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
@@ -2032,18 +2036,113 @@ async function confermaVendita(snakeId) {
 // ═══════════════════════════════════════
 //  PAGINA VENDUTI
 // ═══════════════════════════════════════
+const MESI_ABBR = { it: ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'], en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] };
+const MESI_FULL = { it: ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'], en: ['January','February','March','April','May','June','July','August','September','October','November','December'] };
+
+function getVendutiYears() {
+  const years = new Set();
+  _venduti.forEach(v => { if (v.data_vendita) years.add(v.data_vendita.slice(0, 4)); });
+  return Array.from(years).sort((a, b) => b.localeCompare(a));
+}
+
+function getFilteredVenduti() {
+  if (_vendutiFilterYear === 'all') return _venduti;
+  return _venduti.filter(v => {
+    if (!v.data_vendita) return false;
+    if (v.data_vendita.slice(0, 4) !== _vendutiFilterYear) return false;
+    if (_vendutiFilterMonth !== 'all') {
+      const m = parseInt(v.data_vendita.slice(5, 7), 10) - 1;
+      if (m !== parseInt(_vendutiFilterMonth, 10)) return false;
+    }
+    return true;
+  });
+}
+
+function setVendutiYear(year) {
+  _vendutiFilterYear = year;
+  _vendutiFilterMonth = 'all';
+  renderVenduti();
+}
+
+function setVendutiMonth(month) {
+  _vendutiFilterMonth = String(month);
+  renderVenduti();
+}
+
+function resetVendutiFiltri() {
+  _vendutiFilterYear = 'all';
+  _vendutiFilterMonth = 'all';
+  renderVenduti();
+}
+
 function renderVenduti() {
-  const totIncasso = _venduti.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
+  const filtered = getFilteredVenduti();
+  const filteredIncasso = filtered.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
+  const years = getVendutiYears();
+  const mesiAbbr = MESI_ABBR[_appLang] || MESI_ABBR.it;
+  const mesiFull = MESI_FULL[_appLang] || MESI_FULL.it;
+  const filtriAttivi = _vendutiFilterYear !== 'all' || _vendutiFilterMonth !== 'all';
+
+  // ── Costruzione barre del grafico ──
+  let chartBars = [];
+  if (_vendutiFilterYear === 'all') {
+    chartBars = years.map(y => {
+      const inYear = _venduti.filter(v => v.data_vendita && v.data_vendita.slice(0, 4) === y);
+      const incasso = inYear.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
+      return { label: y, count: inYear.length, incasso, onclick: `setVendutiYear('${y}')`, active: false };
+    });
+  } else {
+    chartBars = mesiAbbr.map((label, idx) => {
+      const inMonth = _venduti.filter(v => v.data_vendita && v.data_vendita.slice(0, 4) === _vendutiFilterYear && (parseInt(v.data_vendita.slice(5, 7), 10) - 1) === idx);
+      const incasso = inMonth.reduce((s, v) => s + (parseFloat(v.prezzo) || 0), 0);
+      const active = _vendutiFilterMonth !== 'all' && parseInt(_vendutiFilterMonth, 10) === idx;
+      return { label, count: inMonth.length, incasso, onclick: `setVendutiMonth(${idx})`, active };
+    });
+  }
+  const maxIncasso = Math.max(1, ...chartBars.map(b => b.incasso));
+
   let html = `
   <div class="page-header">
     <h2>💰 ${t('venduti_title')}</h2>
-    <p>${_venduti.length} ${t('venduti_count')} · ${t('venduti_incasso')} <strong style="color:var(--accent-gold)">€${totIncasso.toFixed(2)}</strong></p>
+    <p>${filtered.length} ${t('venduti_count')} · ${t('venduti_incasso')} <strong style="color:var(--accent-gold)">€${filteredIncasso.toFixed(2)}</strong></p>
   </div>`;
 
-  if (!_venduti.length) {
-    html += `<div class="empty-state"><div class="empty-icon">💰</div><h3>${t('venduti_empty_title')}</h3><p>${t('venduti_empty_desc')}</p></div>`;
+  // ── Grafico ──
+  if (years.length > 0) {
+    html += `
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">📊 ${t('venduti_grafico_title')}</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:150px;margin-top:16px;overflow-x:auto;padding-bottom:4px">
+        ${chartBars.map(b => `
+          <div class="venduti-bar-col" onclick="${b.onclick}" title="${b.count} ${t('venduti_vendite_label')} · €${b.incasso.toFixed(2)}">
+            <div style="font-size:10px;color:var(--text-dim);height:14px">${b.count > 0 ? b.count : ''}</div>
+            <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(4, (b.incasso / maxIncasso) * 100)}px"></div>
+            <div style="font-size:10px;color:var(--text-dim);white-space:nowrap;margin-top:4px">${esc(b.label)}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // ── Filtri ──
+  html += `
+  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+    <select onchange="setVendutiYear(this.value)" style="background:var(--bg-moss);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:13px">
+      <option value="all" ${_vendutiFilterYear === 'all' ? 'selected' : ''}>${t('venduti_tutti_anni')}</option>
+      ${years.map(y => `<option value="${y}" ${_vendutiFilterYear === y ? 'selected' : ''}>${y}</option>`).join('')}
+    </select>
+    ${_vendutiFilterYear !== 'all' ? `
+    <select onchange="setVendutiMonth(this.value)" style="background:var(--bg-moss);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:13px">
+      <option value="all" ${_vendutiFilterMonth === 'all' ? 'selected' : ''}>${t('venduti_tutti_mesi')}</option>
+      ${mesiFull.map((m, idx) => `<option value="${idx}" ${String(_vendutiFilterMonth) === String(idx) ? 'selected' : ''}>${m}</option>`).join('')}
+    </select>` : ''}
+    ${filtriAttivi ? `<button class="btn btn-ghost btn-sm" onclick="resetVendutiFiltri()">${t('venduti_reset_filtri')}</button>` : ''}
+  </div>`;
+
+  // ── Lista (filtrata) ──
+  if (!filtered.length) {
+    html += `<div class="empty-state"><div class="empty-icon">💰</div><h3>${filtriAttivi ? t('venduti_nessuna_nel_periodo') : t('venduti_empty_title')}</h3><p>${filtriAttivi ? '' : t('venduti_empty_desc')}</p></div>`;
   } else {
-    html += '<div class="snakes-grid">' + _venduti.map(v => `
+    html += '<div class="snakes-grid">' + filtered.map(v => `
       <div class="snake-card" style="cursor:default">
         <div class="snake-card-header">
           <div>
@@ -4134,6 +4233,8 @@ async function doCancelSubscription() {
 // ═══════════════════════════════════════
 let _currentUser = null;
 let _userPlan = 'free'; // 'free' | 'pro' | 'admin' | 'free_forever'
+let _vendutiFilterYear = 'all';  // 'all' oppure es. '2026'
+let _vendutiFilterMonth = 'all'; // 'all' oppure 0-11 (indice mese, solo se anno specifico)
 let _userLogo = null; // logo allevatore, base64 compresso, null se non caricato
 const FREE_SNAKE_LIMIT = 3;
 const ADMIN_EMAIL = 'manuel.satta05@gmail.com';
@@ -4970,6 +5071,10 @@ const I18N = {
     pdf_inquadra_camera: '📷 Inquadra con la fotocamera<br>per aprire su qualsiasi smartphone',
     pdf_scheda_esemplare: 'Scheda esemplare', pdf_ritaglia_prefix: '✂️ Ritaglia e applica sulla teca',
     pdf_nascita_short: 'Nascita',
+    venduti_filtro_anno: 'Anno', venduti_tutti_anni: 'Tutti gli anni',
+    venduti_filtro_mese: 'Mese', venduti_tutti_mesi: 'Tutti i mesi',
+    venduti_reset_filtri: '✕ Rimuovi filtri', venduti_grafico_title: 'Andamento vendite',
+    venduti_vendite_label: 'vendite', venduti_nessuna_nel_periodo: 'Nessuna vendita in questo periodo.',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -5085,6 +5190,10 @@ const I18N = {
     pdf_inquadra_camera: '📷 Point your camera at it<br>to open on any smartphone',
     pdf_scheda_esemplare: 'Animal Profile', pdf_ritaglia_prefix: '✂️ Cut out and attach to the enclosure',
     pdf_nascita_short: 'Born',
+    venduti_filtro_anno: 'Year', venduti_tutti_anni: 'All years',
+    venduti_filtro_mese: 'Month', venduti_tutti_mesi: 'All months',
+    venduti_reset_filtri: '✕ Clear filters', venduti_grafico_title: 'Sales trend',
+    venduti_vendite_label: 'sales', venduti_nessuna_nel_periodo: 'No sales in this period.',
   }
 };
 
