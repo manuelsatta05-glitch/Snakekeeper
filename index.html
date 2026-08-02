@@ -2111,8 +2111,6 @@ function renderVenduti() {
   // ── Grafico ──
   if (years.length > 0) {
     const chartH = 140;
-    const labelReserve = 20; // spazio riservato in alto per il numero vendite, cosi' la barra al 100% non sfora
-    const barZoneH = chartH - labelReserve;
     const ySteps = 4; // 5 etichette: 100%, 75%, 50%, 25%, 0%
     const fmtEuroAxis = (val) => val >= 1000 ? '€' + (val / 1000).toFixed(1).replace('.0', '') + 'k' : '€' + Math.round(val);
     const yLabels = [];
@@ -2135,7 +2133,7 @@ function renderVenduti() {
               ${chartBars.map(b => `
                 <div class="venduti-bar-col" onclick="${b.onclick}" title="${b.count} ${t('venduti_vendite_label')} · €${b.incasso.toFixed(2)}">
                   <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:3px;line-height:1">${b.count > 0 ? b.count : ''}</div>
-                  <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(3, (b.incasso / maxIncasso) * barZoneH)}px"></div>
+                  <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(3, (b.incasso / maxIncasso) * chartH)}px"></div>
                 </div>`).join('')}
             </div>
           </div>
