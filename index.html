@@ -3518,29 +3518,29 @@ async function renderProfilo() {
   const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever' };
   const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)' };
   const planDesc = {
-    free: `Stai usando il piano gratuito. Puoi gestire fino a <strong style="color:var(--text-bright)">${FREE_SNAKE_LIMIT} serpenti</strong>.`,
-    pro: 'Hai accesso completo a tutte le funzionalità di SnakeKeeper Pro.',
-    admin: 'Accesso amministratore completo — nessun limite.',
-    free_forever: 'Hai accesso completo a SnakeKeeper gratuitamente per sempre.'
+    free: `${t('piano_free_desc').replace('{N}', FREE_SNAKE_LIMIT)}`,
+    pro: t('piano_pro_desc'),
+    admin: t('piano_admin_desc'),
+    free_forever: t('piano_forever_desc')
   };
 
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
-      <h2>👤 Il mio profilo</h2>
-      <p>Gestisci il tuo account e abbonamento</p>
+      <h2>👤 ${t('profilo_title')}</h2>
+      <p>${t('profilo_subtitle')}</p>
     </div>
 
     <!-- Card Account -->
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">📧 Account</div>
+      <div class="card-title">📧 ${t('profilo_account')}</div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="background:var(--bg-moss);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px">
           <div style="width:42px;height:42px;border-radius:50%;background:var(--accent-gold);display:flex;align-items:center;justify-content:center;font-size:18px;color:#0a1a0a;font-weight:700;flex-shrink:0">
             ${(_currentUser?.email?.[0] || '?').toUpperCase()}
           </div>
           <div>
-            <div style="font-size:14px;color:var(--text-bright);font-weight:500">${_currentUser?.email || '—'}</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Membro dal ${_currentUser?.created_at ? new Date(_currentUser.created_at).toLocaleDateString('it-IT') : '—'}</div>
+            <div style="font-size:14px;color:var(--text-bright);font-weight:500">${esc(_currentUser?.email) || '—'}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${t('profilo_membro_dal')} ${_currentUser?.created_at ? new Date(_currentUser.created_at).toLocaleDateString(_appLang==='it'?'it-IT':'en-GB') : '—'}</div>
           </div>
         </div>
       </div>
@@ -3559,10 +3559,9 @@ async function renderProfilo() {
 
     <!-- Card Logo Allevamento -->
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">🏷️ Logo allevamento</div>
+      <div class="card-title">🏷️ ${t('logo_title')}</div>
       <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
-        Se carichi un logo (immagine o PDF), verrà mostrato automaticamente sull'etichetta stampabile dei serpenti e sui PDF esportati.
-        Il logo viene centrato automaticamente. Se non lo carichi, quelle sezioni restano semplicemente senza logo.
+        ${t('logo_desc')}
       </p>
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <div id="logo-preview-box" style="width:80px;height:80px;border-radius:12px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;background:var(--bg-moss);overflow:hidden;flex-shrink:0">
@@ -3570,17 +3569,17 @@ async function renderProfilo() {
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;text-align:center">
-            📤 ${_userLogo ? 'Cambia logo' : 'Carica logo'}
+            📤 ${_userLogo ? t('logo_cambia') : t('logo_carica_btn')}
             <input type="file" accept="image/*,application/pdf" onchange="uploadLogo(this)" style="display:none">
           </label>
-          ${_userLogo ? `<button class="btn btn-ghost btn-sm" style="color:var(--accent-red);border-color:rgba(192,57,43,0.4)" onclick="removeLogo()">🗑️ Rimuovi logo</button>` : ''}
+          ${_userLogo ? `<button class="btn btn-ghost btn-sm" style="color:var(--accent-red);border-color:rgba(192,57,43,0.4)" onclick="removeLogo()">🗑️ ${t('logo_rimuovi')}</button>` : ''}
         </div>
       </div>
     </div>
 
     <!-- Card Piano -->
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">💳 Piano attuale</div>
+      <div class="card-title">💳 ${t('piano_attuale')}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
         <div>
           <div style="font-size:24px;font-weight:700;color:${planColors[_userPlan]||'var(--text-dim)'}">
@@ -3593,7 +3592,7 @@ async function renderProfilo() {
         ${_userPlan === 'free' ? `
           <button onclick="showUpgradeModal()" 
             style="padding:12px 20px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">
-            ⭐ Passa a Pro
+            ⭐ ${t('passa_a_pro')}
           </button>` : ''}
       </div>
 
@@ -3601,31 +3600,31 @@ async function renderProfilo() {
       ${_userPlan === 'free' ? `
         <div style="background:var(--bg-moss);border-radius:10px;padding:14px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-size:12px;color:var(--text-dim)">Serpenti utilizzati</div>
+            <div style="font-size:12px;color:var(--text-dim)">${t('serpenti_utilizzati')}</div>
             <div style="font-size:12px;color:var(--text-mid);font-weight:600">${_snakes.length} / ${FREE_SNAKE_LIMIT}</div>
           </div>
           <div style="background:var(--bg-card);border-radius:4px;height:6px">
             <div style="height:6px;border-radius:4px;background:${_snakes.length>=FREE_SNAKE_LIMIT?'var(--accent-red)':'var(--accent-lime)'};width:${Math.min(100,(_snakes.length/FREE_SNAKE_LIMIT)*100)}%;transition:width .3s"></div>
           </div>
-          ${_snakes.length >= FREE_SNAKE_LIMIT ? `<div style="font-size:11px;color:var(--accent-red);margin-top:6px">⚠️ Hai raggiunto il limite — passa a Pro per continuare</div>` : ''}
+          ${_snakes.length >= FREE_SNAKE_LIMIT ? `<div style="font-size:11px;color:var(--accent-red);margin-top:6px">⚠️ ${t('limite_raggiunto')}</div>` : ''}
         </div>` : `
         <div style="background:var(--bg-moss);border-radius:10px;padding:14px">
-          <div style="font-size:13px;color:var(--text-mid)">🐍 Serpenti registrati: <strong style="color:var(--text-bright)">${_snakes.length}</strong> (illimitati)</div>
+          <div style="font-size:13px;color:var(--text-mid)">🐍 ${t('serpenti_illimitati_lbl')} <strong style="color:var(--text-bright)">${_snakes.length}</strong> ${t('serpenti_illimitati_suffix')}</div>
         </div>`}
     </div>
 
     <!-- Card Pro Features -->
     ${_userPlan === 'free' ? `
     <div class="card" style="margin-bottom:16px;border:1px solid rgba(201,168,76,0.3)">
-      <div class="card-title" style="color:var(--accent-gold)">⭐ Cosa include Pro</div>
+      <div class="card-title" style="color:var(--accent-gold)">⭐ ${t('pro_features_title')}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
         ${[
-          ['🐍','Serpenti illimitati','Nessun limite al numero di esemplari'],
-          ['📊','Statistiche avanzate','Grafici e analisi dettagliate'],
-          ['📄','Export PDF & Excel','Esporta i tuoi dati'],
-          ['☁️','Backup prioritario','I tuoi dati sempre al sicuro'],
-          ['✅','Supporto dedicato','Risposte prioritarie'],
-          ['🔄','Aggiornamenti gratuiti','Tutte le future funzionalità'],
+          ['🐍',t('pf1_t'),t('pf1_d')],
+          ['📊',t('pf2_t'),t('pf2_d')],
+          ['📄',t('pf3_t'),t('pf3_d')],
+          ['☁️',t('pf4_t'),t('pf4_d')],
+          ['✅',t('pf5_t'),t('pf5_d')],
+          ['🔄',t('pf6_t'),t('pf6_d')],
         ].map(([ico,tit,desc])=>`
           <div style="background:var(--bg-moss);border-radius:8px;padding:12px">
             <div style="font-size:18px;margin-bottom:4px">${ico}</div>
@@ -3636,63 +3635,62 @@ async function renderProfilo() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
         <button onclick="showUpgradeModal();setTimeout(function(){selectPlan('monthly')},100)"
           style="padding:12px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
-          ⭐ €4.99/mese
+          ⭐ ${t('price_mese')}
         </button>
         <button onclick="showUpgradeModal();setTimeout(function(){selectPlan('yearly')},100)"
           style="padding:12px;background:transparent;color:var(--accent-gold);border:2px solid var(--accent-gold);border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
-          ⭐ €47.99/anno
+          ⭐ ${t('price_anno')}
         </button>
       </div>
       <button onclick="showUpgradeModal();setTimeout(function(){selectPlan('for_life')},100)"
         style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(90deg,var(--accent-lime),var(--accent-gold));color:#0a1a0a;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
-        ✨ For Life — €199 una tantum
+        ✨ ${t('price_forlife')}
       </button>
     </div>` : ''}
 
     <!-- Card Gestione Abbonamento (solo per piani a pagamento) -->
     ${(_userPlan === 'pro' || _userPlan === 'for_life') ? `
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">🧾 Gestione abbonamento</div>
+      <div class="card-title">🧾 ${t('gestione_abbonamento')}</div>
       <div id="subscription-info" style="font-size:13px;color:var(--text-dim);padding:8px 0">
-        <span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Caricamento dettagli...
+        <span class="spinner" style="width:14px;height:14px;border-width:2px"></span> ${t('caricamento_dettagli')}
       </div>
       <button onclick="showCancelSubscriptionModal()"
         style="width:100%;padding:12px;background:transparent;border:1px solid rgba(192,57,43,0.4);color:var(--accent-red);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;margin-top:8px">
-        Disdici abbonamento
+        ${t('disdici_abbonamento')}
       </button>
     </div>` : ''}
 
     <!-- Card Azioni account -->
     <div class="card">
-      <div class="card-title">⚙️ Azioni account</div>
+      <div class="card-title">⚙️ ${t('azioni_account')}</div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button onclick="doForgotPassword()" 
           style="width:100%;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text-mid);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">
-          🔑 Cambia password
+          🔑 ${t('cambia_password')}
         </button>
         <button onclick="doLogout()" 
           style="width:100%;padding:12px;background:transparent;border:1px solid rgba(192,57,43,0.4);color:var(--accent-red);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">
-          🚪 Esci dall'account
+          🚪 ${t('esci_account')}
         </button>
       </div>
     </div>
 
     <!-- Card Zona pericolosa -->
     <div class="card" style="margin-top:16px;border:1px solid rgba(192,57,43,0.35)">
-      <div class="card-title" style="color:var(--accent-red)">⚠️ Zona pericolosa</div>
+      <div class="card-title" style="color:var(--accent-red)">⚠️ ${t('zona_pericolosa')}</div>
       <p style="font-size:12px;color:var(--text-dim);line-height:1.6;margin:0 0 12px">
-        Elimina definitivamente il tuo account e tutti i dati associati: serpenti, registri, archivio venduti e abbonamento.
-        Questa azione <strong style="color:var(--text-bright)">non può essere annullata</strong>.
+        ${t('zona_pericolosa_desc')}
       </p>
       <button onclick="showDeleteAccountModal()"
         style="width:100%;padding:12px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.5);color:var(--accent-red);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">
-        🗑️ Elimina account definitivamente
+        🗑️ ${t('elimina_account_btn')}
       </button>
     </div>
     <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-dim);line-height:2">
-      <a href="#" onclick="showPage('privacy')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">Privacy Policy</a>·
-      <a href="#" onclick="showPage('terms')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">Termini di Servizio</a>·
-      <a href="#" onclick="resetCookieConsent()" style="color:var(--text-dim);text-decoration:none;margin:0 8px">🍪 Gestisci Cookie</a>·
+      <a href="#" onclick="showPage('privacy')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">${t('privacy_policy')}</a>·
+      <a href="#" onclick="showPage('terms')" style="color:var(--text-dim);text-decoration:none;margin:0 8px">${t('termini_servizio')}</a>·
+      <a href="#" onclick="resetCookieConsent()" style="color:var(--text-dim);text-decoration:none;margin:0 8px">🍪 ${t('gestisci_cookie')}</a>·
       <span style="margin:0 8px">© ${new Date().getFullYear()} SnakeKeeper</span>
     </div>`;
   // Carica i dettagli abbonamento se piano a pagamento
@@ -4662,6 +4660,34 @@ const I18N = {
     dv_storico_alimentazione: 'Storico Alimentazione', dv_nessun_pasto: 'Nessun pasto registrato',
     dv_storico_feci: 'Storico Feci', dv_storico_deposizioni: 'Storico Deposizioni', dv_nessuna_deposizione: 'Nessuna deposizione',
     dv_giorni_allevamento: 'Giorni in allevamento',
+    profilo_title: 'Il mio profilo', profilo_subtitle: 'Gestisci il tuo account e abbonamento',
+    profilo_account: 'Account', profilo_membro_dal: 'Membro dal',
+    logo_title: 'Logo allevamento',
+    logo_desc: "Se carichi un logo (immagine o PDF), verrà mostrato automaticamente sull'etichetta stampabile dei serpenti e sui PDF esportati. Il logo viene centrato automaticamente. Se non lo carichi, quelle sezioni restano semplicemente senza logo.",
+    logo_cambia: 'Cambia logo', logo_carica_btn: 'Carica logo', logo_rimuovi: 'Rimuovi logo',
+    piano_attuale: 'Piano attuale',
+    piano_free_desc: 'Stai usando il piano gratuito. Puoi gestire fino a {N} serpenti.',
+    piano_pro_desc: 'Hai accesso completo a tutte le funzionalità di SnakeKeeper Pro.',
+    piano_admin_desc: 'Accesso amministratore completo — nessun limite.',
+    piano_forever_desc: 'Hai accesso completo a SnakeKeeper gratuitamente per sempre.',
+    passa_a_pro: 'Passa a Pro', serpenti_utilizzati: 'Serpenti utilizzati',
+    limite_raggiunto: 'Hai raggiunto il limite — passa a Pro per continuare',
+    serpenti_illimitati_lbl: 'Serpenti registrati:', serpenti_illimitati_suffix: '(illimitati)',
+    pro_features_title: 'Cosa include Pro',
+    pf1_t: 'Serpenti illimitati', pf1_d: 'Nessun limite al numero di esemplari',
+    pf2_t: 'Statistiche avanzate', pf2_d: 'Grafici e analisi dettagliate',
+    pf3_t: 'Export PDF & Excel', pf3_d: 'Esporta i tuoi dati',
+    pf4_t: 'Backup prioritario', pf4_d: 'I tuoi dati sempre al sicuro',
+    pf5_t: 'Supporto dedicato', pf5_d: 'Risposte prioritarie',
+    pf6_t: 'Aggiornamenti gratuiti', pf6_d: 'Tutte le future funzionalità',
+    price_mese: '€4.99/mese', price_anno: '€47.99/anno', price_forlife: 'For Life — €199 una tantum',
+    gestione_abbonamento: 'Gestione abbonamento', caricamento_dettagli: 'Caricamento dettagli...',
+    disdici_abbonamento: 'Disdici abbonamento',
+    azioni_account: 'Azioni account', cambia_password: 'Cambia password', esci_account: "Esci dall'account",
+    zona_pericolosa: 'Zona pericolosa',
+    zona_pericolosa_desc: "Elimina definitivamente il tuo account e tutti i dati associati: serpenti, registri, archivio venduti e abbonamento. Questa azione non può essere annullata.",
+    elimina_account_btn: 'Elimina account definitivamente',
+    privacy_policy: 'Privacy Policy', termini_servizio: 'Termini di Servizio', gestisci_cookie: 'Gestisci Cookie',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -4727,6 +4753,34 @@ const I18N = {
     dv_storico_alimentazione: 'Feeding History', dv_nessun_pasto: 'No meals logged',
     dv_storico_feci: 'Feces History', dv_storico_deposizioni: 'Clutch History', dv_nessuna_deposizione: 'No clutches',
     dv_giorni_allevamento: 'Days in collection',
+    profilo_title: 'My Profile', profilo_subtitle: 'Manage your account and subscription',
+    profilo_account: 'Account', profilo_membro_dal: 'Member since',
+    logo_title: 'Breeder Logo',
+    logo_desc: "If you upload a logo (image or PDF), it will automatically appear on printable snake labels and exported PDFs. The logo is centered automatically. If you don't upload one, those sections simply stay without a logo.",
+    logo_cambia: 'Change logo', logo_carica_btn: 'Upload logo', logo_rimuovi: 'Remove logo',
+    piano_attuale: 'Current plan',
+    piano_free_desc: 'You are on the Free plan. You can manage up to {N} snakes.',
+    piano_pro_desc: 'You have full access to all SnakeKeeper Pro features.',
+    piano_admin_desc: 'Full administrator access — no limits.',
+    piano_forever_desc: 'You have full access to SnakeKeeper for free, forever.',
+    passa_a_pro: 'Upgrade to Pro', serpenti_utilizzati: 'Snakes used',
+    limite_raggiunto: "You've reached the limit — upgrade to Pro to continue",
+    serpenti_illimitati_lbl: 'Snakes registered:', serpenti_illimitati_suffix: '(unlimited)',
+    pro_features_title: "What's included in Pro",
+    pf1_t: 'Unlimited snakes', pf1_d: 'No limit on the number of animals',
+    pf2_t: 'Advanced statistics', pf2_d: 'Detailed charts and analytics',
+    pf3_t: 'PDF & Excel export', pf3_d: 'Export your data',
+    pf4_t: 'Priority backup', pf4_d: 'Your data always safe',
+    pf5_t: 'Dedicated support', pf5_d: 'Priority responses',
+    pf6_t: 'Free updates', pf6_d: 'All future features',
+    price_mese: '€4.99/month', price_anno: '€47.99/year', price_forlife: 'For Life — €199 one-time',
+    gestione_abbonamento: 'Manage subscription', caricamento_dettagli: 'Loading details...',
+    disdici_abbonamento: 'Cancel subscription',
+    azioni_account: 'Account actions', cambia_password: 'Change password', esci_account: 'Sign out',
+    zona_pericolosa: 'Danger zone',
+    zona_pericolosa_desc: 'Permanently delete your account and all associated data: snakes, logs, sold archive and subscription. This action cannot be undone.',
+    elimina_account_btn: 'Permanently delete account',
+    privacy_policy: 'Privacy Policy', termini_servizio: 'Terms of Service', gestisci_cookie: 'Manage Cookies',
   }
 };
 
