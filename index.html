@@ -2125,21 +2125,25 @@ function renderVenduti() {
           <div style="position:relative;width:46px;height:${chartH}px;flex-shrink:0">
             ${yLabels.map((val, i) => `<div style="position:absolute;top:${(i / ySteps) * 100}%;transform:translateY(-50%);right:8px;font-size:9px;color:var(--text-dim);white-space:nowrap">${fmtEuroAxis(val)}</div>`).join('')}
           </div>
-          <div style="flex:1;position:relative;height:${chartH}px;overflow-x:auto">
-            <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
-              ${yLabels.map(() => `<div style="border-top:1px dashed var(--border);opacity:0.4;height:0"></div>`).join('')}
-            </div>
-            <div style="position:relative;display:flex;align-items:flex-end;gap:6px;height:100%;padding-right:2px">
-              ${chartBars.map(b => `
-                <div class="venduti-bar-col" onclick="${b.onclick}" title="${b.count} ${t('venduti_vendite_label')} · €${b.incasso.toFixed(2)}">
-                  <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:3px;line-height:1">${b.count > 0 ? b.count : ''}</div>
-                  <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(3, (b.incasso / maxIncasso) * chartH)}px"></div>
-                </div>`).join('')}
+          <div style="flex:1;min-width:0;overflow-x:auto">
+            <div style="min-width:max-content">
+              <div style="position:relative;height:${chartH}px">
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
+                  ${yLabels.map(() => `<div style="border-top:1px dashed var(--border);opacity:0.4;height:0"></div>`).join('')}
+                </div>
+                <div style="position:relative;display:flex;align-items:flex-end;gap:6px;height:100%;padding-right:2px">
+                  ${chartBars.map(b => `
+                    <div class="venduti-bar-col" onclick="${b.onclick}" title="${b.count} ${t('venduti_vendite_label')} · €${b.incasso.toFixed(2)}">
+                      <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:3px;line-height:1">${b.count > 0 ? b.count : ''}</div>
+                      <div class="venduti-bar ${b.active ? 'venduti-bar-active' : ''}" style="height:${Math.max(3, (b.incasso / maxIncasso) * chartH)}px"></div>
+                    </div>`).join('')}
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                ${chartBars.map(b => `<div style="flex:1;min-width:30px;text-align:center;font-size:10px;color:var(--text-dim);white-space:nowrap">${esc(b.label)}</div>`).join('')}
+              </div>
             </div>
           </div>
-        </div>
-        <div style="display:flex;gap:6px;padding-left:46px;margin-top:4px">
-          ${chartBars.map(b => `<div style="flex:1;min-width:30px;text-align:center;font-size:10px;color:var(--text-dim);white-space:nowrap">${esc(b.label)}</div>`).join('')}
         </div>
       </div>
     </div>`;
