@@ -128,9 +128,11 @@ function barClass(pct) {
 
 function renderBar(used, limit, unitLabel) {
   const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  const barWidth = used > 0 ? Math.max(pct, 1) : 0; // spessore minimo visibile se c'e' uso reale
+  const pctLabel = pct > 0 && pct < 1 ? pct.toFixed(2) + '%' : pct.toFixed(0) + '%';
   return `
-    <div class="bar-bg"><div class="bar-fill ${barClass(pct)}" style="width:${pct}%"></div></div>
-    <div class="bar-label"><span>${used} / ${limit} ${unitLabel}</span><span>${pct.toFixed(0)}%</span></div>`;
+    <div class="bar-bg"><div class="bar-fill ${barClass(pct)}" style="width:${barWidth}%"></div></div>
+    <div class="bar-label"><span>${used} / ${limit} ${unitLabel}</span><span>${pctLabel}</span></div>`;
 }
 
 async function loadData() {
