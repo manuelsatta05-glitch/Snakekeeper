@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnakeKeeper — Monitor Piani Gratuiti</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --bg-deep: #070f08; --bg-card: #0f1f11; --bg-moss: #12261a;
+  --accent-gold: #c9a84c; --accent-lime: #4ade80; --accent-red: #e57373;
+  --text-bright: #e8f5e0; --text-mid: #a8c8a0; --text-dim: #688560;
+  --border: #2d5030;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; background: var(--bg-deep); color: var(--text-bright);
+  font-family: 'Inter', sans-serif; padding: 24px 16px;
+}
+h1 { font-family: 'Cinzel', serif; font-size: 22px; color: var(--accent-gold); margin: 0 0 4px; text-align: center; }
+.sub { text-align: center; color: var(--text-dim); font-size: 13px; margin-bottom: 28px; }
+.wrap { max-width: 480px; margin: 0 auto; }
+
+#gate { display: flex; flex-direction: column; gap: 12px; margin-top: 60px; }
+#gate input {
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-bright);
+  border-radius: 10px; padding: 14px; font-size: 15px; font-family: 'Inter', sans-serif; text-align: center;
+}
+#gate button, .refresh-btn {
+  background: var(--accent-gold); color: #0a1a0a; border: none; border-radius: 10px;
+  padding: 14px; font-size: 14px; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer;
+}
+#gate .err { color: var(--accent-red); font-size: 13px; text-align: center; min-height: 16px; }
+
+#dashboard { display: none; }
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px; margin-bottom: 14px;
+}
+.card-title { font-family: 'Cinzel', serif; font-size: 15px; color: var(--text-bright); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.metric-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.metric-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-val { font-size: 13px; color: var(--text-mid); }
+.metric-val b { color: var(--text-bright); font-size: 15px; }
+.bar-track { background: var(--bg-moss); border-radius: 6px; height: 8px; margin: 6px 0 14px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; background: var(--accent-lime); transition: width .4s; }
+.bar-fill.warn { background: var(--accent-gold); }
+.bar-fill.danger { background: var(--accent-red); }
+.link-btn {
+  display: block; text-align: center; background: transparent; border: 1px solid var(--accent-lime);
+  color: var(--accent-lime); text-decoration: none; border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 600;
+}
+.error-box { color: var(--accent-red); font-size: 12px; background: rgba(229,115,115,0.1); border-radius: 8px; padding: 10px; }
+.timestamp { text-align: center; color: var(--text-dim); font-size: 11px; margin-top: 8px; }
+.loading { text-align: center; color: var(--text-dim); padding: 40px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐍 Monitor Piani Gratuiti</h1>
+  <div class="sub">SnakeKeeper — uso corrente dei servizi</div>
+
+  <div id="gate">
+    <input type="password" id="secret-input" placeholder="Password" autocomplete="off">
+    <button onclick="unlock()">Sblocca</button>
+    <div class="err" id="gate-err"></div>
+  </div>
+
+  <div id="dashboard">
+    <div id="content" class="loading">Caricamento...</div>
+    <button class="refresh-btn" onclick="loadData()" style="width:100%;margin-top:4px">🔄 Aggiorna ora</button>
+    <div class="timestamp" id="timestamp"></div>
+  </div>
+</div>
+
+<script>
+const FN_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co/functions/v1/usage-monitor';
+const SUPABASE_USAGE_URL = 'https://supabase.com/dashboard/project/xmtxbtcexyrveifwfswb/settings/billing';
+const STORAGE_KEY = 'sk_monitor_secret';
+
+function pct(used, limit) { return Math.min(100, Math.round((used / limit) * 100)); }
+function barClass(p) { return p >= 90 ? 'danger' : p >= 70 ? 'warn' : ''; }
+
+function unlock() {
+  const val = document.getElementById('secret-input').value.trim();
+  if (!val) return;
+  localStorage.setItem(STORAGE_KEY, val);
+  tryShow();
+}
+
+function tryShow() {
+  const secret = localStorage.getItem(STORAGE_KEY);
+  if (!secret) return;
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+}
+
+async function loadData() {
+  const secret = localStorage.getItem(STORAGE_KEY);
+  const content = document.getElementById('content');
+  content.className = 'loading';
+  content.innerHTML = 'Caricamento...';
+  try {
+    const res = await fetch(FN_URL, { headers: { 'x-monitor-secret': secret } });
+    if (res.status === 401) {
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('gate').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('gate-err').textContent = 'Password errata.';
+      return;
+    }
+    const data = await res.json();
+    render(data);
+    document.getElementById('timestamp').textContent = 'Ultimo aggiornamento: ' + new Date(data.checked_at).toLocaleString('it-IT');
+  } catch (e) {
+    content.className = '';
+    content.innerHTML = `<div class="error-box">Errore di connessione: ${e.message}</div>`;
+  }
+}
+
+function render(data) {
+  const content = document.getElementById('content');
+  let html = '';
+
+  // ── RESEND ──
+  html += '<div class="card"><div class="card-title">📧 Resend — Email</div>';
+  if (data.resend.error) {
+    html += `<div class="error-box">${esc(data.resend.error)}</div>`;
+  } else {
+    const r = data.resend;
+    const pMonth = pct(r.sent_this_month, r.limit_month);
+    const pDay = pct(r.sent_today, r.limit_day);
+    html += `
+      <div class="metric-row"><span class="metric-label">Questo mese</span><span class="metric-val"><b>${r.sent_this_month}</b> / ${r.limit_month}</span></div>
+      <div class="bar-track"><div class="bar-fill ${barClass(pMonth)}" style="width:${pMonth}%"></div></div>
+      <div class="metric-row"><span class="metric-label">Oggi</span><span class="metric-val"><b>${r.sent_today}</b> / ${r.limit_day}</span></div>
+      <div class="bar-track" style="margin-bottom:0"><div class="bar-fill ${barClass(pDay)}" style="width:${pDay}%"></div></div>`;
+  }
+  html += '</div>';
+
+  // ── UPTIMEROBOT ──
+  html += '<div class="card"><div class="card-title">📡 UptimeRobot — Monitor</div>';
+  if (data.uptimerobot.error) {
+    html += `<div class="error-box">${esc(data.uptimerobot.error)}</div>`;
+  } else {
+    const u = data.uptimerobot;
+    const p = pct(u.monitors_used, u.limit);
+    html += `
+      <div class="metric-row"><span class="metric-label">Monitor attivi</span><span class="metric-val"><b>${u.monitors_used}</b> / ${u.limit}</span></div>
+      <div class="bar-track" style="margin-bottom:0"><div class="bar-fill ${barClass(p)}" style="width:${p}%"></div></div>`;
+  }
+  html += '</div>';
+
+  // ── SUPABASE (link diretto, dati gia' in tempo reale sul loro pannello) ──
+  html += `
+    <div class="card">
+      <div class="card-title">☁️ Supabase — Database</div>
+      <p style="font-size:12px;color:var(--text-dim);margin:0 0 12px;line-height:1.5">
+        Supabase mostra già l'uso in tempo reale (spazio database, banda, utenti) nel proprio pannello — apri direttamente da qui:
+      </p>
+      <a class="link-btn" href="${SUPABASE_USAGE_URL}" target="_blank">Apri pannello Supabase →</a>
+    </div>`;
+
+  content.className = '';
+  content.innerHTML = html;
+}
+
+function esc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+tryShow();
+</script>
+</body>
+</html>
