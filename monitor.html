@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnakeKeeper — Monitor Limiti</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif; background: #070f08; color: #e8f5e0;
+    min-height: 100vh; padding: 24px 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 {
+    font-family: 'Cinzel', serif; font-size: 22px; color: #c9a84c; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sub { font-size: 13px; color: #93a894; margin-bottom: 24px; }
+  .card {
+    background: #0f1f11; border: 1px solid #2d5030; border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .card-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .card-num { font-family: 'Cinzel', serif; font-size: 13px; color: #c9a84c; }
+  .bar-bg { background: #060d07; border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 6px; }
+  .bar-fill { height: 100%; border-radius: 6px; background: #6db56d; transition: width .4s; }
+  .bar-fill.warn { background: #c9a84c; }
+  .bar-fill.danger { background: #c0392b; }
+  .bar-label { font-size: 11px; color: #93a894; display: flex; justify-content: space-between; }
+  .info-row { font-size: 12px; color: #93a894; margin-top: 8px; line-height: 1.6; }
+  .link-btn {
+    display: inline-block; margin-top: 10px; padding: 9px 16px; background: transparent;
+    border: 1px solid #c9a84c; color: #c9a84c; border-radius: 8px; text-decoration: none;
+    font-size: 13px; font-weight: 600;
+  }
+  .refresh-btn {
+    width: 100%; padding: 12px; background: #c9a84c; color: #0a1a0a; border: none;
+    border-radius: 10px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px;
+    cursor: pointer; margin-bottom: 18px;
+  }
+  .refresh-btn:disabled { opacity: 0.6; cursor: default; }
+  .error-box {
+    background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.4); color: #e08080;
+    border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-top: 8px;
+  }
+  .timestamp { text-align: center; font-size: 11px; color: #5a7060; margin-top: 8px; }
+  .login-box { max-width: 320px; margin: 80px auto; text-align: center; }
+  .login-box input {
+    width: 100%; padding: 12px; background: #0f1f11; border: 1px solid #2d5030; color: #e8f5e0;
+    border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div id="login-view" class="login-box">
+  <h1 style="justify-content:center">🔒 Monitor Limiti</h1>
+  <p class="sub">Inserisci la chiave di accesso</p>
+  <input type="password" id="secret-input" placeholder="Chiave di accesso" autocomplete="off">
+  <button class="refresh-btn" onclick="unlock()">Sblocca</button>
+  <div id="login-error" class="error-box" style="display:none">Chiave non valida.</div>
+</div>
+
+<div id="dashboard-view" class="wrap" style="display:none">
+  <h1>📊 Monitor Limiti — SnakeKeeper</h1>
+  <p class="sub">Uso attuale dei piani gratuiti, aggiornato in tempo reale</p>
+
+  <button class="refresh-btn" id="refresh-btn" onclick="loadData()">🔄 Aggiorna ora</button>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📧 Resend — email inviate questo mese</div>
+    </div>
+    <div id="resend-content">Caricamento...</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">🟢 UptimeRobot — monitor attivi</div>
+    </div>
+    <div id="uptimerobot-content">Caricamento...</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">💳 Stripe — questo mese</div>
+    </div>
+    <div id="stripe-content">Caricamento...</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">☁️ Supabase — spazio database e banda</div>
+    </div>
+    <div class="info-row">
+      Supabase mostra già l'uso in tempo reale nel suo pannello (spazio database, banda, utenti attivi) — è più affidabile controllarlo direttamente lì piuttosto che duplicarlo qui.
+    </div>
+    <a class="link-btn" href="https://supabase.com/dashboard/project/xmtxbtcexyrveifwfswb/settings/billing/usage" target="_blank">Apri pannello utilizzo Supabase →</a>
+  </div>
+
+  <div id="timestamp" class="timestamp"></div>
+</div>
+
+<script>
+const SECRET_KEY = 'MqPmLVzNN2qF_zPAtXwkOjFbPvwk1aEH7DOdR6PLKyo';
+const FUNCTION_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co/functions/v1/usage-monitor';
+
+function unlock() {
+  const input = document.getElementById('secret-input').value.trim();
+  if (input === SECRET_KEY) {
+    sessionStorage.setItem('sk_monitor_unlocked', '1');
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'block';
+    loadData();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function barClass(pct) {
+  if (pct >= 90) return 'danger';
+  if (pct >= 70) return 'warn';
+  return '';
+}
+
+function renderBar(used, limit, unitLabel) {
+  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  return `
+    <div class="bar-bg"><div class="bar-fill ${barClass(pct)}" style="width:${pct}%"></div></div>
+    <div class="bar-label"><span>${used} / ${limit} ${unitLabel}</span><span>${pct.toFixed(0)}%</span></div>`;
+}
+
+async function loadData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true; btn.textContent = '⏳ Aggiornamento...';
+
+  try {
+    const res = await fetch(`${FUNCTION_URL}?secret=${encodeURIComponent(SECRET_KEY)}`);
+    const data = await res.json();
+
+    const r = data.resend;
+    if (r.error) {
+      document.getElementById('resend-content').innerHTML = `<div class="error-box">Errore: ${r.error}</div>`;
+    } else {
+      document.getElementById('resend-content').innerHTML =
+        renderBar(r.sentThisMonth, r.monthLimit, 'email/mese') +
+        `<div class="info-row">Tetto giornaliero: ${r.dayLimit} email/giorno</div>`;
+    }
+
+    const u = data.uptimerobot;
+    if (u.error) {
+      document.getElementById('uptimerobot-content').innerHTML = `<div class="error-box">Errore: ${u.error}</div>`;
+    } else {
+      document.getElementById('uptimerobot-content').innerHTML = renderBar(u.monitorsUsed, u.monitorLimit, 'monitor');
+    }
+
+    const s = data.stripe;
+    if (s.error) {
+      document.getElementById('stripe-content').innerHTML = `<div class="error-box">Errore: ${s.error}</div>`;
+    } else {
+      document.getElementById('stripe-content').innerHTML = `
+        <div class="card-num" style="font-size:22px">€${s.revenueThisMonth}</div>
+        <div class="info-row">${s.paymentsThisMonth} pagamenti riusciti questo mese</div>`;
+    }
+
+    document.getElementById('timestamp').textContent =
+      'Ultimo aggiornamento: ' + new Date(data.checkedAt).toLocaleString('it-IT');
+  } catch (e) {
+    document.getElementById('resend-content').innerHTML = `<div class="error-box">Errore di connessione: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Aggiorna ora';
+  }
+}
+
+if (sessionStorage.getItem('sk_monitor_unlocked') === '1') {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('dashboard-view').style.display = 'block';
+  loadData();
+}
+document.getElementById('secret-input').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+</script>
+</body>
+</html>
