@@ -1345,24 +1345,31 @@ function renderDettaglio() {
     </div>
     ${pesoLogs.length > 0 ? `<div class="card" style="margin-bottom:14px">
       <div class="card-title">📈 ${t('curva_crescita')}</div>
-      <div style="position:relative;height:180px;background:var(--bg-moss);border-radius:8px;padding:12px;overflow:hidden">
+      <div style="background:var(--bg-moss);border-radius:8px;padding:16px 8px;overflow-x:auto">
         ${(()=>{
           const pl = pesoLogs.filter(l=>l.grammi);
-          if(pl.length<2) return `<div style="color:var(--text-dim);font-size:13px;text-align:center;padding-top:60px">${t('servono_2_pesate')}</div>`;
+          if(pl.length<2) return `<div style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">${t('servono_2_pesate')}</div>`;
           const vals=pl.map(l=>l.grammi);
           const minV=Math.min(...vals), maxV=Math.max(...vals);
-          const range=maxV-minV||1;
-          const w=100/Math.max(pl.length-1,1);
-          const points=pl.map((l,i)=>[i*w, 100-((l.grammi-minV)/range)*80-10]);
-          const path=points.map((p,i)=>((i===0?'M':'L')+p[0]+','+p[1])).join(' ');
-          return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">
-            <polyline points="${points.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="var(--accent-lime)" stroke-width="1.5" stroke-linejoin="round"/>
-            ${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="1.5" fill="var(--accent-lime)"/>`).join('')}
-          </svg>
-          <div style="position:absolute;top:4px;right:8px;font-size:11px;color:var(--accent-lime);font-weight:600">${maxV}g</div>
-          <div style="position:absolute;bottom:4px;right:8px;font-size:11px;color:var(--text-dim)">${minV}g</div>
-          <div style="position:absolute;bottom:4px;left:8px;font-size:10px;color:var(--text-dim)">${fmtDate(pl[0].data)}</div>
-          <div style="position:absolute;bottom:4px;right:40px;font-size:10px;color:var(--text-dim)">${fmtDate(pl[pl.length-1].data)}</div>`;
+          const range=(maxV-minV)||1;
+          const pointSpacing=76;
+          const leftPad=36, rightPad=36;
+          const chartW=Math.max(400, (pl.length-1)*pointSpacing + leftPad + rightPad);
+          const plotH=150, topPad=26, dateAreaH=30;
+          const svgH=topPad+plotH+dateAreaH;
+          const xForI=i=>leftPad+i*pointSpacing;
+          const yForV=v=>topPad+plotH-((v-minV)/range)*plotH;
+          const shortDate=d=>{ if(!d) return ''; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y.slice(2)}`; };
+          const points=pl.map((l,i)=>[xForI(i), yForV(l.grammi), l.grammi, l.data]);
+          const path=points.map((p,i)=>((i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1))).join(' ');
+          return `<svg viewBox="0 0 ${chartW} ${svgH}" width="${chartW}" height="${svgH}" style="display:block">
+            <path d="${path}" fill="none" stroke="var(--accent-lime)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            ${points.map(([x,y,g,d])=>`
+              <circle cx="${x}" cy="${y}" r="4" fill="var(--accent-lime)" stroke="var(--bg-moss)" stroke-width="2"/>
+              <text x="${x}" y="${Math.max(12,y-11)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent-gold)" font-family="Inter,sans-serif">${g}g</text>
+              <text x="${x}" y="${topPad+plotH+20}" text-anchor="middle" font-size="9.5" fill="var(--text-dim)" font-family="Inter,sans-serif">${shortDate(d)}</text>
+            `).join('')}
+          </svg>`;
         })()}
       </div>
     </div>` : ''}
