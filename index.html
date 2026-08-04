@@ -1094,6 +1094,15 @@ function renderAggiungi() {
       </div>
     </div>
     <div class="form-group mt-16"><label>${t('aggiungi_note')}</label><textarea id="f-note" rows="3" placeholder="${t('aggiungi_note_ph')}" style="resize:vertical"></textarea></div>
+  </div>
+  <div class="card mt-16">
+    <div class="card-title">🧬 ${t('gen_title')}</div>
+    <div class="form-grid">
+      ${renderParentField('padre', null, null, 'M', null)}
+      ${renderParentField('madre', null, null, 'F', null)}
+    </div>
+    <div class="form-group mt-16"><label>${t('gen_genetica')}</label><input type="text" id="f-genetica" placeholder="${t('gen_genetica_ph')}" autocomplete="off"></div>
+  </div>
     <div class="flex-row mt-20">
       <button class="btn btn-primary" id="btn-salva-serpente" onclick="saveSerpente()">💾 ${t('aggiungi_salva')}</button>
       <button class="btn btn-ghost" onclick="showPage('serpenti')">${t('aggiungi_annulla')}</button>
@@ -1122,6 +1131,8 @@ async function saveSerpente() {
     note: document.getElementById('f-note').value.trim() || null,
     foto_url: _addFotoData || null,
     foto_position: _addFotoData ? (document.getElementById('foto-position-input')?.value || '50% 50%') : '50% 50%',
+    ...readParentFields(),
+    genetica: document.getElementById('f-genetica').value.trim() || null,
   };
   try {
     await SB.insertSerpente(snake);
@@ -1258,6 +1269,7 @@ function renderDettaglio() {
         <div class="form-group"><label>${t('n_uova')}</label><input type="number" id="eggs-num" placeholder="es. 6" inputmode="numeric"></div>
         <div class="form-group"><label>${t('n_fertili')}</label><input type="number" id="eggs-fertili" placeholder="es. 5" inputmode="numeric"></div>
         <div class="form-group"><label>${t('temp_incubazione')}</label><input type="number" id="eggs-temp" placeholder="es. 31" step="0.1" inputmode="decimal"></div>
+        ${renderParentField('partner', null, null, 'M', snake.id)}
       </div>
       <div class="form-group mt-16"><label>${t('label_note')}</label><input type="text" id="eggs-note" placeholder="${t('ph_uova_note')}" autocomplete="off"></div>
       <button class="btn mt-16" style="background:var(--accent-pink);color:#1a0010" id="btn-log-uova" onclick="logUova('${snake.id}')">💾 ${t('aggiungi_salva')}</button>
@@ -1441,12 +1453,21 @@ function renderDettaglio() {
           <div class="form-group"><label>${t('lbl_provenienza')}</label><input type="text" id="edit-provenienza" value="${esc(snake.provenienza||'')}" autocomplete="off"></div>
         </div>
         <div class="form-group mt-16"><label>${t('label_note')}</label><textarea id="edit-note" rows="3" style="resize:vertical">${esc(snake.note||'')}</textarea></div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--accent-gold);margin-bottom:10px">🧬 ${t('gen_title')}</div>
+          <div class="form-grid">
+            ${renderParentField('padre', snake.padre_id, snake.padre_esterno, 'M', snake.id)}
+            ${renderParentField('madre', snake.madre_id, snake.madre_esterna, 'F', snake.id)}
+          </div>
+          <div class="form-group mt-16"><label>${t('gen_genetica')}</label><input type="text" id="f-genetica" placeholder="${t('gen_genetica_ph')}" value="${esc(snake.genetica||'')}" autocomplete="off"></div>
+        </div>
         <div class="flex-row mt-20">
           <button class="btn btn-primary" id="btn-save-edit" onclick="saveEditSerpente('${snake.id}')">💾 ${t('salva_modifiche')}</button>
           <button class="btn btn-ghost" onclick="toggleEditSerpente()">${t('aggiungi_annulla')}</button>
         </div>
       </div>
     </div>
+    ${renderGenealogySection(snake)}
   </div>`;
 
   applySnakeLockUI(snake.id);
@@ -1475,6 +1496,86 @@ function setFotoPosition(pos) {
   });
 }
 
+// ── GENEALOGIA: campo genitore (select tra archivio + opzione esterna) ─────
+function renderParentField(role, currentId, currentEsterno, sessoFiltro, excludeId) {
+  const label = role === 'padre' ? t('gen_padre') : role === 'madre' ? t('gen_madre') : t('gen_partner');
+  const inputId = role === 'padre' ? 'f-padre-esterno' : role === 'madre' ? 'f-madre-esterna' : 'eggs-partner-esterno';
+  const selectId = role === 'partner' ? 'eggs-partner-select' : `f-${role}-select`;
+  const isEsterno = !currentId && !!currentEsterno;
+  const options = _snakes.filter(s => s.sesso === sessoFiltro && s.id !== excludeId);
+  return `<div class="form-group">
+    <label>${label}</label>
+    <select id="${selectId}" onchange="toggleParentExterno('${role}')">
+      <option value="">${t('gen_nessuno')}</option>
+      <option value="__esterno__" ${isEsterno ? 'selected' : ''}>${t('gen_esterno_label')}</option>
+      ${options.map(s => `<option value="${esc(s.id)}" ${currentId === s.id ? 'selected' : ''}>${esc(s.nome)}</option>`).join('')}
+    </select>
+    <input type="text" id="${inputId}" placeholder="${t('gen_esterno_ph')}" value="${esc(currentEsterno || '')}" style="display:${isEsterno ? 'block' : 'none'};margin-top:6px">
+  </div>`;
+}
+
+function toggleParentExterno(role) {
+  const selectId = role === 'partner' ? 'eggs-partner-select' : `f-${role}-select`;
+  const inputId = role === 'padre' ? 'f-padre-esterno' : role === 'madre' ? 'f-madre-esterna' : 'eggs-partner-esterno';
+  const select = document.getElementById(selectId);
+  const input = document.getElementById(inputId);
+  if (select && input) input.style.display = select.value === '__esterno__' ? 'block' : 'none';
+}
+
+function readParentFields() {
+  const padreSel = document.getElementById('f-padre-select')?.value || '';
+  const madreSel = document.getElementById('f-madre-select')?.value || '';
+  return {
+    padre_id: (padreSel && padreSel !== '__esterno__') ? padreSel : null,
+    padre_esterno: padreSel === '__esterno__' ? (document.getElementById('f-padre-esterno')?.value.trim() || null) : null,
+    madre_id: (madreSel && madreSel !== '__esterno__') ? madreSel : null,
+    madre_esterna: madreSel === '__esterno__' ? (document.getElementById('f-madre-esterna')?.value.trim() || null) : null,
+  };
+}
+
+// ── GENEALOGIA: sezione figli / fratelli di cova nella scheda dettaglio ────
+function renderGenealogySection(snake) {
+  const figli = _snakes.filter(s => s.padre_id === snake.id || s.madre_id === snake.id);
+  const fratelli = (snake.padre_id || snake.madre_id)
+    ? _snakes.filter(s => s.id !== snake.id &&
+        ((snake.padre_id && s.padre_id === snake.padre_id) || (snake.madre_id && s.madre_id === snake.madre_id)))
+    : [];
+  const hasParents = snake.padre_id || snake.padre_esterno || snake.madre_id || snake.madre_esterna || snake.genetica;
+  if (!hasParents && figli.length === 0 && fratelli.length === 0) return '';
+
+  const snakeChip = s => `<span onclick="showPage('dettaglio','${s.id}')" style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-moss);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;font-size:12px;cursor:pointer;margin:3px 4px 3px 0">
+      ${s.foto_url ? `<img src="${esc(s.foto_url)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;object-position:${esc(s.foto_position || '50% 50%')}">` : `<span style="width:20px;height:20px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:10px">🐍</span>`}
+      ${esc(s.nome)}</span>`;
+
+  return `<div class="card" style="margin-bottom:14px">
+    <div class="card-title">🧬 ${t('gen_title')}</div>
+    ${hasParents ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:${(figli.length || fratelli.length) ? '14px' : '0'}">
+      <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${t('gen_padre')}</div>
+        <div style="font-size:13px;color:var(--text-bright);margin-top:3px">
+          ${snake.padre_id && _snakes.find(s => s.id === snake.padre_id) ? snakeChip(_snakes.find(s => s.id === snake.padre_id)) :
+            snake.padre_esterno ? `${esc(snake.padre_esterno)} <span style="font-size:10px;color:var(--text-dim)">(${t('gen_esterno_badge')})</span>` :
+            `<span style="color:var(--text-dim)">${t('gen_non_impostato')}</span>`}
+        </div>
+      </div>
+      <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${t('gen_madre')}</div>
+        <div style="font-size:13px;color:var(--text-bright);margin-top:3px">
+          ${snake.madre_id && _snakes.find(s => s.id === snake.madre_id) ? snakeChip(_snakes.find(s => s.id === snake.madre_id)) :
+            snake.madre_esterna ? `${esc(snake.madre_esterna)} <span style="font-size:10px;color:var(--text-dim)">(${t('gen_esterno_badge')})</span>` :
+            `<span style="color:var(--text-dim)">${t('gen_non_impostato')}</span>`}
+        </div>
+      </div>
+      ${snake.genetica ? `<div style="background:var(--bg-moss);border-radius:8px;padding:10px;grid-column:1/-1">
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${t('gen_genetica')}</div>
+        <div style="font-size:13px;color:var(--text-bright);margin-top:3px">${esc(snake.genetica)}</div>
+      </div>` : ''}
+    </div>` : ''}
+    ${figli.length > 0 ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">${t('gen_figli')} (${figli.length})</div>${figli.map(snakeChip).join('')}</div>` : ''}
+    ${fratelli.length > 0 ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">${t('gen_fratelli')} (${fratelli.length})</div>${fratelli.map(snakeChip).join('')}</div>` : ''}
+  </div>`;
+}
+
 function renderLogList(logs, type, snakeId) {
   const icons = { food:'🥩', feci:'💩', eggs:'🥚', pulizia:'🧹', muta:'🦎', peso:'⚖️' };
   if (!logs.length) return `<div style="color:var(--text-dim);font-size:14px;padding:10px 0">${t('nessuna_registrazione')}</div>`;
@@ -1482,7 +1583,10 @@ function renderLogList(logs, type, snakeId) {
     let desc = '';
     if (l.tipo==='cibo') desc=`${l.food_tipo||t('log_cibo_default')} ×${l.qty||1} — ${l.grammi||0}g`;
     if (l.tipo==='feci') desc=`${l.feci_tipo||'—'}`;
-    if (l.tipo==='uova') desc=`${l.num_uova||0} ${t('log_uova_desc')}, ${l.fertili||0} ${t('log_fertili_desc')}${l.temp?` — ${l.temp}°C`:''}`;
+    if (l.tipo==='uova') {
+      const partnerNome = l.partner_id ? (_snakes.find(s=>s.id===l.partner_id)?.nome || null) : (l.partner_esterno || null);
+      desc=`${l.num_uova||0} ${t('log_uova_desc')}, ${l.fertili||0} ${t('log_fertili_desc')}${l.temp?` — ${l.temp}°C`:''}${partnerNome?` · ${t('gen_partner')}: ${esc(partnerNome)}`:''}`;
+    }
     if (l.tipo==='muta') desc=`${l.feci_tipo||t('muta_completa')}`;
     if (l.tipo==='peso') desc=`${l.grammi||0}g`;
     return `<div class="log-entry">
@@ -1565,6 +1669,9 @@ async function logUova(snakeId) {
     temp:parseFloat(document.getElementById('eggs-temp').value)||null,
     note:document.getElementById('eggs-note').value||null,
   };
+  const partnerSel = document.getElementById('eggs-partner-select')?.value || '';
+  log.partner_id = (partnerSel && partnerSel !== '__esterno__') ? partnerSel : null;
+  log.partner_esterno = partnerSel === '__esterno__' ? (document.getElementById('eggs-partner-esterno')?.value.trim() || null) : null;
   try {
     await SB.insertLog(log);
     _logs.unshift(log);
@@ -1967,6 +2074,8 @@ async function saveEditSerpente(snakeId) {
     peso: parseFloat(document.getElementById('edit-peso').value) || null,
     provenienza: document.getElementById('edit-provenienza').value.trim() || null,
     note: document.getElementById('edit-note').value.trim() || null,
+    ...readParentFields(),
+    genetica: document.getElementById('f-genetica').value.trim() || null,
   };
   if (_editFotoData) updates.foto_url = _editFotoData;
   const posInput = document.getElementById('foto-position-input');
@@ -2794,7 +2903,10 @@ function printSchedaSerpente(snakeId) {
      [t('lbl_data_nascita'),snake.nascita?new Date(snake.nascita).toLocaleDateString(dateLocale):'—'],
      [t('serpenti_eta'),age(snake.nascita)],
      [t('pdf_peso_attuale'),snake.peso?snake.peso+'g':'—'],[t('lbl_provenienza'),snake.provenienza||'—'],
-     [t('lbl_icd'),snake.icd]
+     [t('lbl_icd'),snake.icd],
+     [t('gen_padre'), snake.padre_id ? (_snakes.find(s=>s.id===snake.padre_id)?.nome || '—') : (snake.padre_esterno || '—')],
+     [t('gen_madre'), snake.madre_id ? (_snakes.find(s=>s.id===snake.madre_id)?.nome || '—') : (snake.madre_esterna || '—')],
+     [t('gen_genetica'), snake.genetica || '—']
   ].map(([k,v])=>`<div class="info-item"><div class="info-label">${k}</div><div class="info-value">${esc(v)}</div></div>`).join('')}
 </div>
 
@@ -5170,6 +5282,12 @@ const I18N = {
     venduti_grafico_hint: '💡 Grafico interattivo — clicca le barre per applicare il filtro',
     venduti_vendite_label: 'vendite', venduti_nessuna_nel_periodo: 'Nessuna vendita in questo periodo.',
     foto_pos_label: 'Posizione foto',
+    gen_title: 'Genealogia', gen_padre: 'Padre', gen_madre: 'Madre', gen_genetica: 'Genetica',
+    gen_genetica_ph: 'es. het Pastel, Clown visivo', gen_nessuno: '— Nessuno —',
+    gen_esterno_label: 'Esterno (non in archivio)', gen_esterno_ph: 'Nome esterno',
+    gen_figli: 'Figli', gen_fratelli: 'Fratelli di cova', gen_nessun_figlio: 'Nessun figlio registrato',
+    gen_nessun_fratello: 'Nessun fratello di cova', gen_partner: 'Partner (maschio)',
+    gen_esterno_badge: 'esterno', gen_genitori: 'Genitori', gen_non_impostato: 'Non impostato',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -5291,6 +5409,12 @@ const I18N = {
     venduti_grafico_hint: '💡 Interactive chart — click a bar to apply the filter',
     venduti_vendite_label: 'sales', venduti_nessuna_nel_periodo: 'No sales in this period.',
     foto_pos_label: 'Photo position',
+    gen_title: 'Genealogy', gen_padre: 'Father', gen_madre: 'Mother', gen_genetica: 'Genetics',
+    gen_genetica_ph: 'e.g. het Pastel, visual Clown', gen_nessuno: '— None —',
+    gen_esterno_label: 'External (not in your records)', gen_esterno_ph: 'External name',
+    gen_figli: 'Offspring', gen_fratelli: 'Clutch siblings', gen_nessun_figlio: 'No offspring registered',
+    gen_nessun_fratello: 'No clutch siblings', gen_partner: 'Partner (male)',
+    gen_esterno_badge: 'external', gen_genitori: 'Parents', gen_non_impostato: 'Not set',
   }
 };
 
