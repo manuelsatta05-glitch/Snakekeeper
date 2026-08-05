@@ -1547,24 +1547,31 @@ function renderGenealogySection(snake) {
       ${s.foto_url ? `<img src="${esc(s.foto_url)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;object-position:${esc(s.foto_position || '50% 50%')}">` : `<span style="width:20px;height:20px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:10px">🐍</span>`}
       ${esc(s.nome)}</span>`;
 
+  const parentChip = s => {
+    const sottotitolo = [s.specie, s.morfo].filter(Boolean).join(' · ');
+    return `<div onclick="showPage('dettaglio','${s.id}')" style="display:inline-flex;align-items:center;gap:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;margin-top:2px">
+      ${s.foto_url ? `<img src="${esc(s.foto_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:${esc(s.foto_position || '50% 50%')};flex-shrink:0">` : `<span style="width:28px;height:28px;border-radius:50%;background:var(--bg-moss);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🐍</span>`}
+      <div style="min-width:0">
+        <div style="font-size:13px;color:var(--text-bright);font-weight:500">${esc(s.nome)}</div>
+        ${sottotitolo ? `<div style="font-size:10.5px;color:var(--text-dim);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sottotitolo)}</div>` : ''}
+      </div>
+    </div>`;
+  };
+
   return `<div class="card" style="margin-bottom:14px">
     <div class="card-title">🧬 ${t('gen_title')}</div>
-    ${hasParents ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:${(figli.length || fratelli.length) ? '14px' : '0'}">
+    ${hasParents ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:${(figli.length || fratelli.length) ? '14px' : '0'}">
       <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
-        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${t('gen_padre')}</div>
-        <div style="font-size:13px;color:var(--text-bright);margin-top:3px">
-          ${snake.padre_id && _snakes.find(s => s.id === snake.padre_id) ? snakeChip(_snakes.find(s => s.id === snake.padre_id)) :
-            snake.padre_esterno ? `${esc(snake.padre_esterno)} <span style="font-size:10px;color:var(--text-dim)">(${t('gen_esterno_badge')})</span>` :
-            `<span style="color:var(--text-dim)">${t('gen_non_impostato')}</span>`}
-        </div>
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${t('gen_padre')}</div>
+        ${snake.padre_id && _snakes.find(s => s.id === snake.padre_id) ? parentChip(_snakes.find(s => s.id === snake.padre_id)) :
+          snake.padre_esterno ? `<div style="font-size:13px;color:var(--text-bright);margin-top:3px">${esc(snake.padre_esterno)} <span style="font-size:10px;color:var(--text-dim)">(${t('gen_esterno_badge')})</span></div>` :
+          `<div style="font-size:13px;color:var(--text-dim);margin-top:3px">${t('gen_non_impostato')}</div>`}
       </div>
       <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
-        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${t('gen_madre')}</div>
-        <div style="font-size:13px;color:var(--text-bright);margin-top:3px">
-          ${snake.madre_id && _snakes.find(s => s.id === snake.madre_id) ? snakeChip(_snakes.find(s => s.id === snake.madre_id)) :
-            snake.madre_esterna ? `${esc(snake.madre_esterna)} <span style="font-size:10px;color:var(--text-dim)">(${t('gen_esterno_badge')})</span>` :
-            `<span style="color:var(--text-dim)">${t('gen_non_impostato')}</span>`}
-        </div>
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${t('gen_madre')}</div>
+        ${snake.madre_id && _snakes.find(s => s.id === snake.madre_id) ? parentChip(_snakes.find(s => s.id === snake.madre_id)) :
+          snake.madre_esterna ? `<div style="font-size:13px;color:var(--text-bright);margin-top:3px">${esc(snake.madre_esterna)} <span style="font-size:10px;color:var(--text-dim)">(${t('gen_esterno_badge')})</span></div>` :
+          `<div style="font-size:13px;color:var(--text-dim);margin-top:3px">${t('gen_non_impostato')}</div>`}
       </div>
       ${snake.genetica ? `<div style="background:var(--bg-moss);border-radius:8px;padding:10px;grid-column:1/-1">
         <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${t('gen_genetica')}</div>
@@ -2904,8 +2911,8 @@ function printSchedaSerpente(snakeId) {
      [t('serpenti_eta'),age(snake.nascita)],
      [t('pdf_peso_attuale'),snake.peso?snake.peso+'g':'—'],[t('lbl_provenienza'),snake.provenienza||'—'],
      [t('lbl_icd'),snake.icd],
-     [t('gen_padre'), snake.padre_id ? (_snakes.find(s=>s.id===snake.padre_id)?.nome || '—') : (snake.padre_esterno || '—')],
-     [t('gen_madre'), snake.madre_id ? (_snakes.find(s=>s.id===snake.madre_id)?.nome || '—') : (snake.madre_esterna || '—')],
+     [t('gen_padre'), (()=>{ const p=snake.padre_id?_snakes.find(s=>s.id===snake.padre_id):null; if(p){const st=[p.specie,p.morfo].filter(Boolean).join(', '); return p.nome+(st?` (${st})`:'');} return snake.padre_esterno||'—'; })()],
+     [t('gen_madre'), (()=>{ const m=snake.madre_id?_snakes.find(s=>s.id===snake.madre_id):null; if(m){const st=[m.specie,m.morfo].filter(Boolean).join(', '); return m.nome+(st?` (${st})`:'');} return snake.madre_esterna||'—'; })()],
      [t('gen_genetica'), snake.genetica || '—']
   ].map(([k,v])=>`<div class="info-item"><div class="info-label">${k}</div><div class="info-value">${esc(v)}</div></div>`).join('')}
 </div>
