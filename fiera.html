@@ -186,9 +186,20 @@ async function checkCode(codice) {
       bannerEl.classList.add('show');
     } else {
       _codeIsValid = false;
-      statusEl.textContent = '❌ Codice non valido o scaduto';
-      statusEl.className = 'code-status invalid';
       bannerEl.classList.remove('show');
+      const reason = data && data.reason;
+      if (reason === 'not_started') {
+        const d = data.data_inizio ? new Date(data.data_inizio).toLocaleDateString('it-IT') : '';
+        statusEl.textContent = `⏳ "${data.nome}" — offerta valida dal ${d}, non ancora iniziata`;
+      } else if (reason === 'expired') {
+        const d = data.data_fine ? new Date(data.data_fine).toLocaleDateString('it-IT') : '';
+        statusEl.textContent = `⌛ "${data.nome}" — offerta terminata il ${d}`;
+      } else if (reason === 'inactive') {
+        statusEl.textContent = `❌ "${data.nome}" — questa offerta non è più attiva`;
+      } else {
+        statusEl.textContent = '❌ Codice non valido. Controlla di averlo digitato correttamente.';
+      }
+      statusEl.className = 'code-status invalid';
     }
   } catch(e) {
     console.warn('Verifica codice fallita:', e);
@@ -231,7 +242,8 @@ async function submitRegistration() {
       await checkCode(codice);
     }
     if (!_codeIsValid) {
-      showError('Il codice promozionale inserito non è valido. Controlla di averlo digitato correttamente.');
+      const detail = document.getElementById('code-status').textContent;
+      showError(detail || 'Il codice promozionale inserito non è valido. Controlla di averlo digitato correttamente.');
       btn.disabled = false;
       btn.innerHTML = '🐍 Crea account e attiva Pro gratis';
       return;
