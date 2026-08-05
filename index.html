@@ -5065,10 +5065,22 @@ function renderAdminFiera(eventi, plans) {
   if (!el) return;
   const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
 
+  // Stato "vero" del codice in questo momento: attivo=true non basta se le
+  // date lo escludono. Questo badge riflette esattamente cio' che decide
+  // check_fiera_code() lato server, non solo il flag manuale.
+  function fieraStatoReale(ev) {
+    const oggi = new Date().toISOString().slice(0,10);
+    if (!ev.attivo) return null; // il badge DISATTIVO copre già questo caso
+    if (ev.data_fine && oggi > ev.data_fine) return { label: '⏱️ SCADUTA', color: 'var(--accent-red)' };
+    if (ev.data_inizio && oggi < ev.data_inizio) return { label: '🕓 NON INIZIATA', color: 'var(--accent-gold)' };
+    return null;
+  }
+
   const listHtml = eventi.length === 0 ? `
     <p style="color:var(--text-dim);font-size:13px;padding:8px 0">Nessun evento fiera creato ancora.</p>` : eventi.map(ev => {
     const count = plans.filter(p => p.trial_fiera_id === ev.id).length;
     const link = `${baseUrl}/fiera.html?c=${encodeURIComponent(ev.codice_promo)}`;
+    const statoReale = fieraStatoReale(ev);
     return `
     <div class="card" style="margin-bottom:10px;padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
@@ -5076,6 +5088,7 @@ function renderAdminFiera(eventi, plans) {
           <div style="font-weight:700;color:var(--text-bright);font-size:14px">
             ${esc(ev.nome)}
             ${ev.attivo ? `<span style="margin-left:8px;padding:2px 8px;border-radius:20px;font-size:10px;background:rgba(109,191,109,0.15);color:var(--accent-lime)">ATTIVO</span>` : `<span style="margin-left:8px;padding:2px 8px;border-radius:20px;font-size:10px;background:rgba(0,0,0,0.3);color:var(--text-dim)">DISATTIVO</span>`}
+            ${statoReale ? `<span style="margin-left:6px;padding:2px 8px;border-radius:20px;font-size:10px;background:rgba(0,0,0,0.3);color:${statoReale.color}">${statoReale.label}</span>` : ''}
           </div>
           <div style="font-size:12px;color:var(--text-dim);margin-top:4px">
             ${ev.luogo ? esc(ev.luogo) + ' · ' : ''}${ev.data_inizio ? ev.data_inizio : '?'} → ${ev.data_fine ? ev.data_fine : '?'}
@@ -5119,6 +5132,7 @@ function renderAdminFiera(eventi, plans) {
               <input type="date" id="fiera-data-fine">
             </div>
           </div>
+          <p style="font-size:11px;color:var(--text-dim);margin-top:-4px">Se imposti le date, il codice funzionerà SOLO in quell'intervallo (fuso orario italiano). Lasciale vuote per nessun limite di date.</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <div class="form-group" style="flex:1;min-width:140px">
               <label>Codice promo</label>
@@ -5155,6 +5169,10 @@ async function createFieraEvent() {
 
   if (!nome) { toast('Inserisci il nome evento!', '#c0392b'); return; }
   if (!codice || !/^[A-Z0-9]{4,32}$/.test(codice)) { toast('Codice promo non valido (solo lettere/numeri, min 4 caratteri)', '#c0392b'); return; }
+  if (data_inizio && data_fine && data_fine < data_inizio) {
+    toast('❌ La data di fine non può essere precedente alla data di inizio!', '#c0392b');
+    return;
+  }
 
   const btn = document.getElementById('btn-crea-fiera');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creazione...';
@@ -5169,7 +5187,11 @@ async function createFieraEvent() {
     toast('✅ Evento fiera creato!');
     await loadAdminData();
   } catch(e) {
-    toast('❌ ' + (e.message.includes('duplicate') || e.message.includes('unique') ? 'Codice promo già in uso' : e.message), '#c0392b');
+    let msg = e.message;
+    if (msg.includes('duplicate') || msg.includes('unique')) msg = 'Codice promo già in uso';
+    else if (msg.includes('fiere_eventi_date_range_check')) msg = 'La data di fine non può essere precedente alla data di inizio';
+    else if (msg.includes('fiere_eventi_durata_positiva_check')) msg = 'La durata del trial deve essere maggiore di zero';
+    toast('❌ ' + msg, '#c0392b');
     btn.disabled = false; btn.innerHTML = '🎪 Crea evento e genera link';
   }
 }
