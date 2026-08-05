@@ -5060,9 +5060,12 @@ async function loadAdminFiera(plans) {
   }
 }
 
+let _fieraEventiCache = [];
+
 function renderAdminFiera(eventi, plans) {
   const el = document.getElementById('admin-fiera-section');
   if (!el) return;
+  _fieraEventiCache = eventi;
   const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
 
   // Stato "vero" del codice in questo momento: attivo=true non basta se le
@@ -5099,6 +5102,8 @@ function renderAdminFiera(eventi, plans) {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="copyFieraLink('${esc(link)}')">📋 Copia link</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="showFieraQr('${esc(link)}','${esc(ev.nome)}')">📱 QR</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="editFieraEvent('${ev.id}')">✏️ Modifica</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="showFieraHistory('${ev.id}','${esc(ev.nome)}')">🕓 Cronologia</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="toggleFieraAttivo('${ev.id}', ${ev.attivo})">${ev.attivo ? '⏸️ Disattiva' : '▶️ Riattiva'}</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px;color:var(--accent-red)" onclick="deleteFieraEvent('${ev.id}', ${count})">🗑️</button>
         </div>
@@ -5239,6 +5244,158 @@ function showFieraQr(link, nome) {
     </div>`;
   overlay.addEventListener('click', () => overlay.remove());
   document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════
+//  ADMIN FIERA — MODIFICA EVENTO
+//  Il codice promo è bloccato di default: e' stampato sui volantini/QR,
+//  quindi cambiarlo per sbaglio renderebbe inutile tutto il materiale
+//  già stampato. Serve uno sblocco esplicito per poterlo cambiare.
+// ═══════════════════════════════════════
+function editFieraEvent(id) {
+  const ev = _fieraEventiCache.find(e => e.id === id);
+  if (!ev) { toast('Evento non trovato, ricarico...', '#c0392b'); loadAdminData(); return; }
+
+  const prev = document.getElementById('fiera-edit-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'fiera-edit-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:440px;width:100%;box-shadow:var(--shadow)" onclick="event.stopPropagation()">
+      <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--accent-gold);margin-bottom:16px">✏️ Modifica evento fiera</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="form-group">
+          <label>Nome evento</label>
+          <input type="text" id="edit-fiera-nome" value="${esc(ev.nome)}">
+        </div>
+        <div class="form-group">
+          <label>Luogo</label>
+          <input type="text" id="edit-fiera-luogo" value="${esc(ev.luogo||'')}">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="form-group" style="flex:1;min-width:140px">
+            <label>Data inizio</label>
+            <input type="date" id="edit-fiera-data-inizio" value="${ev.data_inizio||''}">
+          </div>
+          <div class="form-group" style="flex:1;min-width:140px">
+            <label>Data fine</label>
+            <input type="date" id="edit-fiera-data-fine" value="${ev.data_fine||''}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Durata trial (giorni) — vale solo per le nuove iscrizioni da qui in poi</label>
+          <input type="number" id="edit-fiera-durata" value="${ev.durata_trial_giorni}" min="1" max="730">
+        </div>
+        <div class="form-group">
+          <label>Codice promo — 🔒 bloccato (è sui volantini/QR già stampati)</label>
+          <input type="text" id="edit-fiera-codice" value="${esc(ev.codice_promo)}" disabled style="font-family:monospace;opacity:0.6">
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;text-transform:none;font-size:12px;color:var(--accent-red);cursor:pointer">
+            <input type="checkbox" id="edit-fiera-unlock-codice" onchange="unlockCodicePromoField(this.checked)" style="width:auto">
+            Sblocca per modificarlo (i QR già stampati smetteranno di funzionare!)
+          </label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="saveFieraEdit('${ev.id}')" id="btn-save-fiera-edit">💾 Salva modifiche</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('fiera-edit-modal').remove()">Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  modal.addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+}
+
+function unlockCodicePromoField(unlocked) {
+  const el = document.getElementById('edit-fiera-codice');
+  el.disabled = !unlocked;
+  el.style.opacity = unlocked ? '1' : '0.6';
+  if (unlocked) el.style.textTransform = 'uppercase';
+}
+
+async function saveFieraEdit(id) {
+  const nome = document.getElementById('edit-fiera-nome').value.trim();
+  const luogo = document.getElementById('edit-fiera-luogo').value.trim();
+  const data_inizio = document.getElementById('edit-fiera-data-inizio').value || null;
+  const data_fine = document.getElementById('edit-fiera-data-fine').value || null;
+  const durata = parseInt(document.getElementById('edit-fiera-durata').value, 10) || 90;
+  const codiceUnlocked = document.getElementById('edit-fiera-unlock-codice').checked;
+  const codice = document.getElementById('edit-fiera-codice').value.trim().toUpperCase();
+
+  if (!nome) { toast('Il nome evento è obbligatorio!', '#c0392b'); return; }
+  if (data_inizio && data_fine && data_fine < data_inizio) {
+    toast('❌ La data di fine non può essere precedente alla data di inizio!', '#c0392b');
+    return;
+  }
+  if (codiceUnlocked && (!codice || !/^[A-Z0-9]{4,32}$/.test(codice))) {
+    toast('Codice promo non valido (solo lettere/numeri, min 4 caratteri)', '#c0392b');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-fiera-edit');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
+  try {
+    const body = { nome, luogo: luogo || null, data_inizio, data_fine, durata_trial_giorni: durata };
+    if (codiceUnlocked) body.codice_promo = codice;
+    await SB.req(`fiere_eventi?id=eq.${id}`, { method:'PATCH', prefer:'return=minimal', body: JSON.stringify(body) });
+    toast('✅ Evento aggiornato!');
+    document.getElementById('fiera-edit-modal').remove();
+    await loadAdminData();
+  } catch(e) {
+    let msg = e.message;
+    if (msg.includes('duplicate') || msg.includes('unique')) msg = 'Codice promo già in uso da un altro evento';
+    else if (msg.includes('fiere_eventi_date_range_check')) msg = 'La data di fine non può essere precedente alla data di inizio';
+    else if (msg.includes('fiere_eventi_durata_positiva_check')) msg = 'La durata del trial deve essere maggiore di zero';
+    toast('❌ ' + msg, '#c0392b');
+    btn.disabled = false; btn.innerHTML = '💾 Salva modifiche';
+  }
+}
+
+// ═══════════════════════════════════════
+//  ADMIN FIERA — CRONOLOGIA MODIFICHE
+//  Sola lettura: la tabella è scritta solo dal trigger di sistema,
+//  nemmeno l'admin può alterarla dall'interfaccia.
+// ═══════════════════════════════════════
+async function showFieraHistory(id, nome) {
+  const prev = document.getElementById('fiera-history-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'fiera-history-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow)" onclick="event.stopPropagation()">
+      <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--accent-gold);margin-bottom:4px">🕓 Cronologia modifiche</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">${esc(nome)}</div>
+      <div id="fiera-history-content" style="display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;padding:20px"><span class="spinner"></span></div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="document.getElementById('fiera-history-modal').remove()">Chiudi</button>
+    </div>`;
+  modal.addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+
+  try {
+    const storia = await SB.req(`fiere_eventi_storico?fiera_id=eq.${id}&select=*&order=changed_at.desc`);
+    const contentEl = document.getElementById('fiera-history-content');
+    if (!storia.length) {
+      contentEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:10px 0">Nessuna modifica registrata: l'evento è ancora nella sua versione originale.</p>`;
+      return;
+    }
+    const campoLabels = { codice_promo:'Codice promo', nome:'Nome', luogo:'Luogo', data_inizio:'Data inizio', data_fine:'Data fine', durata_trial_giorni:'Durata trial (giorni)', attivo:'Stato attivo' };
+    contentEl.innerHTML = storia.map(h => `
+      <div style="background:var(--bg-moss);border-radius:8px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600;color:var(--accent-gold)">${campoLabels[h.campo]||h.campo}</span>
+          <span style="font-size:11px;color:var(--text-dim)">${new Date(h.changed_at).toLocaleString('it-IT')}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-mid)">
+          <span style="text-decoration:line-through;color:var(--text-dim)">${esc(h.valore_precedente ?? '—')}</span>
+          → <span style="color:var(--text-bright)">${esc(h.valore_nuovo ?? '—')}</span>
+        </div>
+        ${h.changed_by_email ? `<div style="font-size:10px;color:var(--text-dim);margin-top:4px">da ${esc(h.changed_by_email)}</div>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('fiera-history-content').innerHTML = `<div style="color:var(--accent-red);font-size:13px">Errore caricamento: ${e.message}</div>`;
+  }
 }
 
 async function changePlan(userId, newPlan) {
