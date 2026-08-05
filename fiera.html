@@ -190,10 +190,10 @@ async function checkCode(codice) {
       const reason = data && data.reason;
       if (reason === 'not_started') {
         const d = data.data_inizio ? new Date(data.data_inizio).toLocaleDateString('it-IT') : '';
-        statusEl.textContent = `⏳ "${data.nome}" — offerta valida dal ${d}, non ancora iniziata`;
+        statusEl.textContent = `⏳ Questo codice sarà valido dal ${d} — la fiera "${data.nome}" non è ancora iniziata.`;
       } else if (reason === 'expired') {
         const d = data.data_fine ? new Date(data.data_fine).toLocaleDateString('it-IT') : '';
-        statusEl.textContent = `⌛ "${data.nome}" — offerta terminata il ${d}`;
+        statusEl.textContent = `⌛ Questo codice è scaduto perché la fiera "${data.nome}" è terminata il ${d}.`;
       } else if (reason === 'inactive') {
         statusEl.textContent = `❌ "${data.nome}" — questa offerta non è più attiva`;
       } else {
