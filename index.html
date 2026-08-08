@@ -1,4 +1,3 @@
-<!-- commento di prova -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -4161,6 +4160,15 @@ async function renderProfilo() {
           <div style="font-size:13px;color:var(--text-mid);margin-top:4px;max-width:280px;line-height:1.5">
             ${planDesc[_userPlan]||''}
           </div>
+          ${(_userPlan === 'pro' && _userTrialFieraId) ? `
+          <div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35)">
+            <span style="font-size:13px">🎪</span>
+            <span style="font-size:11px;color:var(--accent-gold);font-weight:600">
+              ${t('trial_badge_prefix')} ${daysUntil(_userValidUntil) !== null ? Math.max(0,daysUntil(_userValidUntil)) : ''} ${t('trial_badge_days')}
+              (${t('trial_badge_code')} ${esc(_userTrialCode||'')})
+            </span>
+          </div>
+          ${_userValidUntil ? `<div style="font-size:11px;color:var(--text-dim);margin-top:5px">${t('trial_badge_expires')} ${new Date(_userValidUntil).toLocaleDateString(_appLang==='en'?'en-GB':'it-IT')}</div>` : ''}` : ''}
         </div>
         ${_userPlan === 'free' ? `
           <button onclick="showUpgradeModal()" 
@@ -4450,6 +4458,10 @@ let _userPlan = 'free'; // 'free' | 'pro' | 'admin' | 'free_forever'
 let _vendutiFilterYear = 'all';  // 'all' oppure es. '2026'
 let _vendutiFilterMonth = 'all'; // 'all' oppure 0-11 (indice mese, solo se anno specifico)
 let _userLogo = null; // logo allevatore, base64 compresso, null se non caricato
+let _userValidUntil = null;       // scadenza pro (trial o abbonamento), ISO string o null
+let _userTrialFieraId = null;     // id evento fiera se il pro attuale è un trial promozionale
+let _userTrialCode = null;        // codice promo usato per il trial
+let _userTrialNotifiedDate = null; // ultima data in cui è stato mostrato il countdown
 const FREE_SNAKE_LIMIT = 3;
 const ADMIN_EMAIL = 'manuel.satta05@gmail.com';
 
@@ -4553,13 +4565,18 @@ async function loadUserPlan() {
   if (!_currentUser || !_currentUser.id) return;
   try {
     // Usa SB.req() che gestisce già il token correttamente
-    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan,logo_url,lang`);
+    const data = await SB.req(`user_plans?user_id=eq.${_currentUser.id}&select=plan,logo_url,lang,valid_until,trial_fiera_id,trial_code,trial_notified_date`);
     if (data && data.length > 0) {
       _userPlan = data[0].plan || 'free';
       _userLogo = data[0].logo_url || null;
       _appLang = data[0].lang || 'it';
+      _userValidUntil = data[0].valid_until || null;
+      _userTrialFieraId = data[0].trial_fiera_id || null;
+      _userTrialCode = data[0].trial_code || null;
+      _userTrialNotifiedDate = data[0].trial_notified_date || null;
       applyAppLang();
       applyPlanUI();
+      checkTrialCountdown();
       return;
     }
     // Fallback admin per email
@@ -4578,6 +4595,66 @@ async function loadUserPlan() {
     }
   }
   applyPlanUI();
+}
+
+// ═══════════════════════════════════════
+//  TRIAL FIERA — countdown ultima settimana
+// ═══════════════════════════════════════
+function daysUntil(isoDateString) {
+  if (!isoDateString) return null;
+  const ms = new Date(isoDateString).getTime() - Date.now();
+  return Math.ceil(ms / 86400000);
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD, confrontabile come stringa
+}
+
+function checkTrialCountdown() {
+  if (_userPlan !== 'pro' || !_userTrialFieraId || !_userValidUntil) return;
+  const remaining = daysUntil(_userValidUntil);
+  if (remaining === null || remaining < 0 || remaining > 7) return;
+  if (_userTrialNotifiedDate === todayStr()) return; // già mostrato oggi
+  showTrialCountdownModal(remaining);
+  _userTrialNotifiedDate = todayStr(); // guardia locale, evita doppioni nella stessa sessione
+  markTrialNotifiedServer();
+}
+
+async function markTrialNotifiedServer() {
+  try {
+    const session = await getSession();
+    const token = session ? session.access_token : SUPABASE_KEY;
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/mark_trial_notified`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+  } catch(e) { console.warn('mark_trial_notified fallito:', e); }
+}
+
+function showTrialCountdownModal(daysRemaining) {
+  const prev = document.getElementById('trial-countdown-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'trial-countdown-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:650;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px';
+  const dayLabel = daysRemaining === 1 ? t('trial_countdown_day_left') : t('trial_countdown_days_left');
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid rgba(201,168,76,0.4);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:44px;margin-bottom:10px">⏳</div>
+      <div style="font-family:'Cinzel',serif;font-size:19px;color:var(--accent-gold);margin-bottom:14px">${t('trial_countdown_title')}</div>
+      <p style="color:var(--text-mid);font-size:14px;line-height:1.6;margin:0 0 8px">
+        ${t('trial_countdown_desc_1')} <strong style="color:var(--text-bright)">${esc(_userTrialCode||'')}</strong>
+        ${t('trial_countdown_desc_2')} <strong style="color:var(--accent-gold)">${daysRemaining} ${dayLabel}</strong>.
+      </p>
+      <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 20px">${t('trial_countdown_desc_3')}</p>
+      <div class="flex-row" style="justify-content:center;gap:10px">
+        <button class="btn btn-primary" style="background:var(--accent-gold);color:#0a1a0a" onclick="document.getElementById('trial-countdown-modal').remove();showPage('profilo');setTimeout(showUpgradeModal,150)">⭐ ${t('trial_countdown_cta')}</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('trial-countdown-modal').remove()">${t('trial_countdown_dismiss')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 // Verifica il pagamento direttamente su Stripe e aggiorna il piano
@@ -4964,9 +5041,363 @@ async function loadAdminData() {
         </div>
       </div>`;
 
-    document.getElementById('admin-content').innerHTML = statsHtml + tableHtml + addUserHtml + statsGlobaliHtml;
+    document.getElementById('admin-content').innerHTML = statsHtml + tableHtml + addUserHtml + statsGlobaliHtml + `<div id="admin-fiera-section" style="margin-top:16px"></div>`;
+    loadAdminFiera(plans);
   } catch(e) {
     document.getElementById('admin-content').innerHTML = `<div class="card" style="color:var(--accent-red)">Errore caricamento: ${e.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════
+//  ADMIN — GESTIONE FIERE / TRIAL PROMOZIONALI
+// ═══════════════════════════════════════
+async function loadAdminFiera(plans) {
+  const el = document.getElementById('admin-fiera-section');
+  if (!el) return;
+  el.innerHTML = `<div class="card"><div style="display:flex;align-items:center;justify-content:center;padding:20px"><span class="spinner"></span></div></div>`;
+  try {
+    const eventi = await SB.req('fiere_eventi?select=*&order=created_at.desc');
+    renderAdminFiera(eventi, plans || []);
+  } catch(e) {
+    el.innerHTML = `<div class="card" style="color:var(--accent-red)">Errore caricamento fiere: ${e.message}</div>`;
+  }
+}
+
+let _fieraEventiCache = [];
+
+function renderAdminFiera(eventi, plans) {
+  const el = document.getElementById('admin-fiera-section');
+  if (!el) return;
+  _fieraEventiCache = eventi;
+  const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+
+  // Stato "vero" del codice in questo momento: attivo=true non basta se le
+  // date lo escludono. Questo badge riflette esattamente cio' che decide
+  // check_fiera_code() lato server, non solo il flag manuale.
+  function fieraStatoReale(ev) {
+    const oggi = new Date().toISOString().slice(0,10);
+    if (!ev.attivo) return null; // il badge DISATTIVO copre già questo caso
+    if (ev.data_fine && oggi > ev.data_fine) return { label: '⏱️ SCADUTA', color: 'var(--accent-red)' };
+    if (ev.data_inizio && oggi < ev.data_inizio) return { label: '🕓 NON INIZIATA', color: 'var(--accent-gold)' };
+    return null;
+  }
+
+  const listHtml = eventi.length === 0 ? `
+    <p style="color:var(--text-dim);font-size:13px;padding:8px 0">Nessun evento fiera creato ancora.</p>` : eventi.map(ev => {
+    const count = plans.filter(p => p.trial_fiera_id === ev.id).length;
+    const link = `${baseUrl}/fiera.html?c=${encodeURIComponent(ev.codice_promo)}`;
+    const statoReale = fieraStatoReale(ev);
+    return `
+    <div class="card" style="margin-bottom:10px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:700;color:var(--text-bright);font-size:14px">
+            ${esc(ev.nome)}
+            ${ev.attivo ? `<span style="margin-left:8px;padding:2px 8px;border-radius:20px;font-size:10px;background:rgba(109,191,109,0.15);color:var(--accent-lime)">ATTIVO</span>` : `<span style="margin-left:8px;padding:2px 8px;border-radius:20px;font-size:10px;background:rgba(0,0,0,0.3);color:var(--text-dim)">DISATTIVO</span>`}
+            ${statoReale ? `<span style="margin-left:6px;padding:2px 8px;border-radius:20px;font-size:10px;background:rgba(0,0,0,0.3);color:${statoReale.color}">${statoReale.label}</span>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:4px">
+            ${ev.luogo ? esc(ev.luogo) + ' · ' : ''}${ev.data_inizio ? ev.data_inizio : '?'} → ${ev.data_fine ? ev.data_fine : '?'}
+            · Trial ${ev.durata_trial_giorni} giorni · <strong style="color:var(--accent-gold)">${count}</strong> iscritti
+          </div>
+          <div style="font-family:monospace;font-size:12px;color:var(--accent-lime);margin-top:6px;word-break:break-all">${esc(link)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="copyFieraLink('${esc(link)}')">📋 Copia link</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="showFieraQr('${esc(link)}','${esc(ev.nome)}')">📱 QR</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="editFieraEvent('${ev.id}')">✏️ Modifica</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="showFieraHistory('${ev.id}','${esc(ev.nome)}')">🕓 Cronologia</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="toggleFieraAttivo('${ev.id}', ${ev.attivo})">${ev.attivo ? '⏸️ Disattiva' : '▶️ Riattiva'}</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px;color:var(--accent-red)" onclick="deleteFieraEvent('${ev.id}', ${count})">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">🎪 Fiera — Iscrizioni trial promozionali</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Crea un evento fiera: verrà generato un link/QR condivisibile che porta a una landing page pubblica dove i visitatori possono registrarsi con email, password e il codice promo per ottenere Pro gratis per la durata scelta.</p>
+      ${listHtml}
+      <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+        <div style="font-weight:600;color:var(--text-bright);font-size:13px;margin-bottom:10px">➕ Nuovo evento fiera</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="form-group">
+            <label>Nome evento</label>
+            <input type="text" id="fiera-nome" placeholder="es. Reptile Expo Verona 2026" autocomplete="off" oninput="autoSuggestFieraCode()">
+          </div>
+          <div class="form-group">
+            <label>Luogo (opzionale)</label>
+            <input type="text" id="fiera-luogo" placeholder="es. Verona" autocomplete="off">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="form-group" style="flex:1;min-width:140px">
+              <label>Data inizio</label>
+              <input type="date" id="fiera-data-inizio">
+            </div>
+            <div class="form-group" style="flex:1;min-width:140px">
+              <label>Data fine</label>
+              <input type="date" id="fiera-data-fine">
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--text-dim);margin-top:-4px">Se imposti le date, il codice funzionerà SOLO in quell'intervallo (fuso orario italiano). Lasciale vuote per nessun limite di date.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="form-group" style="flex:1;min-width:140px">
+              <label>Codice promo</label>
+              <input type="text" id="fiera-codice" placeholder="es. VERONA26" autocomplete="off" style="font-family:monospace;text-transform:uppercase">
+            </div>
+            <div class="form-group" style="flex:1;min-width:140px">
+              <label>Durata trial (giorni)</label>
+              <input type="number" id="fiera-durata" value="90" min="1" max="730">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="createFieraEvent()" id="btn-crea-fiera">🎪 Crea evento e genera link</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function autoSuggestFieraCode() {
+  const codeEl = document.getElementById('fiera-codice');
+  if (!codeEl || codeEl.dataset.touched) return; // non sovrascrive se l'admin ha già digitato manualmente
+  const nome = document.getElementById('fiera-nome').value;
+  const slug = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 12);
+  const year = new Date().getFullYear().toString().slice(-2);
+  codeEl.value = slug ? `${slug}${year}` : '';
+}
+
+async function createFieraEvent() {
+  const nome = document.getElementById('fiera-nome').value.trim();
+  const luogo = document.getElementById('fiera-luogo').value.trim();
+  const data_inizio = document.getElementById('fiera-data-inizio').value || null;
+  const data_fine = document.getElementById('fiera-data-fine').value || null;
+  const codice = document.getElementById('fiera-codice').value.trim().toUpperCase();
+  const durata = parseInt(document.getElementById('fiera-durata').value, 10) || 90;
+
+  if (!nome) { toast('Inserisci il nome evento!', '#c0392b'); return; }
+  if (!codice || !/^[A-Z0-9]{4,32}$/.test(codice)) { toast('Codice promo non valido (solo lettere/numeri, min 4 caratteri)', '#c0392b'); return; }
+  if (data_inizio && data_fine && data_fine < data_inizio) {
+    toast('❌ La data di fine non può essere precedente alla data di inizio!', '#c0392b');
+    return;
+  }
+
+  const btn = document.getElementById('btn-crea-fiera');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creazione...';
+  try {
+    await SB.req('fiere_eventi', {
+      method: 'POST',
+      body: JSON.stringify({
+        nome, luogo: luogo || null, data_inizio, data_fine,
+        codice_promo: codice, durata_trial_giorni: durata
+      })
+    });
+    toast('✅ Evento fiera creato!');
+    await loadAdminData();
+  } catch(e) {
+    let msg = e.message;
+    if (msg.includes('duplicate') || msg.includes('unique')) msg = 'Codice promo già in uso';
+    else if (msg.includes('fiere_eventi_date_range_check')) msg = 'La data di fine non può essere precedente alla data di inizio';
+    else if (msg.includes('fiere_eventi_durata_positiva_check')) msg = 'La durata del trial deve essere maggiore di zero';
+    toast('❌ ' + msg, '#c0392b');
+    btn.disabled = false; btn.innerHTML = '🎪 Crea evento e genera link';
+  }
+}
+
+async function toggleFieraAttivo(id, current) {
+  try {
+    await SB.req(`fiere_eventi?id=eq.${id}`, { method:'PATCH', prefer:'return=minimal', body: JSON.stringify({ attivo: !current }) });
+    toast('✅ Stato evento aggiornato!');
+    await loadAdminData();
+  } catch(e) {
+    toast('❌ ' + e.message, '#c0392b');
+  }
+}
+
+async function deleteFieraEvent(id, count) {
+  if (count > 0) {
+    toast('⚠️ Questo evento ha iscritti: non può essere eliminato, disattivalo invece.', '#c0392b');
+    return;
+  }
+  if (!confirm('Eliminare definitivamente questo evento fiera?')) return;
+  try {
+    await SB.req(`fiere_eventi?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
+    toast('✅ Evento eliminato!');
+    await loadAdminData();
+  } catch(e) {
+    toast('❌ ' + e.message, '#c0392b');
+  }
+}
+
+function copyFieraLink(link) {
+  navigator.clipboard.writeText(link).then(() => toast('✅ Link copiato negli appunti!'))
+    .catch(() => toast('❌ Impossibile copiare il link', '#c0392b'));
+}
+
+function showFieraQr(link, nome) {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(link)}`;
+  const overlay = document.createElement('div');
+  overlay.id = 'fiera-qr-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(6,13,7,0.92);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out';
+  overlay.innerHTML = `
+    <div style="background:#fff;padding:20px;border-radius:16px;text-align:center;max-width:340px;cursor:default" onclick="event.stopPropagation()">
+      <img src="${qrUrl}" width="280" height="280" style="display:block;border-radius:8px">
+      <div style="margin-top:10px;font-family:'Cinzel',serif;color:#1a2e1a;font-size:14px;font-weight:700">${esc(nome)}</div>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="document.getElementById('fiera-qr-overlay').remove()">Chiudi</button>
+    </div>`;
+  overlay.addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════
+//  ADMIN FIERA — MODIFICA EVENTO
+//  Il codice promo è bloccato di default: e' stampato sui volantini/QR,
+//  quindi cambiarlo per sbaglio renderebbe inutile tutto il materiale
+//  già stampato. Serve uno sblocco esplicito per poterlo cambiare.
+// ═══════════════════════════════════════
+function editFieraEvent(id) {
+  const ev = _fieraEventiCache.find(e => e.id === id);
+  if (!ev) { toast('Evento non trovato, ricarico...', '#c0392b'); loadAdminData(); return; }
+
+  const prev = document.getElementById('fiera-edit-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'fiera-edit-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:440px;width:100%;box-shadow:var(--shadow)" onclick="event.stopPropagation()">
+      <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--accent-gold);margin-bottom:16px">✏️ Modifica evento fiera</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="form-group">
+          <label>Nome evento</label>
+          <input type="text" id="edit-fiera-nome" value="${esc(ev.nome)}">
+        </div>
+        <div class="form-group">
+          <label>Luogo</label>
+          <input type="text" id="edit-fiera-luogo" value="${esc(ev.luogo||'')}">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="form-group" style="flex:1;min-width:140px">
+            <label>Data inizio</label>
+            <input type="date" id="edit-fiera-data-inizio" value="${ev.data_inizio||''}">
+          </div>
+          <div class="form-group" style="flex:1;min-width:140px">
+            <label>Data fine</label>
+            <input type="date" id="edit-fiera-data-fine" value="${ev.data_fine||''}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Durata trial (giorni) — vale solo per le nuove iscrizioni da qui in poi</label>
+          <input type="number" id="edit-fiera-durata" value="${ev.durata_trial_giorni}" min="1" max="730">
+        </div>
+        <div class="form-group">
+          <label>Codice promo — 🔒 bloccato (è sui volantini/QR già stampati)</label>
+          <input type="text" id="edit-fiera-codice" value="${esc(ev.codice_promo)}" disabled style="font-family:monospace;opacity:0.6">
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;text-transform:none;font-size:12px;color:var(--accent-red);cursor:pointer">
+            <input type="checkbox" id="edit-fiera-unlock-codice" onchange="unlockCodicePromoField(this.checked)" style="width:auto">
+            Sblocca per modificarlo (i QR già stampati smetteranno di funzionare!)
+          </label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="saveFieraEdit('${ev.id}')" id="btn-save-fiera-edit">💾 Salva modifiche</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('fiera-edit-modal').remove()">Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  modal.addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+}
+
+function unlockCodicePromoField(unlocked) {
+  const el = document.getElementById('edit-fiera-codice');
+  el.disabled = !unlocked;
+  el.style.opacity = unlocked ? '1' : '0.6';
+  if (unlocked) el.style.textTransform = 'uppercase';
+}
+
+async function saveFieraEdit(id) {
+  const nome = document.getElementById('edit-fiera-nome').value.trim();
+  const luogo = document.getElementById('edit-fiera-luogo').value.trim();
+  const data_inizio = document.getElementById('edit-fiera-data-inizio').value || null;
+  const data_fine = document.getElementById('edit-fiera-data-fine').value || null;
+  const durata = parseInt(document.getElementById('edit-fiera-durata').value, 10) || 90;
+  const codiceUnlocked = document.getElementById('edit-fiera-unlock-codice').checked;
+  const codice = document.getElementById('edit-fiera-codice').value.trim().toUpperCase();
+
+  if (!nome) { toast('Il nome evento è obbligatorio!', '#c0392b'); return; }
+  if (data_inizio && data_fine && data_fine < data_inizio) {
+    toast('❌ La data di fine non può essere precedente alla data di inizio!', '#c0392b');
+    return;
+  }
+  if (codiceUnlocked && (!codice || !/^[A-Z0-9]{4,32}$/.test(codice))) {
+    toast('Codice promo non valido (solo lettere/numeri, min 4 caratteri)', '#c0392b');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-fiera-edit');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvataggio...';
+  try {
+    const body = { nome, luogo: luogo || null, data_inizio, data_fine, durata_trial_giorni: durata };
+    if (codiceUnlocked) body.codice_promo = codice;
+    await SB.req(`fiere_eventi?id=eq.${id}`, { method:'PATCH', prefer:'return=minimal', body: JSON.stringify(body) });
+    toast('✅ Evento aggiornato!');
+    document.getElementById('fiera-edit-modal').remove();
+    await loadAdminData();
+  } catch(e) {
+    let msg = e.message;
+    if (msg.includes('duplicate') || msg.includes('unique')) msg = 'Codice promo già in uso da un altro evento';
+    else if (msg.includes('fiere_eventi_date_range_check')) msg = 'La data di fine non può essere precedente alla data di inizio';
+    else if (msg.includes('fiere_eventi_durata_positiva_check')) msg = 'La durata del trial deve essere maggiore di zero';
+    toast('❌ ' + msg, '#c0392b');
+    btn.disabled = false; btn.innerHTML = '💾 Salva modifiche';
+  }
+}
+
+// ═══════════════════════════════════════
+//  ADMIN FIERA — CRONOLOGIA MODIFICHE
+//  Sola lettura: la tabella è scritta solo dal trigger di sistema,
+//  nemmeno l'admin può alterarla dall'interfaccia.
+// ═══════════════════════════════════════
+async function showFieraHistory(id, nome) {
+  const prev = document.getElementById('fiera-history-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'fiera-history-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow)" onclick="event.stopPropagation()">
+      <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--accent-gold);margin-bottom:4px">🕓 Cronologia modifiche</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">${esc(nome)}</div>
+      <div id="fiera-history-content" style="display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;padding:20px"><span class="spinner"></span></div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="document.getElementById('fiera-history-modal').remove()">Chiudi</button>
+    </div>`;
+  modal.addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+
+  try {
+    const storia = await SB.req(`fiere_eventi_storico?fiera_id=eq.${id}&select=*&order=changed_at.desc`);
+    const contentEl = document.getElementById('fiera-history-content');
+    if (!storia.length) {
+      contentEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:10px 0">Nessuna modifica registrata: l'evento è ancora nella sua versione originale.</p>`;
+      return;
+    }
+    const campoLabels = { codice_promo:'Codice promo', nome:'Nome', luogo:'Luogo', data_inizio:'Data inizio', data_fine:'Data fine', durata_trial_giorni:'Durata trial (giorni)', attivo:'Stato attivo' };
+    contentEl.innerHTML = storia.map(h => `
+      <div style="background:var(--bg-moss);border-radius:8px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600;color:var(--accent-gold)">${campoLabels[h.campo]||h.campo}</span>
+          <span style="font-size:11px;color:var(--text-dim)">${new Date(h.changed_at).toLocaleString('it-IT')}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-mid)">
+          <span style="text-decoration:line-through;color:var(--text-dim)">${esc(h.valore_precedente ?? '—')}</span>
+          → <span style="color:var(--text-bright)">${esc(h.valore_nuovo ?? '—')}</span>
+        </div>
+        ${h.changed_by_email ? `<div style="font-size:10px;color:var(--text-dim);margin-top:4px">da ${esc(h.changed_by_email)}</div>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('fiera-history-content').innerHTML = `<div style="color:var(--accent-red);font-size:13px">Errore caricamento: ${e.message}</div>`;
   }
 }
 
@@ -5299,6 +5730,12 @@ const I18N = {
     gen_figli: 'Figli', gen_fratelli: 'Fratelli di cova', gen_nessun_figlio: 'Nessun figlio registrato',
     gen_nessun_fratello: 'Nessun fratello di cova', gen_partner: 'Partner (maschio)',
     gen_esterno_badge: 'esterno', gen_genitori: 'Genitori', gen_non_impostato: 'Non impostato',
+    trial_badge_prefix: 'Pro gratis per', trial_badge_days: 'giorni', trial_badge_code: 'codice',
+    trial_badge_expires: 'Scade il', trial_countdown_title: 'La tua prova gratuita sta per scadere',
+    trial_countdown_desc_1: 'Il tuo periodo Pro gratuito con il codice', trial_countdown_desc_2: 'scade tra',
+    trial_countdown_days_left: 'giorni', trial_countdown_day_left: 'giorno',
+    trial_countdown_desc_3: 'Dopo la scadenza il tuo account tornerà al piano Free.',
+    trial_countdown_cta: 'Passa a Pro ora', trial_countdown_dismiss: 'Ho capito',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -5426,6 +5863,12 @@ const I18N = {
     gen_figli: 'Offspring', gen_fratelli: 'Clutch siblings', gen_nessun_figlio: 'No offspring registered',
     gen_nessun_fratello: 'No clutch siblings', gen_partner: 'Partner (male)',
     gen_esterno_badge: 'external', gen_genitori: 'Parents', gen_non_impostato: 'Not set',
+    trial_badge_prefix: 'Free Pro for', trial_badge_days: 'days', trial_badge_code: 'code',
+    trial_badge_expires: 'Expires on', trial_countdown_title: 'Your free trial is ending soon',
+    trial_countdown_desc_1: 'Your free Pro period with code', trial_countdown_desc_2: 'expires in',
+    trial_countdown_days_left: 'days', trial_countdown_day_left: 'day',
+    trial_countdown_desc_3: 'After it ends your account will return to the Free plan.',
+    trial_countdown_cta: 'Upgrade to Pro now', trial_countdown_dismiss: 'Got it',
   }
 };
 
