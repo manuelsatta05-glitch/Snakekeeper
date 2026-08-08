@@ -105,19 +105,18 @@
 </div>
 
 <script>
-const SECRET_KEY = 'MqPmLVzNN2qF_zPAtXwkOjFbPvwk1aEH7DOdR6PLKyo';
 const FUNCTION_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co/functions/v1/usage-monitor';
+const STORAGE_KEY = 'sk_monitor_secret';
 
-function unlock() {
+// La chiave non e' mai scritta nel codice: viene inserita dall'utente e
+// verificata dal server (usage-monitor risponde 401 se e' sbagliata).
+async function unlock() {
   const input = document.getElementById('secret-input').value.trim();
-  if (input === SECRET_KEY) {
-    sessionStorage.setItem('sk_monitor_unlocked', '1');
-    document.getElementById('login-view').style.display = 'none';
-    document.getElementById('dashboard-view').style.display = 'block';
-    loadData();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-  }
+  if (!input) return;
+  sessionStorage.setItem(STORAGE_KEY, input);
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('dashboard-view').style.display = 'block';
+  await loadData();
 }
 
 function barClass(pct) {
@@ -140,7 +139,16 @@ async function loadData() {
   btn.disabled = true; btn.textContent = '⏳ Aggiornamento...';
 
   try {
-    const res = await fetch(`${FUNCTION_URL}?secret=${encodeURIComponent(SECRET_KEY)}`);
+    const secret = sessionStorage.getItem(STORAGE_KEY);
+    const res = await fetch(FUNCTION_URL, { headers: { 'x-monitor-secret': secret || '' } });
+    if (res.status === 401) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      document.getElementById('login-view').style.display = 'block';
+      document.getElementById('dashboard-view').style.display = 'none';
+      document.getElementById('login-error').style.display = 'block';
+      btn.disabled = false; btn.textContent = '🔄 Aggiorna ora';
+      return;
+    }
     const data = await res.json();
 
     const r = data.resend;
@@ -177,7 +185,7 @@ async function loadData() {
   }
 }
 
-if (sessionStorage.getItem('sk_monitor_unlocked') === '1') {
+if (sessionStorage.getItem(STORAGE_KEY)) {
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('dashboard-view').style.display = 'block';
   loadData();

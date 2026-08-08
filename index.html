@@ -4087,13 +4087,14 @@ function renderTerms() {
 //  PAGINA PROFILO
 // ═══════════════════════════════════════
 async function renderProfilo() {
-  const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever' };
-  const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)' };
+  const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever', for_life:'♾️ For Life' };
+  const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)', for_life:'var(--accent-lime)' };
   const planDesc = {
     free: `${t('piano_free_desc').replace('{N}', FREE_SNAKE_LIMIT)}`,
     pro: t('piano_pro_desc'),
     admin: t('piano_admin_desc'),
-    free_forever: t('piano_forever_desc')
+    free_forever: t('piano_forever_desc'),
+    for_life: t('piano_pro_desc')
   };
 
   document.getElementById('main-content').innerHTML = `
@@ -4453,7 +4454,7 @@ const FREE_SNAKE_LIMIT = 3;
 const ADMIN_EMAIL = 'manuel.satta05@gmail.com';
 
 function isPro() {
-  return ['pro', 'admin', 'free_forever'].includes(_userPlan);
+  return ['pro', 'admin', 'free_forever', 'for_life'].includes(_userPlan);
 }
 function isAdmin() {
   return _userPlan === 'admin';
@@ -4668,8 +4669,8 @@ function applyPlanUI() {
   // Mostra badge piano nella user-info
   const userEl = document.getElementById('user-info');
   if (userEl && _currentUser) {
-    const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever' };
-    const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)' };
+    const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever', for_life:'♾️ For Life' };
+    const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)', for_life:'var(--accent-lime)' };
     userEl.innerHTML = `
       <div style="font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${_currentUser.email || ''}</div>
       <div style="font-size:10px;color:${planColors[_userPlan]||'var(--text-dim)'};margin-top:2px;font-weight:600">${planLabels[_userPlan]||'Free'}</div>
@@ -4853,14 +4854,15 @@ async function loadAdminData() {
       console.warn('Statistiche globali non disponibili:', e);
     }
 
-    const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever' };
-    const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)' };
+    const planLabels = { free:'🔓 Free', pro:'⭐ Pro', admin:'👑 Admin', free_forever:'🎁 Free Forever', for_life:'♾️ For Life' };
+    const planColors = { free:'var(--text-dim)', pro:'var(--accent-lime)', admin:'var(--accent-gold)', free_forever:'var(--accent-pink)', for_life:'var(--accent-lime)' };
 
     const statsHtml = `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px">
         ${[
           ['👑','Admin',plans.filter(p=>p.plan==='admin').length,'var(--accent-gold)'],
           ['⭐','Pro',plans.filter(p=>p.plan==='pro').length,'var(--accent-lime)'],
+          ['♾️','For Life',plans.filter(p=>p.plan==='for_life').length,'var(--accent-lime)'],
           ['🎁','Free Forever',plans.filter(p=>p.plan==='free_forever').length,'var(--accent-pink)'],
           ['🔓','Free',plans.filter(p=>p.plan==='free').length,'var(--text-dim)'],
           ['👥','Totale',plans.length,'var(--text-bright)'],
@@ -4903,7 +4905,7 @@ async function loadAdminData() {
                     ${p.user_id === '${_currentUser.id}' ? `<span style="font-size:11px;color:var(--accent-gold)">👑 Tu (Admin)</span>` : `
                     <select onchange="changePlan('${p.user_id}', this.value)" 
                       style="background:var(--bg-moss);color:var(--text-mid);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer">
-                      ${['free','pro','admin','free_forever'].map(pl=>`<option value="${pl}" ${p.plan===pl?'selected':''}>${planLabels[pl]}</option>`).join('')}
+                      ${['free','pro','for_life','admin','free_forever'].map(pl=>`<option value="${pl}" ${p.plan===pl?'selected':''}>${planLabels[pl]}</option>`).join('')}
                     </select>`}
                   </td>
                 </tr>`).join('')}
@@ -4931,6 +4933,7 @@ async function loadAdminData() {
               <option value="free">🔓 Free</option>
               <option value="free_forever" selected>🎁 Free Forever</option>
               <option value="pro">⭐ Pro</option>
+              <option value="for_life">♾️ For Life</option>
               <option value="admin">👑 Admin</option>
             </select>
           </div>
