@@ -455,6 +455,11 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
 <!-- LOGIN SCREEN -->
 <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:998;background:var(--bg-deep);align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:400px">
+    <!-- Torna alla landing -->
+    <button onclick="showLanding()" id="btn-back-to-landing"
+      style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text-dim);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;padding:8px 4px;margin-bottom:12px">
+      ← <span data-it="Torna alla home" data-en="Back to home">Torna alla home</span>
+    </button>
     <!-- Logo -->
     <div style="text-align:center;margin-bottom:32px">
       <div style="font-size:64px;filter:drop-shadow(0 0 12px rgba(109,181,109,0.5))">🐍</div>
