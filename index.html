@@ -5983,6 +5983,15 @@ function showLoginScreen() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('mobile-nav').style.display = 'none';
   document.getElementById('landing-page').style.display = 'none';
+  // Riporta i pulsanti login/registrati allo stato normale: doLogin() li blocca
+  // con uno spinner durante la richiesta e li sblocca solo in caso di errore
+  // (in caso di successo la schermata semplicemente spariva, prima). Se poi si
+  // torna qui - es. dopo un logout - lo stesso pulsante ricompare ancora
+  // bloccato dall'ultimo accesso riuscito, impedendo di riaccedere.
+  const btnLogin = document.getElementById('btn-login');
+  if (btnLogin) { btnLogin.disabled = false; btnLogin.innerHTML = '🔓 Accedi'; }
+  const btnRegister = document.getElementById('btn-register');
+  if (btnRegister) { btnRegister.disabled = false; btnRegister.innerHTML = '🐍 Crea Account'; }
 }
 
 function hideLoginScreen() {
