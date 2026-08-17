@@ -87,8 +87,24 @@
 </style>
 
 <title>SnakeKeeper — Gestionale Allevamento Serpenti</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://js.stripe.com/v3/"></script>
+<script>
+/* Carica uno script esterno solo quando serve davvero, invece che per ogni visita.
+   pdf.js serve solo per "carica logo da PDF"; Stripe.js serve solo quando si apre
+   il modale di upgrade (il checkout vero e proprio è un redirect server-side, ma
+   Stripe.js imposta i cookie anti-frode usati durante il pagamento). */
+const _loadedScripts = {};
+function loadScriptOnce(src) {
+  if (_loadedScripts[src]) return _loadedScripts[src];
+  _loadedScripts[src] = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => { delete _loadedScripts[src]; reject(new Error('Caricamento script fallito: ' + src)); };
+    document.head.appendChild(s);
+  });
+  return _loadedScripts[src];
+}
+</script>
 <script>
 /* Minimal QR Code generator — pure JS, no dependencies (MIT) */
 /* Simplified QR for URLs — uses Google Charts as img tag (works on GitHub Pages) */
@@ -2183,6 +2199,9 @@ function uploadLogo(input) {
 async function uploadLogoFromPdf(file) {
   try {
     toast('📄 Lettura PDF in corso...', 'var(--accent-lime)');
+    if (typeof pdfjsLib === 'undefined') {
+      await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    }
     if (typeof pdfjsLib === 'undefined') throw new Error('Libreria PDF non disponibile, ricarica la pagina');
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -3660,8 +3679,9 @@ function cookieChoice(type) {
 }
 
 function applyCookiePrefs(prefs) {
-  // Se Stripe non è abilitato e l'utente non vuole i cookie di terze parti,
-  // non carichiamo funzionalità di pagamento (già caricato nell'head, ma possiamo avvisare)
+  // Stripe.js viene caricato solo all'apertura del modale di upgrade (vedi showUpgradeModal),
+  // non più in head — quindi se l'utente rifiuta i cookie di terze parti qui sappiamo
+  // ancora solo registrarlo, ma almeno il cookie non è già stato impostato prima del consenso.
   if (!prefs.stripe) {
     console.log('[Cookie] Stripe cookie disabilitati dall\'utente');
   }
@@ -5132,6 +5152,7 @@ function applyPlanUI() {
 }
 
 function showUpgradeModal() {
+  loadScriptOnce('https://js.stripe.com/v3/').catch(err => console.warn('[Stripe]', err.message));
   document.getElementById('upgrade-modal')?.remove();
   const modal = document.createElement('div');
   modal.id = 'upgrade-modal';
@@ -6758,7 +6779,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 /* HERO */
 .lp-hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:60px 32px 80px;text-align:center;overflow:hidden}
 .lp-hero-bg{position:absolute;inset:0;overflow:hidden}
-.lp-hero-image{position:absolute;inset:0;background:url('/hero-snake.jpg') center/cover no-repeat;opacity:0.35}
+.lp-hero-image{position:absolute;inset:0;background:url('/hero-snake.webp') center/cover no-repeat;opacity:0.35}
 .lp-hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,13,7,0.5) 0%,rgba(6,13,7,0.7) 60%,#060d07 100%)}
 .lp-hero-bg canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1}
 .lp-hero-glow{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(77,222,128,0.08) 0%,transparent 70%);pointer-events:none;animation:heroGlow 4s ease-in-out infinite}

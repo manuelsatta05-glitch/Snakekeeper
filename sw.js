@@ -1,5 +1,5 @@
 // SnakeKeeper Service Worker
-const CACHE_VERSION = 'sk-v6';
+const CACHE_VERSION = 'sk-v7';
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
   '/manifest.json',
-  '/hero-snake.jpg',
+  '/hero-snake.webp',
 ];
 
 self.addEventListener('install', event => {
