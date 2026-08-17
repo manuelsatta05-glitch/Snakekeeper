@@ -3679,6 +3679,22 @@ function resetCookieConsent() {
 // (chiamato dall'init principale dopo il caricamento)
 // document.addEventListener('DOMContentLoaded', initCookieBanner); // spostato nell'init
 
+// Mostra un banner quando una nuova versione dell'app è pronta
+function showUpdateBanner() {
+  if (document.getElementById('update-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;padding:12px 16px;background:rgba(8,15,9,0.97);border-bottom:2px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;font-family:\'Inter\',sans-serif';
+  banner.innerHTML = `
+    <span style="font-size:13px;color:var(--text-bright)">🔄 È disponibile una nuova versione di SnakeKeeper</span>
+    <button onclick="window.location.reload()"
+      style="padding:8px 16px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">
+      Aggiorna ora
+    </button>
+  `;
+  document.body.appendChild(banner);
+}
+
 // Registra Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -3690,6 +3706,21 @@ if ('serviceWorker' in navigator) {
           if (event.data.type === 'SYNC_REQUESTED') {
             syncPendingOfflineData();
           }
+        });
+        // Se c'è già un worker in attesa, la nuova versione è pronta
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          showUpdateBanner();
+        }
+        // Rileva un nuovo worker installato mentre uno vecchio è già attivo
+        // (se non c'è già un controller, è solo la prima installazione)
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner();
+            }
+          });
         });
       })
       .catch(err => console.warn('[SW] Registrazione fallita:', err));
