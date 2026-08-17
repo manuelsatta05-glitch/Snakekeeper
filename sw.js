@@ -1,5 +1,5 @@
 // SnakeKeeper Service Worker
-const CACHE_VERSION = 'sk-v5';
+const CACHE_VERSION = 'sk-v6';
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
