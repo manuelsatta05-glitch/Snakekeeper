@@ -1,10 +1,11 @@
 // SnakeKeeper Service Worker
-const CACHE_VERSION = 'sk-v7';
+const CACHE_VERSION = 'sk-v8';
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/style.css',
   '/icon-192.png',
   '/icon-512.png',
   '/manifest.json',
