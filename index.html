@@ -5567,8 +5567,9 @@ function setLandingLang(lang) {
   document.querySelectorAll('[data-it-html]').forEach(el => {
     el.innerHTML = lang === 'it' ? el.dataset.itHtml : el.dataset.enHtml;
   });
-  document.getElementById('lang-it')?.classList.toggle('lang-active', lang === 'it');
-  document.getElementById('lang-en')?.classList.toggle('lang-active', lang === 'en');
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('lang-active', btn.dataset.lang === lang);
+  });
 }
 
 // ═══════════════════════════════════════
@@ -6345,8 +6346,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     <a href="#faq" data-it="FAQ" data-en="FAQ" onclick="smoothScrollTo('faq')">FAQ</a>
     <a href="#guide" data-it="Guide" data-en="Guides" onclick="smoothScrollTo('guide')">Guide</a>
     <div class="lang-switcher">
-      <button class="lang-btn lang-active" id="lang-it" onclick="setLandingLang('it')">IT</button>
-      <button class="lang-btn" id="lang-en" onclick="setLandingLang('en')">EN</button>
+      <button class="lang-btn lang-active" id="lang-it" data-lang="it" onclick="setLandingLang('it')">IT</button>
+      <button class="lang-btn" id="lang-en" data-lang="en" onclick="setLandingLang('en')">EN</button>
     </div>
     <button class="lp-btn-ghost" onclick="landingLogin()" data-it="Accedi" data-en="Sign in">Accedi</button>
     <button class="lp-btn-primary" onclick="landingRegister()" data-it="Inizia gratis" data-en="Start free">Inizia gratis</button>
@@ -6354,8 +6355,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   <!-- Mobile buttons -->
   <div style="gap:8px;align-items:center" id="lp-mobile-ctas">
     <div class="lang-switcher">
-      <button class="lang-btn lang-active" onclick="setLandingLang('it')">IT</button>
-      <button class="lang-btn" onclick="setLandingLang('en')">EN</button>
+      <button class="lang-btn lang-active" data-lang="it" onclick="setLandingLang('it')">IT</button>
+      <button class="lang-btn" data-lang="en" onclick="setLandingLang('en')">EN</button>
     </div>
     <button class="lp-btn-primary" style="padding:8px 14px;font-size:13px" onclick="landingRegister()" data-it="Inizia" data-en="Start">Inizia</button>
     <button class="lp-hamburger" id="lp-hamburger" onclick="toggleMobileNav()" aria-label="Menu" aria-expanded="false" aria-controls="lp-mobile-sheet">

@@ -436,11 +436,11 @@
 .lang-switcher{display:flex;background:rgba(45,80,48,0.2);border-radius:20px;padding:3px;gap:2px}
 .lang-btn{padding:4px 12px;border-radius:16px;border:none;background:transparent;color:#6b8f6e;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
 .lang-active{background:#c9a84c;color:#060d07;font-weight:700}
-.lp-btn-ghost{padding:10px 20px;background:transparent;border:1px solid rgba(201,168,76,0.4);color:#c9a84c;border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;transition:background .2s,transform .15s var(--ease-spring)}
-.lp-btn-ghost:hover{background:rgba(201,168,76,0.1)}
+.lp-btn-ghost{padding:10px 20px;background:transparent;border:1.5px solid rgba(201,168,76,0.55);color:#c9a84c;border-radius:980px;font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;transition:background .2s,border-color .2s,transform .15s var(--ease-spring)}
+.lp-btn-ghost:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.8)}
 .lp-btn-ghost:active{transform:scale(0.96)}
-.lp-btn-primary{padding:10px 20px;background:#c9a84c;border:none;color:#060d07;border-radius:8px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background .2s,transform .15s var(--ease-spring)}
-.lp-btn-primary:hover{background:#e0ba5c;transform:translateY(-1px)}
+.lp-btn-primary{padding:10px 20px;background:#c9a84c;border:1.5px solid #a9873a;color:#060d07;border-radius:980px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background .2s,border-color .2s,transform .15s var(--ease-spring)}
+.lp-btn-primary:hover{background:#e0ba5c;border-color:#c9a84c;transform:translateY(-1px)}
 .lp-btn-primary:active{transform:scale(0.96)}
 
 /* HERO */
@@ -461,11 +461,11 @@
 .lp-hero h1 span{background:linear-gradient(135deg,#4ade80,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .lp-hero p{font-size:clamp(16px,2vw,20px);color:#a0b5a1;line-height:1.7;margin:0 0 40px;max-width:600px;margin-left:auto;margin-right:auto;animation:fadeInUp .8s var(--ease-spring) .2s both}
 .lp-hero-ctas{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeInUp .8s var(--ease-spring) .3s both}
-.lp-cta-primary{padding:16px 36px;background:linear-gradient(135deg,#4ade80,#2d9b4a);border:none;color:#060d07;border-radius:12px;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:transform .25s var(--ease-spring),box-shadow .25s var(--ease-spring);box-shadow:0 4px 20px rgba(77,222,128,0.3)}
-.lp-cta-primary:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(77,222,128,0.4)}
+.lp-cta-primary{padding:16px 36px;background:linear-gradient(135deg,#4ade80,#2d9b4a);border:1.5px solid #226b34;color:#060d07;border-radius:980px;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:transform .25s var(--ease-spring),box-shadow .25s var(--ease-spring),border-color .2s;box-shadow:0 4px 20px rgba(77,222,128,0.3)}
+.lp-cta-primary:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(77,222,128,0.4);border-color:#2d9b4a}
 .lp-cta-primary:active{transform:scale(0.97);transition-duration:.1s}
-.lp-cta-secondary{padding:16px 36px;background:transparent;border:1px solid rgba(201,168,76,0.5);color:#c9a84c;border-radius:12px;font-size:16px;font-family:'Inter',sans-serif;cursor:pointer;transition:transform .25s var(--ease-spring),background .2s}
-.lp-cta-secondary:hover{background:rgba(201,168,76,0.1);transform:translateY(-2px)}
+.lp-cta-secondary{padding:16px 36px;background:transparent;border:1.5px solid rgba(201,168,76,0.55);color:#c9a84c;border-radius:980px;font-size:16px;font-family:'Inter',sans-serif;cursor:pointer;transition:transform .25s var(--ease-spring),background .2s,border-color .2s}
+.lp-cta-secondary:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.85);transform:translateY(-2px)}
 .lp-cta-secondary:active{transform:scale(0.97);transition-duration:.1s}
 .lp-scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bounce 2s infinite;color:#4a6b4d;font-size:24px}
 @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
