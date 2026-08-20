@@ -111,6 +111,7 @@ async function loadData() {
       document.getElementById('gate-err').textContent = 'Password errata.';
       return;
     }
+    if (!res.ok) throw new Error(`Errore server (${res.status})`);
     const data = await res.json();
     render(data);
     document.getElementById('timestamp').textContent = 'Ultimo aggiornamento: ' + new Date(data.checked_at).toLocaleString('it-IT');

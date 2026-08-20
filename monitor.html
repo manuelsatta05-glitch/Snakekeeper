@@ -149,6 +149,7 @@ async function loadData() {
       btn.disabled = false; btn.textContent = '🔄 Aggiorna ora';
       return;
     }
+    if (!res.ok) throw new Error(`Errore server (${res.status})`);
     const data = await res.json();
 
     const r = data.resend;
