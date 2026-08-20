@@ -435,6 +435,11 @@ const SB = {
   async getAllLogs() {
     return this.req('logs?select=*&order=data.desc,created_at.desc');
   },
+  // Solo l'ultima riga per (serpente, tipo) — vista server-side (DISTINCT ON), usata per
+  // "ultimo pasto"/"ultime feci" nella lista serpenti senza scaricare lo storico completo.
+  async getLastLogsPerSnake() {
+    return this.req('last_logs_per_snake?select=*');
+  },
   // Solo le ultime N righe (tutti i serpenti) — usato all'avvio per Dashboard/Registro,
   // che mostrano comunque solo attività recente. Lo storico completo si carica per-serpente.
   async getRecentLogs(limit) {
@@ -485,28 +490,56 @@ const SB = {
 let _snakes = [];
 // _recentLogs: ultime ~300 righe su tutti i serpenti, per Dashboard/Registro.
 // _logsCache: storico completo per-serpente, caricato al volo alla prima apertura della scheda.
+// _lastLogsPerSnake: solo l'ultima riga per (snake_id, tipo), per "ultimo pasto"/"ultime feci"
+// nella lista serpenti — caricata subito all'avvio (vista server-side last_logs_per_snake),
+// indipendente dallo storico completo che resta lazy.
 let _recentLogs = [];
 let _logsCache = {};
+let _lastLogsPerSnake = {}; // chiave `${snakeId}|${tipo}` -> riga log
 let _venduti = [];
 const RECENT_LOGS_LIMIT = 300;
 let _eggsTotalCache = null; // conteggio deposizioni da sempre — via count server-side, non richiede tutto lo storico
 const _annullaInFlight = new Set(); // guardia anti doppio-click / listener duplicati su "Annulla vendita"
+
+function _lastLogKey(snakeId, tipo) { return snakeId + '|' + tipo; }
+// Confronta due log per "quale è più recente" con lo stesso ordinamento della vista server-side
+// (data desc, poi created_at desc), per decidere se aggiornare la cache _lastLogsPerSnake.
+function _isNewerLog(a, b) {
+  if (!b) return true;
+  if ((a.data||'') !== (b.data||'')) return (a.data||'') > (b.data||'');
+  return String(a.created_at||'') > String(b.created_at||'');
+}
+// Ricalcola _lastLogsPerSnake per un serpente dallo storico completo in _logsCache (disponibile
+// solo se la scheda dettaglio di quel serpente è già stata aperta in sessione).
+function _refreshLastLogsForSnake(snakeId) {
+  const logs = _logsCache[snakeId];
+  if (!logs) return; // storico non caricato: non tocchiamo quel che sappiamo già
+  Object.keys(_lastLogsPerSnake).forEach(k => { if (k.startsWith(snakeId + '|')) delete _lastLogsPerSnake[k]; });
+  logs.forEach(l => {
+    const k = _lastLogKey(snakeId, l.tipo);
+    if (_isNewerLog(l, _lastLogsPerSnake[k])) _lastLogsPerSnake[k] = l;
+  });
+}
 
 function addLogToCaches(log) {
   if (!_logsCache[log.snake_id]) _logsCache[log.snake_id] = [];
   _logsCache[log.snake_id].unshift(log);
   _recentLogs.unshift(log);
   if (_recentLogs.length > RECENT_LOGS_LIMIT) _recentLogs.pop();
+  const k = _lastLogKey(log.snake_id, log.tipo);
+  if (_isNewerLog(log, _lastLogsPerSnake[k])) _lastLogsPerSnake[k] = log;
 }
 function removeLogFromCaches(logId, snakeId) {
   if (_logsCache[snakeId]) _logsCache[snakeId] = _logsCache[snakeId].filter(l => l.id !== logId);
   _recentLogs = _recentLogs.filter(l => l.id !== logId);
+  _refreshLastLogsForSnake(snakeId);
 }
 function updateLogInCaches(logId, snakeId, updates) {
   const inCache = (_logsCache[snakeId] || []).find(l => l.id === logId);
   if (inCache) Object.assign(inCache, updates);
   const inRecent = _recentLogs.find(l => l.id === logId);
   if (inRecent) Object.assign(inRecent, updates);
+  _refreshLastLogsForSnake(snakeId);
 }
 const LOG_FIELDS = ['id','snake_id','user_id','tipo','data','grammi','qty','food_tipo','feci_tipo','num_uova','fertili','temp','note','pulizia_tipo','partner_id','partner_esterno','created_at'];
 function normalizeLogRow(l) {
@@ -520,6 +553,7 @@ function addLogsToCaches(snakeId, logs) {
   _recentLogs = _recentLogs.concat(logs)
     .sort((a,b) => b.data.localeCompare(a.data) || String(b.created_at||'').localeCompare(String(a.created_at||'')))
     .slice(0, RECENT_LOGS_LIMIT);
+  _refreshLastLogsForSnake(snakeId);
 }
 let _isOnline = false;
 
@@ -542,12 +576,17 @@ async function loadAll() {
   const results = await Promise.allSettled([
     withTimeout(SB.getSerpenti(), 15000, []),
     withTimeout(SB.getRecentLogs(RECENT_LOGS_LIMIT), 15000, []),
-    withTimeout(SB.getVenduti(), 15000, [])
+    withTimeout(SB.getVenduti(), 15000, []),
+    withTimeout(SB.getLastLogsPerSnake(), 15000, [])
   ]);
 
   _snakes = results[0].status === 'fulfilled' ? (results[0].value || []) : [];
   _recentLogs = results[1].status === 'fulfilled' ? (results[1].value || []) : [];
   _logsCache = {};
+  _lastLogsPerSnake = {};
+  (results[3].status === 'fulfilled' ? (results[3].value || []) : []).forEach(l => {
+    _lastLogsPerSnake[_lastLogKey(l.snake_id, l.tipo)] = l;
+  });
   _eggsTotalCache = null;
   _venduti = results[2].status === 'fulfilled' ? (results[2].value || []) : [];
 
@@ -782,10 +821,9 @@ function renderSerpenti() {
     html += `<div class="empty-state"><div class="empty-icon">🐍</div><h3>${t('serpenti_empty_title')}</h3><p>${t('serpenti_empty_desc')}</p><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ ${t('serpenti_aggiungi')}</button></div>`;
   } else {
     html += '<div class="snakes-grid">' + _snakes.map(s => {
-      const sl = logsForSnake(s.id);
       const locked = !canEditSnake(s.id);
-      const lastFood = sl.filter(l=>l.tipo==='cibo').sort((a,b)=>b.data.localeCompare(a.data))[0];
-      const lastFece = sl.filter(l=>l.tipo==='feci').sort((a,b)=>b.data.localeCompare(a.data))[0];
+      const lastFood = _lastLogsPerSnake[_lastLogKey(s.id, 'cibo')];
+      const lastFece = _lastLogsPerSnake[_lastLogKey(s.id, 'feci')];
       return `
       <div class="snake-card" onclick="showPage('dettaglio','${s.id}')">
         <div class="snake-card-header">
