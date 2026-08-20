@@ -13,21 +13,22 @@ body {
 }
 .lp-nav {
   position: sticky; top: 0; z-index: 100; padding: 16px 32px;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   background: rgba(6,13,7,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(45,80,48,0.3);
 }
-.lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.lp-logo span { font-family: 'Cinzel', serif; font-size: 18px; color: var(--accent-gold); letter-spacing: 2px; }
+.lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; overflow: hidden; }
+.lp-logo span { font-family: 'Cinzel', serif; font-size: 18px; color: var(--accent-gold); letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .lp-btn-primary {
   padding: 10px 20px; background: var(--accent-gold); border: none; color: #060d07;
   border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Inter', sans-serif;
-  cursor: pointer; text-decoration: none; display: inline-block;
+  cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap;
 }
 .lp-btn-ghost {
   padding: 10px 20px; background: transparent; border: 1px solid rgba(201,168,76,0.4);
   color: var(--accent-gold); border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif;
-  cursor: pointer; text-decoration: none; display: inline-block; margin-right: 10px;
+  cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap;
 }
 main { max-width: 720px; margin: 0 auto; padding: 48px 24px 24px; }
 .breadcrumb { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; }
@@ -68,6 +69,12 @@ footer {
 footer a { color: var(--text-dim); margin: 0 8px; }
 @media (max-width: 600px) {
   .lp-nav { padding: 14px 18px; }
+  .lp-logo span { font-size: 15px; letter-spacing: 0.5px; }
+  .nav-actions { gap: 6px; }
+  .lp-btn-ghost, .lp-btn-primary { padding: 8px 12px; font-size: 13px; }
   h1 { font-size: 26px; }
   main { padding: 32px 18px 24px; }
+}
+@media (max-width: 360px) {
+  .lp-btn-ghost { display: none; }
 }

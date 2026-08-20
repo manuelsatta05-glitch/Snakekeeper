@@ -264,7 +264,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
 
   <!-- MOBILE HEADER -->
   <div id="mobile-header">
-    <div class="m-logo">🐍 <span style="font-size:16px">SnakeKeeper</span></div>
+    <div class="m-logo">🐍 <span style="font-size:15px">SnakeKeeper</span></div>
     <div style="display:flex;align-items:center;gap:8px">
       <div id="conn-indicator-mob" style="width:8px;height:8px;border-radius:50%;background:var(--text-dim)"></div>
       <button id="hamburger" onclick="openDrawer()">☰</button>
@@ -643,7 +643,26 @@ function toast(msg, color='#6db56d') {
   t.style.background = color;
   t.style.color = color === '#6db56d' ? '#0a1a0a' : '#fff';
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2800);
+  setTimeout(() => closeToastEl(t), 2800);
+}
+function closeToastEl(t) {
+  if (!t || !t.isConnected) return;
+  t.classList.add('toast-out');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => t.remove(), reduced ? 20 : 250);
+}
+// Apertura/chiusura modali con materializzazione (fade+scale in ingresso e uscita, invece di comparire/sparire di scatto)
+function openModalEl(modal) {
+  modal.classList.add('modal-backdrop');
+  document.body.appendChild(modal);
+  void modal.offsetWidth; // forza il reflow così la transizione di apertura parte dallo stato iniziale
+  requestAnimationFrame(() => modal.classList.add('modal-open'));
+}
+function closeModalEl(modal) {
+  if (!modal) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  modal.classList.remove('modal-open');
+  setTimeout(() => modal.remove(), reduced ? 130 : 280);
 }
 function logsForSnake(snakeId) { return _logsCache[snakeId] || []; }
 
@@ -1602,11 +1621,11 @@ function editLogEntry(logId, snakeId, tipo) {
       <div class="form-grid">${fieldsHtml}</div>
       <div class="flex-row mt-20">
         <button class="btn btn-primary" id="btn-save-editlog" onclick="saveEditLog('${logId}','${snakeId}','${tipo}')">💾 Salva</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('edit-log-modal').remove()">Annulla</button>
+        <button class="btn btn-ghost" onclick="closeModalEl(document.getElementById('edit-log-modal'))">Annulla</button>
       </div>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) closeModalEl(modal); });
 }
 
 async function saveEditLog(logId, snakeId, tipo) {
@@ -1634,7 +1653,7 @@ async function saveEditLog(logId, snakeId, tipo) {
   try {
     await SB.updateLog(logId, updates);
     updateLogInCaches(logId, snakeId, updates);
-    document.getElementById('edit-log-modal').remove();
+    closeModalEl(document.getElementById('edit-log-modal'));
     toast('✅ Log aggiornato!');
     renderDettaglio();
   } catch(e) {
@@ -1986,12 +2005,13 @@ function showVendiModal(snakeId) {
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
-        <button onclick="document.getElementById('vendi-modal').remove()" style="padding:12px 20px;background:transparent;color:var(--text-mid);border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;cursor:pointer">Annulla</button>
+        <button onclick="closeModalEl(document.getElementById('vendi-modal'))" style="padding:12px 20px;background:transparent;color:var(--text-mid);border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;cursor:pointer">Annulla</button>
         <button id="btn-conferma-vendi" onclick="confermaVendita('${snake.id}')" style="padding:12px 24px;background:var(--accent-gold);color:#1a0f00;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer">💰 Conferma Vendita</button>
       </div>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.classList.add('modal-sheet');
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModalEl(modal); });
 }
 
 async function confermaVendita(snakeId) {
@@ -2039,7 +2059,7 @@ async function confermaVendita(snakeId) {
     delete _logsCache[snakeId];
     _recentLogs = _recentLogs.filter(l => l.snake_id !== snakeId);
 
-    document.getElementById('vendi-modal').remove();
+    closeModalEl(document.getElementById('vendi-modal'));
     toast('💰 ' + snake.nome + ' segnato come venduto con ' + logsSnapshot.length + ' log salvati!');
     showPage('venduti');
   } catch(e) {
@@ -3111,13 +3131,75 @@ function checkHash() {
 }
 window.addEventListener('hashchange',checkHash);
 
-// Swipe gesture drawer
-let touchStartX=0;
-document.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
-document.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-touchStartX;
-  if(dx<-60&&document.getElementById('mobile-drawer').classList.contains('open'))closeDrawer();
-},{passive:true});
+// Swipe gesture drawer — trascinamento 1:1 col dito, rubber-band ai bordi, rilascio deciso dalla velocità (apple-design §2/§6/§9)
+(function(){
+  const DRAWER_W = 280;
+  const drawer = document.getElementById('mobile-drawer');
+  const overlay = document.getElementById('drawer-overlay');
+  let mode = 'idle'; // 'idle' | 'pending' | 'dragging'
+  let pointerId = null, startX = 0, startY = 0, curTranslate = DRAWER_W;
+  let lastX = 0, lastT = 0, velocity = 0;
+
+  function rubberband(overshoot, dim, k) {
+    return (overshoot * dim * k) / (dim + k * Math.abs(overshoot));
+  }
+  function clampWithRubberband(x) {
+    if (x < 0) return rubberband(x, DRAWER_W, 0.55);
+    if (x > DRAWER_W) return DRAWER_W + rubberband(x - DRAWER_W, DRAWER_W, 0.55);
+    return x;
+  }
+  function applyTranslate(x) {
+    curTranslate = x;
+    drawer.style.transform = 'translateX(' + x + 'px)';
+    overlay.style.opacity = String(Math.max(0, Math.min(1, x / DRAWER_W)));
+  }
+  function settle(open) {
+    drawer.style.transition = '';
+    overlay.style.transition = '';
+    drawer.style.transform = '';
+    overlay.style.opacity = '';
+    if (open) openDrawer(); else closeDrawer();
+  }
+  function onDown(e) {
+    if (!drawer.classList.contains('open') || mode !== 'idle') return;
+    mode = 'pending';
+    pointerId = e.pointerId;
+    startX = e.clientX; startY = e.clientY;
+    curTranslate = DRAWER_W;
+    lastX = startX; lastT = performance.now(); velocity = 0;
+  }
+  function onMove(e) {
+    if (mode === 'idle' || e.pointerId !== pointerId) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (mode === 'pending') {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; // hysteresis prima di impegnarsi in una direzione
+      if (Math.abs(dy) > Math.abs(dx)) { mode = 'idle'; return; } // era uno scroll verticale nel drawer, non un drag
+      mode = 'dragging';
+      try { drawer.setPointerCapture(pointerId); } catch (err) {}
+      drawer.style.transition = 'none';
+      overlay.style.transition = 'none';
+    }
+    const now = performance.now();
+    applyTranslate(clampWithRubberband(DRAWER_W + dx));
+    const dt = now - lastT;
+    if (dt > 0) velocity = (e.clientX - lastX) / dt * 1000; // px/s
+    lastX = e.clientX; lastT = now;
+    e.preventDefault();
+  }
+  function onUp(e) {
+    if (e.pointerId !== pointerId) return;
+    if (mode === 'dragging') {
+      const shouldOpen = velocity < -300 ? false : velocity > 300 ? true : curTranslate > DRAWER_W / 2;
+      settle(shouldOpen);
+    }
+    mode = 'idle'; pointerId = null;
+  }
+  drawer.addEventListener('pointerdown', onDown);
+  drawer.addEventListener('pointermove', onMove, { passive: false });
+  drawer.addEventListener('pointerup', onUp);
+  drawer.addEventListener('pointercancel', onUp);
+})();
 
 // ═══════════════════════════════════════
 //  SERVICE WORKER + OFFLINE SYNC
@@ -3504,13 +3586,13 @@ function showLegalPage(page) {
     : (legalLang === 'en' ? getTermsContentEN() : getTermsContent());
   modal.innerHTML = `
     <div style="max-width:760px;margin:0 auto">
-      <button onclick="document.getElementById('legal-modal').remove()"
+      <button onclick="closeModalEl(document.getElementById('legal-modal'))"
         style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-mid);padding:10px 18px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;margin-bottom:24px;display:flex;align-items:center;gap:6px">
         ← Torna indietro
       </button>
       ${content}
     </div>`;
-  document.body.appendChild(modal);
+  openModalEl(modal);
   modal.scrollTop = 0;
 }
 
@@ -4416,13 +4498,13 @@ function showCancelSubscriptionModal() {
         style="width:100%;padding:14px;background:var(--accent-red);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px">
         ${eligible ? '💸 Disdici e rimborsa' : 'Disdici abbonamento'}
       </button>` : ''}
-      <button onclick="document.getElementById('cancel-sub-modal').remove()"
+      <button onclick="closeModalEl(document.getElementById('cancel-sub-modal'))"
         style="width:100%;padding:12px;background:var(--accent-lime);color:#0a1a0a;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
         🐍 Resto con Pro
       </button>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) closeModalEl(modal); });
 }
 
 async function doCancelSubscription() {
@@ -4442,7 +4524,7 @@ async function doCancelSubscription() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    document.getElementById('cancel-sub-modal').remove();
+    closeModalEl(document.getElementById('cancel-sub-modal'));
 
     if (data.refunded) {
       toast(`✅ Abbonamento disdetto. Rimborso di €${data.refundAmount.toFixed(2)} in elaborazione (3-5 giorni lavorativi).`, '#6db56d');
@@ -4539,12 +4621,12 @@ function showLockedSnakeModal() {
       <p style="color:var(--text-mid);font-size:14px;line-height:1.6;margin:0 0 10px">Il piano Free permette di gestire attivamente i primi <strong style="color:var(--text-bright)">${FREE_SNAKE_LIMIT} serpenti</strong> inseriti.</p>
       <p style="color:var(--text-mid);font-size:14px;line-height:1.6;margin:0 0 20px">Questo esemplare resta <strong style="color:var(--text-bright)">sempre visibile</strong> con tutto il suo storico, ma per aggiungere o modificare dati serve il piano Pro.</p>
       <div class="flex-row" style="justify-content:center;gap:10px">
-        <button class="btn btn-primary" style="background:var(--accent-gold);color:#0a1a0a" onclick="document.getElementById('locked-snake-modal').remove();showUpgradeModal()">⭐ Passa a Pro</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('locked-snake-modal').remove()">Chiudi</button>
+        <button class="btn btn-primary" style="background:var(--accent-gold);color:#0a1a0a" onclick="closeModalEl(document.getElementById('locked-snake-modal'));showUpgradeModal()">⭐ Passa a Pro</button>
+        <button class="btn btn-ghost" onclick="closeModalEl(document.getElementById('locked-snake-modal'))">Chiudi</button>
       </div>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModalEl(modal); });
 }
 
 // Applica lo stato "sola lettura" alla pagina di dettaglio gia' renderizzata:
@@ -4664,12 +4746,12 @@ function showTrialCountdownModal(daysRemaining) {
       </p>
       <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 20px">${t('trial_countdown_desc_3')}</p>
       <div class="flex-row" style="justify-content:center;gap:10px">
-        <button class="btn btn-primary" style="background:var(--accent-gold);color:#0a1a0a" onclick="document.getElementById('trial-countdown-modal').remove();showPage('profilo');setTimeout(showUpgradeModal,150)">⭐ ${t('trial_countdown_cta')}</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('trial-countdown-modal').remove()">${t('trial_countdown_dismiss')}</button>
+        <button class="btn btn-primary" style="background:var(--accent-gold);color:#0a1a0a" onclick="closeModalEl(document.getElementById('trial-countdown-modal'));showPage('profilo');setTimeout(showUpgradeModal,150)">⭐ ${t('trial_countdown_cta')}</button>
+        <button class="btn btn-ghost" onclick="closeModalEl(document.getElementById('trial-countdown-modal'))">${t('trial_countdown_dismiss')}</button>
       </div>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModalEl(modal); });
 }
 
 // Verifica il pagamento direttamente su Stripe e aggiorna il piano
@@ -4735,13 +4817,13 @@ function showPaymentSuccessModal(plan) {
       <div style="color:var(--text-dim);font-size:13px;margin-bottom:28px">
         Il tuo piano è ora attivo. Hai accesso a tutte le funzionalità premium.
       </div>
-      <button onclick="document.getElementById('payment-success-modal').remove()"
+      <button onclick="closeModalEl(document.getElementById('payment-success-modal'))"
         style="width:100%;padding:14px;background:var(--accent-lime);color:#0a1a0a;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">
         Inizia a usare Pro →
       </button>
     </div>
   `;
-  document.body.appendChild(modal);
+  openModalEl(modal);
   // Aggiungi animazioni se non esistono
   if (!document.getElementById('success-anim-style')) {
     const style = document.createElement('style');
@@ -4823,14 +4905,14 @@ function showUpgradeModal() {
         style="width:100%;padding:14px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px">
         ⭐ Inizia con il piano Mensile
       </button>
-      <button onclick="document.getElementById('upgrade-modal').remove()"
+      <button onclick="closeModalEl(document.getElementById('upgrade-modal'))"
         style="width:100%;padding:10px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer">
         Rimani sul piano Free
       </button>
       <div style="font-size:11px;color:var(--text-dim);margin-top:12px">🔒 Pagamento sicuro con Stripe · Annulla quando vuoi</div>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) closeModalEl(modal); });
   _selectedPlan = 'monthly';
 }
 
@@ -5316,12 +5398,12 @@ function editFieraEvent(id) {
         </div>
         <div style="display:flex;gap:10px;margin-top:8px">
           <button class="btn btn-primary" style="flex:1" onclick="saveFieraEdit('${ev.id}')" id="btn-save-fiera-edit">💾 Salva modifiche</button>
-          <button class="btn btn-ghost" onclick="document.getElementById('fiera-edit-modal').remove()">Annulla</button>
+          <button class="btn btn-ghost" onclick="closeModalEl(document.getElementById('fiera-edit-modal'))">Annulla</button>
         </div>
       </div>
     </div>`;
-  modal.addEventListener('click', () => modal.remove());
-  document.body.appendChild(modal);
+  modal.addEventListener('click', () => closeModalEl(modal));
+  openModalEl(modal);
 }
 
 function unlockCodicePromoField(unlocked) {
@@ -5357,7 +5439,7 @@ async function saveFieraEdit(id) {
     if (codiceUnlocked) body.codice_promo = codice;
     await SB.req(`fiere_eventi?id=eq.${id}`, { method:'PATCH', prefer:'return=minimal', body: JSON.stringify(body) });
     toast('✅ Evento aggiornato!');
-    document.getElementById('fiera-edit-modal').remove();
+    closeModalEl(document.getElementById('fiera-edit-modal'));
     await loadAdminData();
   } catch(e) {
     let msg = e.message;
@@ -5387,10 +5469,10 @@ async function showFieraHistory(id, nome) {
       <div id="fiera-history-content" style="display:flex;flex-direction:column;gap:10px">
         <div style="text-align:center;padding:20px"><span class="spinner"></span></div>
       </div>
-      <button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="document.getElementById('fiera-history-modal').remove()">Chiudi</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="closeModalEl(document.getElementById('fiera-history-modal'))">Chiudi</button>
     </div>`;
-  modal.addEventListener('click', () => modal.remove());
-  document.body.appendChild(modal);
+  modal.addEventListener('click', () => closeModalEl(modal));
+  openModalEl(modal);
 
   try {
     const storia = await SB.req(`fiere_eventi_storico?fiera_id=eq.${id}&select=*&order=changed_at.desc`);
@@ -5608,6 +5690,15 @@ function setLandingLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('lang-active', btn.dataset.lang === lang);
   });
+  document.querySelectorAll('.lp-lang-toggle').forEach(btn => {
+    btn.textContent = lang === 'it' ? 'EN' : 'IT';
+  });
+  document.querySelectorAll('[data-href-it]').forEach(el => {
+    el.href = lang === 'it' ? el.dataset.hrefIt : el.dataset.hrefEn;
+  });
+}
+function toggleLandingLang() {
+  setLandingLang(_landingLang === 'it' ? 'en' : 'it');
 }
 
 // ═══════════════════════════════════════
@@ -6038,11 +6129,11 @@ function showDeleteAccountModal() {
           style="padding:12px 20px;background:var(--accent-red);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;opacity:0.5">
           🗑️ Elimina definitivamente
         </button>
-        <button class="btn btn-ghost" onclick="document.getElementById('delete-account-modal').remove()">Annulla</button>
+        <button class="btn btn-ghost" onclick="closeModalEl(document.getElementById('delete-account-modal'))">Annulla</button>
       </div>
     </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModalEl(modal); });
   // Il pulsante conferma resta disabilitato finche' il testo non corrisponde esattamente
   const input = document.getElementById('delete-account-confirm-input');
   const confirmBtn = document.getElementById('btn-confirm-delete-account');
@@ -6126,12 +6217,12 @@ function showExpiredLinkModal(errorCode, errorDesc) {
         style="width:100%;padding:14px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px">
         📧 Invia nuova email di verifica
       </button>
-      <button onclick="document.getElementById('expired-link-modal').remove()"
+      <button onclick="closeModalEl(document.getElementById('expired-link-modal'))"
         style="width:100%;padding:10px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer">
         Torna al login
       </button>
     </div>`;
-  document.body.appendChild(modal);
+  openModalEl(modal);
 }
 
 async function resendVerificationEmail() {
@@ -6157,13 +6248,13 @@ async function resendVerificationEmail() {
       })
     });
     if (res.ok) {
-      document.getElementById('expired-link-modal').remove();
+      closeModalEl(document.getElementById('expired-link-modal'));
       toast('✅ Email inviata! Controlla la tua casella (anche lo spam).');
     } else {
       const err = await res.json().catch(()=>({}));
       // Supabase a volte risponde ok anche se già verificato
       if (err.msg && err.msg.toLowerCase().includes('already')) {
-        document.getElementById('expired-link-modal').remove();
+        closeModalEl(document.getElementById('expired-link-modal'));
         toast('✅ Questo account è già verificato! Puoi accedere.');
       } else {
         throw new Error(err.msg || err.error_description || 'Errore invio');
@@ -6375,7 +6466,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 <!-- NAV -->
 <nav class="lp-nav" id="lp-nav">
   <a class="lp-logo" href="#">
-    <span style="font-size:28px">🐍</span>
+    <span class="lp-logo-emoji" style="font-size:28px">🐍</span>
     <span>SNAKEKEEPER</span>
   </a>
   <div class="lp-nav-links">
@@ -6391,11 +6482,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     <button class="lp-btn-primary" onclick="landingRegister()" data-it="Inizia gratis" data-en="Start free">Inizia gratis</button>
   </div>
   <!-- Mobile buttons -->
-  <div style="gap:8px;align-items:center" id="lp-mobile-ctas">
-    <div class="lang-switcher">
-      <button class="lang-btn lang-active" data-lang="it" onclick="setLandingLang('it')">IT</button>
-      <button class="lang-btn" data-lang="en" onclick="setLandingLang('en')">EN</button>
-    </div>
+  <div style="gap:6px;align-items:center" id="lp-mobile-ctas">
+    <button class="lp-lang-toggle" id="lp-lang-toggle-mobile" onclick="toggleLandingLang()" aria-label="Cambia lingua / Change language">EN</button>
     <button class="lp-btn-primary" style="padding:8px 14px;font-size:13px" onclick="landingRegister()" data-it="Inizia" data-en="Start">Inizia</button>
     <button class="lp-hamburger" id="lp-hamburger" onclick="toggleMobileNav()" aria-label="Menu" aria-expanded="false" aria-controls="lp-mobile-sheet">
       <span></span><span></span><span></span>
@@ -6599,7 +6687,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-0">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-0">
-      <p data-it="No. Il piano Free è completamente gratuito e non richiede nessun metodo di pagamento." data-en="No. The Free plan is completely free and requires no payment method.">No. Il piano Free è completamente gratuito e non richiede nessun metodo di pagamento.</p>
+      <div class="lp-faq-a-inner"><p data-it="No. Il piano Free è completamente gratuito e non richiede nessun metodo di pagamento." data-en="No. The Free plan is completely free and requires no payment method.">No. Il piano Free è completamente gratuito e non richiede nessun metodo di pagamento.</p></div>
     </div>
   </div>
   <div class="lp-faq-item">
@@ -6608,7 +6696,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-1">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-1">
-      <p data-it="Sì. Puoi cancellare l'abbonamento Pro in qualsiasi momento dalla pagina Profilo. Non ci sono penali." data-en="Yes. You can cancel the Pro subscription at any time from the Profile page. No penalties.">Sì. Puoi cancellare l'abbonamento Pro in qualsiasi momento dalla pagina Profilo. Non ci sono penali.</p>
+      <div class="lp-faq-a-inner"><p data-it="Sì. Puoi cancellare l'abbonamento Pro in qualsiasi momento dalla pagina Profilo. Non ci sono penali." data-en="Yes. You can cancel the Pro subscription at any time from the Profile page. No penalties.">Sì. Puoi cancellare l'abbonamento Pro in qualsiasi momento dalla pagina Profilo. Non ci sono penali.</p></div>
     </div>
   </div>
   <div class="lp-faq-item">
@@ -6617,7 +6705,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-2">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-2">
-      <p data-it="Sì. Tutti i dati sono cifrati, accessibili solo a te, e protetti da autenticazione sicura. Non condividiamo mai i tuoi dati con terzi." data-en="Yes. All data is encrypted, accessible only to you, and protected by secure authentication. We never share your data with third parties.">Sì. Tutti i dati sono cifrati, accessibili solo a te, e protetti da autenticazione sicura. Non condividiamo mai i tuoi dati con terzi.</p>
+      <div class="lp-faq-a-inner"><p data-it="Sì. Tutti i dati sono cifrati, accessibili solo a te, e protetti da autenticazione sicura. Non condividiamo mai i tuoi dati con terzi." data-en="Yes. All data is encrypted, accessible only to you, and protected by secure authentication. We never share your data with third parties.">Sì. Tutti i dati sono cifrati, accessibili solo a te, e protetti da autenticazione sicura. Non condividiamo mai i tuoi dati con terzi.</p></div>
     </div>
   </div>
   <div class="lp-faq-item">
@@ -6626,7 +6714,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-3">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-3">
-      <p data-it="Sì. SnakeKeeper è una Progressive Web App installabile su qualsiasi dispositivo — iPhone, Android, tablet e PC." data-en="Yes. SnakeKeeper is a Progressive Web App installable on any device — iPhone, Android, tablet and PC.">Sì. SnakeKeeper è una Progressive Web App installabile su qualsiasi dispositivo — iPhone, Android, tablet e PC.</p>
+      <div class="lp-faq-a-inner"><p data-it="Sì. SnakeKeeper è una Progressive Web App installabile su qualsiasi dispositivo — iPhone, Android, tablet e PC." data-en="Yes. SnakeKeeper is a Progressive Web App installable on any device — iPhone, Android, tablet and PC.">Sì. SnakeKeeper è una Progressive Web App installabile su qualsiasi dispositivo — iPhone, Android, tablet e PC.</p></div>
     </div>
   </div>
   <div class="lp-faq-item">
@@ -6635,7 +6723,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-4">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-4">
-      <p data-it="Non puoi aggiungere nuovi serpenti. Tutti i tuoi esemplari restano sempre visibili con lo storico completo: i primi 3 inseriti restano modificabili, gli altri passano in sola lettura finché non attivi il piano Pro. Nessun dato viene mai cancellato." data-en="You cannot add new snakes. All your animals stay visible with their full history: the first 3 you added remain editable, the others become read-only until you activate the Pro plan. No data is ever deleted.">Non puoi aggiungere nuovi serpenti. Tutti i tuoi esemplari restano sempre visibili con lo storico completo: i primi 3 inseriti restano modificabili, gli altri passano in sola lettura finché non attivi il piano Pro. Nessun dato viene mai cancellato.</p>
+      <div class="lp-faq-a-inner"><p data-it="Non puoi aggiungere nuovi serpenti. Tutti i tuoi esemplari restano sempre visibili con lo storico completo: i primi 3 inseriti restano modificabili, gli altri passano in sola lettura finché non attivi il piano Pro. Nessun dato viene mai cancellato." data-en="You cannot add new snakes. All your animals stay visible with their full history: the first 3 you added remain editable, the others become read-only until you activate the Pro plan. No data is ever deleted.">Non puoi aggiungere nuovi serpenti. Tutti i tuoi esemplari restano sempre visibili con lo storico completo: i primi 3 inseriti restano modificabili, gli altri passano in sola lettura finché non attivi il piano Pro. Nessun dato viene mai cancellato.</p></div>
     </div>
   </div>
   <div class="lp-faq-item">
@@ -6644,7 +6732,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       <span class="lp-faq-icon" id="faq-icon-5">+</span>
     </button>
     <div class="lp-faq-a" id="faq-ans-5">
-      <p data-it="Sì. Paghi una volta e ricevi tutti gli aggiornamenti futuri di SnakeKeeper senza costi aggiuntivi, per sempre." data-en="Yes. You pay once and receive all future SnakeKeeper updates at no extra cost, forever.">Sì. Paghi una volta e ricevi tutti gli aggiornamenti futuri di SnakeKeeper senza costi aggiuntivi, per sempre.</p>
+      <div class="lp-faq-a-inner"><p data-it="Sì. Paghi una volta e ricevi tutti gli aggiornamenti futuri di SnakeKeeper senza costi aggiuntivi, per sempre." data-en="Yes. You pay once and receive all future SnakeKeeper updates at no extra cost, forever.">Sì. Paghi una volta e ricevi tutti gli aggiornamenti futuri di SnakeKeeper senza costi aggiuntivi, per sempre.</p></div>
     </div>
   </div>
 
@@ -6659,17 +6747,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     <p style="color:#a0b5a1;font-size:15px" data-it="Approfondimenti pratici su gestione, salute e organizzazione dell'allevamento." data-en="Practical insights on breeding management and health.">Approfondimenti pratici su gestione, salute e organizzazione dell'allevamento.</p>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
-    <a href="/guide/pasti-serpenti.html" style="display:block;padding:24px;background:rgba(26,51,32,0.6);border:1px solid rgba(45,80,48,0.4);border-radius:14px;text-decoration:none;transition:transform .2s">
+    <a href="/guide/pasti-serpenti.html" data-href-it="/guide/pasti-serpenti.html" data-href-en="/guide/en/snake-feeding-log.html" style="display:block;padding:24px;background:rgba(26,51,32,0.6);border:1px solid rgba(45,80,48,0.4);border-radius:14px;text-decoration:none;transition:transform .2s">
       <div style="font-size:28px;margin-bottom:12px">🥩</div>
       <div style="font-family:'Cinzel',serif;color:#e8f5e0;font-size:16px;margin-bottom:8px" data-it="Come tracciare i pasti del serpente" data-en="How to track your snake's feedings">Come tracciare i pasti del serpente</div>
       <div style="color:#a0b5a1;font-size:13px;line-height:1.5" data-it="Guida completa: cosa registrare e perché è importante." data-en="Complete guide: what to log and why it matters.">Guida completa: cosa registrare e perché è importante.</div>
     </a>
-    <a href="/guide/muta-serpenti.html" style="display:block;padding:24px;background:rgba(26,51,32,0.6);border:1px solid rgba(45,80,48,0.4);border-radius:14px;text-decoration:none;transition:transform .2s">
+    <a href="/guide/muta-serpenti.html" data-href-it="/guide/muta-serpenti.html" data-href-en="/guide/en/snake-shedding-guide.html" style="display:block;padding:24px;background:rgba(26,51,32,0.6);border:1px solid rgba(45,80,48,0.4);border-radius:14px;text-decoration:none;transition:transform .2s">
       <div style="font-size:28px;margin-bottom:12px">🦎</div>
       <div style="font-family:'Cinzel',serif;color:#e8f5e0;font-size:16px;margin-bottom:8px" data-it="Guida alla muta (ecdisi)" data-en="Guide to shedding (ecdysis)">Guida alla muta (ecdisi)</div>
       <div style="color:#a0b5a1;font-size:13px;line-height:1.5" data-it="Cosa osservare e quando preoccuparsi." data-en="What to watch for and when to worry.">Cosa osservare e quando preoccuparsi.</div>
     </a>
-    <a href="/guide/registro-allevamento.html" style="display:block;padding:24px;background:rgba(26,51,32,0.6);border:1px solid rgba(45,80,48,0.4);border-radius:14px;text-decoration:none;transition:transform .2s">
+    <a href="/guide/registro-allevamento.html" data-href-it="/guide/registro-allevamento.html" data-href-en="/guide/en/breeding-log-guide.html" style="display:block;padding:24px;background:rgba(26,51,32,0.6);border:1px solid rgba(45,80,48,0.4);border-radius:14px;text-decoration:none;transition:transform .2s">
       <div style="font-size:28px;margin-bottom:12px">📋</div>
       <div style="font-family:'Cinzel',serif;color:#e8f5e0;font-size:16px;margin-bottom:8px" data-it="Quaderno, Excel o app?" data-en="Notebook, Excel or app?">Quaderno, Excel o app?</div>
       <div style="color:#a0b5a1;font-size:13px;line-height:1.5" data-it="Come organizzare un registro di allevamento." data-en="How to organize a breeding log.">Come organizzare un registro di allevamento.</div>
