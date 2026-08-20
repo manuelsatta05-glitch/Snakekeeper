@@ -1,1 +1,26 @@
-{"0": "Contenuti SEO & Registri Base", "1": "Piani & Limiti Free", "2": "Graphify: Ingest & Estrazione", "3": "Graphify: Export & Pipeline", "4": "Graphify: Comando & Estrazione Semantica", "5": "Manifest PWA", "6": "Graphify: Query & MCP", "7": "Trial Fiera & Pannello Admin", "8": "Gestione Serpenti & Export PDF", "9": "Graphify: Aggiornamento Incrementale", "10": "Graphify: Clone & Merge Repo", "11": "Dashboard Monitoraggio Uso", "12": "Sync Offline", "13": "Service Worker"}
+{
+  "0": "SnakeKeeper Web App",
+  "1": "Piani & Limiti Free",
+  "2": "Extraction Subagent Prompt Spec",
+  "3": "Query, Path, Explain Reference",
+  "4": "Gestione Serpenti & Registro",
+  "5": "Manifest PWA",
+  "6": "Admin, Abbonamento & Profilo",
+  "7": "Stato Globale & Utility UI",
+  "8": "Modali & Popup UI",
+  "9": "Pagine Legali (Privacy/Termini)",
+  "10": "GitHub Clone & Cross-Repo Merge Reference",
+  "11": "Dashboard Monitoraggio Uso",
+  "12": "Sync Offline (Feature)",
+  "13": "Service Worker",
+  "14": "Autenticazione & Sessione",
+  "15": "Sync Offline & Coda",
+  "16": "Landing Page & Animazioni",
+  "17": "Gestione Venduti",
+  "18": "Cache Ultimi Log",
+  "19": "Drawer Mobile",
+  "20": "Transizioni Login/Landing",
+  "21": "Fisica Touch (Rubberband)",
+  "22": "Posizionamento Foto",
+  "23": "Extra Exports & Benchmark Reference"
+}
