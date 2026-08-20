@@ -1,0 +1,44 @@
+name: Build minified site (Passo A - solo build, nessun deploy)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Prepare _site/ (allowlist esplicita, no denylist)
+        run: |
+          set -e
+          mkdir -p _site
+          cp index.html style.css sw.js manifest.json fiera.html monitor.html \
+             private-monitor-9x7k2.html robots.txt sitemap.xml llms.txt CNAME \
+             icon-180.png icon-192.png icon-512.png hero-snake.jpg hero-snake.webp \
+             _site/
+          cp -r guide _site/guide
+          touch _site/.nojekyll
+
+      - name: Minify app.js con terser (pinnato, mangle.toplevel di default = false)
+        run: |
+          set -e
+          npx --yes terser@5.36.0 app.js -o _site/app.js --compress --mangle
+          echo "--- dimensioni ---"
+          wc -c app.js _site/app.js
+
+      - name: Elenco file pubblicati (verifica allowlist)
+        run: find _site -type f | sort
+
+      - name: Upload artifact (solo per ispezione, nessun deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: _site/
+          retention-days: 7
