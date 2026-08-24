@@ -5128,9 +5128,9 @@ function showUpgradeModal() {
   document.getElementById('upgrade-modal')?.remove();
   const modal = document.createElement('div');
   modal.id = 'upgrade-modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:24px';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(8,15,9,0.92);display:flex;align-items:center;justify-content:center;padding:16px;padding-bottom:calc(16px + var(--safe-bottom))';
   modal.innerHTML = `
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:var(--shadow)">
+    <div class="upgrade-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:var(--shadow)">
       <div style="font-size:48px;margin-bottom:12px">🐍</div>
       <div style="font-family:'Cinzel',serif;font-size:22px;color:var(--accent-gold);margin-bottom:8px">Passa a Pro</div>
       <div style="color:var(--text-mid);font-size:14px;line-height:1.6;margin-bottom:20px">
