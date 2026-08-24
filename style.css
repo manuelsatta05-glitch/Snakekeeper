@@ -97,6 +97,13 @@
   nav button.active { color: var(--accent-gold); }
   nav button:active { transform: scale(0.98); background: var(--bg-card2); }
   nav .ico { font-size: 16px; width: 20px; text-align: center; }
+  /* Contatore delle richieste di trasferimento in attesa, in coda alla voce di menu */
+  nav .nav-badge {
+    margin-left: auto; flex-shrink: 0;
+    min-width: 20px; padding: 1px 6px; border-radius: 20px;
+    background: var(--accent-gold); color: #1a0f00;
+    font-size: 11px; font-weight: 700; text-align: center; line-height: 18px;
+  }
 
   .sidebar-snakes { padding: 0 12px 16px; }
   .sidebar-snakes .nav-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; padding: 8px 12px 4px; }

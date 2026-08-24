@@ -131,6 +131,9 @@ const SB = {
   async insertVenduto(v) {
     return this.req('venduti', { method:'POST', body: JSON.stringify(v) });
   },
+  async updateVenduto(id, data) {
+    return this.req(`venduti?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data), prefer:'return=minimal' });
+  },
   async deleteVenduto(id) {
     return this.req(`venduti?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' });
   },
@@ -190,6 +193,22 @@ const SB = {
   async updateLog(id, data) {
     return this.req(`logs?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data), prefer:'return=minimal' });
   },
+
+  // RPC — passa da req(), quindi usa getSupabaseToken() e rinnova da solo un JWT
+  // in scadenza. Le chiamate rpc storiche sono fetch scritti a mano su getSession()
+  // e quel rinnovo non ce l'hanno.
+  async rpc(name, body={}) {
+    return this.req(`rpc/${name}`, { method:'POST', body: JSON.stringify(body) });
+  },
+
+  // TRASFERIMENTI
+  // La tabella ha RLS senza policy: non è raggiungibile via PostgREST. Ogni accesso
+  // passa da queste RPC SECURITY DEFINER, che ricavano l'identità da auth.uid().
+  async getTrasferimentiRicevuti() { return this.rpc('get_trasferimenti_ricevuti'); },
+  async getTrasferimentiInviati()  { return this.rpc('get_trasferimenti_inviati'); },
+  async accettaTrasferimento(id)   { return this.rpc('accetta_trasferimento', { p_id: id }); },
+  async rifiutaTrasferimento(id)   { return this.rpc('rifiuta_trasferimento', { p_id: id }); },
+  async annullaTrasferimento(id)   { return this.rpc('annulla_trasferimento', { p_id: id }); },
 };
 
 // ═══════════════════════════════════════
@@ -205,9 +224,15 @@ let _recentLogs = [];
 let _logsCache = {};
 let _lastLogsPerSnake = {}; // chiave `${snakeId}|${tipo}` -> riga log
 let _venduti = [];
+// Trasferimenti: _trasfRicevuti sono gli inviti in attesa arrivati a questo account
+// (col payload completo, è l'anteprima di ciò che si sta per accettare); _trasfInviati
+// sono quelli partiti da qui, servono solo a mostrare lo stato sulla scheda del venduto.
+let _trasfRicevuti = [];
+let _trasfInviati = [];
 const RECENT_LOGS_LIMIT = 300;
 let _eggsTotalCache = null; // conteggio deposizioni da sempre — via count server-side, non richiede tutto lo storico
 const _annullaInFlight = new Set(); // guardia anti doppio-click / listener duplicati su "Annulla vendita"
+const _trasfInFlight = new Set(); // stessa guardia per accetta/rifiuta/ritira trasferimento
 
 function _lastLogKey(snakeId, tipo) { return snakeId + '|' + tipo; }
 // Confronta due log per "quale è più recente" con lo stesso ordinamento della vista server-side
@@ -285,7 +310,9 @@ async function loadAll() {
     withTimeout(SB.getSerpenti(), 15000, []),
     withTimeout(SB.getRecentLogs(RECENT_LOGS_LIMIT), 15000, []),
     withTimeout(SB.getVenduti(), 15000, []),
-    withTimeout(SB.getLastLogsPerSnake(), 15000, [])
+    withTimeout(SB.getLastLogsPerSnake(), 15000, []),
+    withTimeout(SB.getTrasferimentiRicevuti(), 15000, []),
+    withTimeout(SB.getTrasferimentiInviati(), 15000, [])
   ]);
 
   _snakes = results[0].status === 'fulfilled' ? (results[0].value || []) : [];
@@ -297,11 +324,14 @@ async function loadAll() {
   });
   _eggsTotalCache = null;
   _venduti = results[2].status === 'fulfilled' ? (results[2].value || []) : [];
+  _trasfRicevuti = results[4].status === 'fulfilled' ? (results[4].value || []) : [];
+  _trasfInviati = results[5].status === 'fulfilled' ? (results[5].value || []) : [];
 
   // Log errori per debug
+  const _labels = ['serpenti','logs','venduti','ultimi log','trasferimenti ricevuti','trasferimenti inviati'];
   results.forEach((r, i) => {
     if (r.status === 'rejected') {
-      console.error(['serpenti','logs','venduti'][i] + ' errore:', r.reason);
+      console.error(_labels[i] + ' errore:', r.reason);
     }
   });
 
@@ -325,6 +355,20 @@ function setOnline(val) {
 //  HELPERS
 // ═══════════════════════════════════════
 function genId() { return 'SN' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase(); }
+// Nome leggibile di un genitore: se padre_id/madre_id puntano a un serpente ancora
+// in collezione usa quello, altrimenti ricade sul nome esterno scritto a mano.
+// Serve a "congelare" la genealogia in testo al momento della vendita, perché dopo
+// la vendita il serpente-genitore potrebbe non essere più raggiungibile per id.
+function nomeGenitore(snake, ruolo) {
+  const idField  = ruolo === 'padre' ? 'padre_id' : 'madre_id';
+  const txtField = ruolo === 'padre' ? 'padre_esterno' : 'madre_esterna';
+  const p = snake[idField] ? _snakes.find(s => s.id === snake[idField]) : null;
+  if (p) {
+    const st = [p.specie, p.morfo].filter(Boolean).join(', ');
+    return p.nome + (st ? ` (${st})` : '');
+  }
+  return snake[txtField] || null;
+}
 function genICD() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
   let r = 'IT-'; for (let i=0;i<8;i++) r += chars[Math.floor(Math.random()*chars.length)];
@@ -420,9 +464,10 @@ function showPage(page, snakeId=null) {
     });
   });
   document.getElementById('main-content').innerHTML = '';
-  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro, venduti:renderVenduti, dettaglioVenduto:renderDettaglioVenduto, admin:renderAdmin, profilo:renderProfilo, privacy:renderPrivacy, terms:renderTerms };
+  const pages = { dashboard:renderDashboard, serpenti:renderSerpenti, aggiungi:renderAggiungi, dettaglio:renderDettaglio, registro:renderRegistro, venduti:renderVenduti, dettaglioVenduto:renderDettaglioVenduto, trasferimenti:renderTrasferimenti, admin:renderAdmin, profilo:renderProfilo, privacy:renderPrivacy, terms:renderTerms };
   if (pages[page]) pages[page]();
   refreshSidebar();
+  applyTrasferimentiUI();
 }
 
 function refreshSidebar() {
@@ -1433,65 +1478,64 @@ function toggleEditSerpente(id) {
   _editFotoData = null;
 }
 
-function previewFotoAdd(input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const maxSize = 400;
-      let w = img.width, h = img.height;
-      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
-      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      _addFotoData = canvas.toDataURL('image/jpeg', 0.7);
-      const preview = document.getElementById('add-foto-preview');
-      preview.innerHTML = `<img src="${_addFotoData}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;object-position:50% 50%" id="add-foto-img">`;
-      preview.style.border = 'none';
-      setFotoPosition('50% 50%');
-      const posContainer = document.getElementById('add-foto-pos-container');
-      if (posContainer) posContainer.innerHTML = renderPosPicker('50% 50%');
+// Comprime lato client una foto scelta dall'utente in un data-URL JPEG (lato lungo
+// max 400px, qualità 0.7). Non esiste uno Storage: è questa stringa che finisce
+// direttamente nella colonna testo `foto_url`, quindi la compressione non è un
+// dettaglio estetico ma ciò che tiene le righe di dimensioni ragionevoli.
+function compressImageToDataUrl(file, maxSize = 400, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Lettura del file non riuscita'));
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('File immagine non valido'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+        else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
 }
 
-function previewFoto(input) {
+async function previewFotoAdd(input) {
   if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    // Comprimi immagine client-side
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const maxSize = 400;
-      let w = img.width, h = img.height;
-      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
-      else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      _editFotoData = canvas.toDataURL('image/jpeg', 0.7);
-      const preview = document.getElementById('edit-foto-preview');
-      if (preview.tagName === 'IMG') {
-        preview.src = _editFotoData;
-      } else {
-        preview.outerHTML = `<img id="edit-foto-preview" src="${_editFotoData}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;object-position:50% 50%;border:2px solid var(--border)">`;
-        // Prima foto aggiunta durante la modifica: crea il selettore di posizione al volo, se non c'e' gia'
-        if (!document.querySelector('.pos-picker-btn')) {
-          setFotoPosition('50% 50%');
-          const hiddenInput = document.getElementById('foto-position-input');
-          if (hiddenInput) hiddenInput.insertAdjacentHTML('afterend', `<div style="display:flex;justify-content:center">${renderPosPicker('50% 50%')}</div>`);
-        }
-      }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+  try {
+    _addFotoData = await compressImageToDataUrl(input.files[0]);
+  } catch(e) { toast('Errore: ' + e.message, '#c0392b'); return; }
+  const preview = document.getElementById('add-foto-preview');
+  if (!preview) return;
+  preview.innerHTML = `<img src="${_addFotoData}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;object-position:50% 50%" id="add-foto-img">`;
+  preview.style.border = 'none';
+  setFotoPosition('50% 50%');
+  const posContainer = document.getElementById('add-foto-pos-container');
+  if (posContainer) posContainer.innerHTML = renderPosPicker('50% 50%');
+}
+
+async function previewFoto(input) {
+  if (!input.files || !input.files[0]) return;
+  try {
+    _editFotoData = await compressImageToDataUrl(input.files[0]);
+  } catch(e) { toast('Errore: ' + e.message, '#c0392b'); return; }
+  const preview = document.getElementById('edit-foto-preview');
+  if (!preview) return;
+  if (preview.tagName === 'IMG') {
+    preview.src = _editFotoData;
+  } else {
+    preview.outerHTML = `<img id="edit-foto-preview" src="${_editFotoData}" style="width:100px;height:100px;border-radius:12px;object-fit:cover;object-position:50% 50%;border:2px solid var(--border)">`;
+    // Prima foto aggiunta durante la modifica: crea il selettore di posizione al volo, se non c'e' gia'
+    if (!document.querySelector('.pos-picker-btn')) {
+      setFotoPosition('50% 50%');
+      const hiddenInput = document.getElementById('foto-position-input');
+      if (hiddenInput) hiddenInput.insertAdjacentHTML('afterend', `<div style="display:flex;justify-content:center">${renderPosPicker('50% 50%')}</div>`);
+    }
+  }
 }
 
 // ═══════════════════════════════════════
@@ -1753,6 +1797,19 @@ async function confermaVendita(snakeId) {
       note_vendita: document.getElementById('v-note').value.trim() || null,
       snake_created_at: snake.created_at,
       logs_snapshot: logsSnapshot,
+      // Foto, genetica e genealogia: prima non venivano salvate e andavano perse per
+      // sempre alla vendita. Servono sia per ripristinare davvero con "Annulla vendita",
+      // sia per poter mandare al cliente una scheda completa.
+      foto_url: snake.foto_url || null,
+      foto_position: snake.foto_position || null,
+      genetica: snake.genetica || null,
+      padre_id: snake.padre_id || null,
+      madre_id: snake.madre_id || null,
+      padre_esterno: snake.padre_esterno || null,
+      madre_esterna: snake.madre_esterna || null,
+      // Risolti adesso, finché i genitori sono ancora in collezione.
+      padre_nome: nomeGenitore(snake, 'padre'),
+      madre_nome: nomeGenitore(snake, 'madre'),
     };
 
     // 2. Salva il venduto CON i log PRIMA di eliminare il serpente
@@ -1918,7 +1975,7 @@ function renderVenduti() {
       <div class="snake-card" style="cursor:default">
         <div class="snake-card-header">
           <div>
-            <div class="snake-name" style="display:flex;align-items:center;gap:8px">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t('venduti_badge')}</span></div>
+            <div class="snake-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t('venduti_badge')}</span>${trasferimentoPill(v.id)}</div>
             <div class="snake-code">${v.icd}</div>
           </div>
           <span class="badge badge-${esc(v.sesso)}">${v.sesso === 'M' ? '♂' : '♀'}</span>
@@ -1931,37 +1988,53 @@ function renderVenduti() {
         </div>
         <div class="snake-card-actions">
           <button class="btn btn-ghost btn-sm vend-detail-btn" data-id="${v.id}">📋 ${t('serpenti_dettagli')}</button>
-          <button class="btn btn-ghost btn-sm vend-undo-btn" data-id="${v.id}" style="color:var(--accent-lime);border-color:var(--accent-lime)">↩️ Annulla vendita</button>
+          ${trasferimentoActions(v.id)}
+          ${trasferimentoAccettato(v.id) ? '' : `<button class="btn btn-ghost btn-sm vend-undo-btn" data-id="${v.id}" style="color:var(--accent-lime);border-color:var(--accent-lime)">↩️ Annulla vendita</button>`}
           <button class="btn btn-primary btn-sm vend-pdf-btn" data-id="${v.id}">📄 PDF</button>
           <button class="btn btn-danger btn-sm vend-del-btn" data-id="${v.id}">🗑️</button>
         </div>
       </div>`).join('') + '</div>';
   }
   document.getElementById('main-content').innerHTML = html;
+  bindVendutiActions();
+}
 
-  // Event delegation — evita problemi con onclick e template literals su Safari.
-  // #main-content è un contenitore persistente (solo l'innerHTML viene sostituito ad ogni
-  // navigazione): il listener va agganciato UNA SOLA VOLTA, altrimenti si accumula ad ogni
-  // visita di questa pagina e ogni click scatena N conferme in sequenza.
+// Event delegation — evita problemi con onclick e template literals su Safari.
+// #main-content è un contenitore persistente (solo l'innerHTML viene sostituito ad ogni
+// navigazione): il listener va agganciato UNA SOLA VOLTA, altrimenti si accumula ad ogni
+// visita di questa pagina e ogni click scatena N conferme in sequenza.
+// Chiamata sia dalla lista che dal dettaglio venduto, perché entrambe le pagine
+// mostrano i bottoni di trasferimento.
+function bindVendutiActions() {
   const mainEl = document.getElementById('main-content');
-  if (!mainEl.dataset.vendutiBound) {
-    mainEl.dataset.vendutiBound = '1';
-    mainEl.addEventListener('click', function(e) {
-      const detBtn = e.target.closest('.vend-detail-btn');
-      const pdfBtn = e.target.closest('.vend-pdf-btn');
-      const delBtn = e.target.closest('.vend-del-btn');
-      const undoBtn = e.target.closest('.vend-undo-btn');
-      if (detBtn) showPage('dettaglioVenduto', detBtn.dataset.id);
-      if (pdfBtn) printResoconto(pdfBtn.dataset.id);
-      if (delBtn) deleteVenduto(delBtn.dataset.id);
-      if (undoBtn) annullaVendita(undoBtn.dataset.id);
-    });
-  }
+  if (!mainEl || mainEl.dataset.vendutiBound) return;
+  mainEl.dataset.vendutiBound = '1';
+  mainEl.addEventListener('click', function(e) {
+    const detBtn = e.target.closest('.vend-detail-btn');
+    const pdfBtn = e.target.closest('.vend-pdf-btn');
+    const delBtn = e.target.closest('.vend-del-btn');
+    const undoBtn = e.target.closest('.vend-undo-btn');
+    const sendBtn = e.target.closest('.vend-send-btn');
+    const trUndoBtn = e.target.closest('.vend-trasf-undo-btn');
+    if (detBtn) showPage('dettaglioVenduto', detBtn.dataset.id);
+    if (pdfBtn) printResoconto(pdfBtn.dataset.id);
+    if (delBtn) deleteVenduto(delBtn.dataset.id);
+    if (undoBtn) annullaVendita(undoBtn.dataset.id);
+    if (sendBtn) showInviaClienteModal(sendBtn.dataset.id);
+    if (trUndoBtn) ritiraTrasferimento(trUndoBtn.dataset.id);
+  });
 }
 
 async function deleteVenduto(id) {
   if (!confirm(t('err_elimina_venduto'))) return;
   try {
+    // Un invito ancora in attesa punta a una vendita che sta per sparire: va ritirato,
+    // altrimenti resterebbe accettabile per un record che non esiste più.
+    const tr = trasferimentoDelVenduto(id);
+    if (tr && tr.stato === 'pending') {
+      await SB.annullaTrasferimento(tr.id);
+      tr.stato = 'cancelled';
+    }
     await SB.deleteVenduto(id);
     _venduti = _venduti.filter(v => v.id !== id);
     toast(t('eliminato'), '#c0392b');
@@ -1970,21 +2043,44 @@ async function deleteVenduto(id) {
 }
 
 // Riporta un serpente venduto in collezione (creato per errore, ripensamento, ecc.).
-// Ripristina anagrafica e storico log completo. Genealogia (padre/madre) e foto NON sono
-// mai state salvate nel record venduto: se il serpente le aveva, vanno reinserite a mano.
+// Ripristina anagrafica, storico log completo e — per le vendite registrate da quando
+// `venduti` salva anche quei campi — foto, genetica e genealogia.
 async function annullaVendita(vendutoId) {
   // Protegge da doppio-click e da eventuali listener duplicati rimasti da prima del fix:
   // senza questa guardia due inserimenti in corsa possono scontrarsi su "duplicate key".
   if (_annullaInFlight.has(vendutoId)) return;
   const listV = _venduti.find(x => x.id === vendutoId);
   if (!listV) return;
-  if (!confirm(`Annullare la vendita di "${listV.nome}"?\n\nIl serpente torna in "I miei serpenti" con anagrafica e storico log completi.\n\nAttenzione: eventuali legami di genealogia (padre/madre) e la foto non erano salvati al momento della vendita e non possono essere ripristinati automaticamente.`)) return;
+
+  // Se il cliente ha già accettato il trasferimento, l'animale vive sul suo account:
+  // ripristinare anche la propria copia creerebbe lo stesso esemplare in due posti.
+  const tr = trasferimentoDelVenduto(vendutoId);
+  if (tr && tr.stato === 'accepted') { toast(t('trasf_err_gia_accettato'), '#c0392b'); return; }
+
+  const avvisoInvito = (tr && tr.stato === 'pending')
+    ? `\n\nL'invito inviato a ${tr.destinatario_email} verrà ritirato: il cliente non potrà più accettarlo.`
+    : '';
+  if (!confirm(`Annullare la vendita di "${listV.nome}"?\n\nIl serpente torna in "I miei serpenti" con anagrafica e storico log completi, insieme a foto e genealogia se erano state salvate al momento della vendita.${avvisoInvito}`)) return;
 
   _annullaInFlight.add(vendutoId);
   try {
+    // Prima si ritira l'invito, poi si smonta la vendita: se il ritiro fallisce meglio
+    // fermarsi qui, con la vendita ancora intatta, che lasciare in giro un invito
+    // accettabile per un serpente tornato in collezione.
+    if (tr && tr.stato === 'pending') {
+      await SB.annullaTrasferimento(tr.id);
+      tr.stato = 'cancelled';
+    }
+
     // Serve la riga completa (con logs_snapshot) — potrebbe non essere ancora in cache se richiamato dalla lista.
     const v = listV.logs_snapshot ? listV : await SB.getVendutoFull(vendutoId);
     if (!v) { toast('Vendita non trovata', '#c0392b'); return; }
+
+    // I genitori potrebbero essere stati venduti nel frattempo: se l'id non punta più a
+    // un serpente in collezione si ricade sul nome congelato alla vendita, così la
+    // genealogia resta leggibile invece di sparire.
+    const padreVivo = !!(v.padre_id && _snakes.some(s => s.id === v.padre_id));
+    const madreViva = !!(v.madre_id && _snakes.some(s => s.id === v.madre_id));
 
     const restored = {
       id: v.snake_id,
@@ -1992,6 +2088,13 @@ async function annullaVendita(vendutoId) {
       nascita: v.nascita, peso: v.peso, provenienza: v.provenienza,
       icd: v.icd, note: v.note,
       created_at: v.snake_created_at || undefined,
+      foto_url: v.foto_url || null,
+      foto_position: v.foto_position || null,
+      genetica: v.genetica || null,
+      padre_id: padreVivo ? v.padre_id : null,
+      padre_esterno: padreVivo ? null : (v.padre_esterno || v.padre_nome || null),
+      madre_id: madreViva ? v.madre_id : null,
+      madre_esterna: madreViva ? null : (v.madre_esterna || v.madre_nome || null),
     };
     // Se un tentativo precedente si era già fermato qui (es. rete, o un retry) il serpente
     // può esistere già lato server: non è un errore, si prosegue con i passi mancanti.
@@ -2066,7 +2169,7 @@ function renderDettaglioVenduto() {
       <div class="sdh-top-row1">
         <div class="snake-avatar" style="position:relative;overflow:hidden;border-radius:50%;width:56px;height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">${v.foto_url ? `<img src="${esc(v.foto_url)}" style="width:100%;height:100%;object-fit:cover">` : '🐍'}</div>
         <div class="sdh-name-block">
-          <div class="snake-detail-name">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t('venduti_badge')}</span></div>
+          <div class="snake-detail-name">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t('venduti_badge')}</span>${trasferimentoPill(v.id)}</div>
           <div class="snake-detail-meta">
             <span class="badge badge-${esc(v.sesso)}">${v.sesso==='M'?'♂ '+t('aggiungi_maschio'):'♀ '+t('aggiungi_femmina')}</span>
             ${v.specie?`<span>🦎 ${esc(v.specie)}</span>`:''}
@@ -2076,7 +2179,8 @@ function renderDettaglioVenduto() {
         </div>
       </div>
       <div class="sdh-top-row2">
-        <button class="btn btn-ghost btn-sm" onclick="annullaVendita('${v.id}')" style="color:var(--accent-lime);border-color:var(--accent-lime)">↩️ Annulla vendita</button>
+        ${trasferimentoActions(v.id)}
+        ${trasferimentoAccettato(v.id) ? '' : `<button class="btn btn-ghost btn-sm" onclick="annullaVendita('${v.id}')" style="color:var(--accent-lime);border-color:var(--accent-lime)">↩️ Annulla vendita</button>`}
         <button class="btn btn-primary btn-sm" onclick="printResoconto('${v.id}')">📄 PDF</button>
       </div>
     </div>
@@ -2166,7 +2270,12 @@ function renderDettaglioVenduto() {
            [t('lbl_sesso'),v.sesso==='M'?'♂ '+t('aggiungi_maschio'):'♀ '+t('aggiungi_femmina')],
            [t('lbl_nascita'),fmtDate(v.nascita)],[t('lbl_peso'),v.peso?v.peso+'g':'—'],
            [t('lbl_provenienza'),v.provenienza||'—'],[t('lbl_icd'),v.icd],
-           [t('dv_giorni_allevamento'),giorniAllevamento!==null?giorniAllevamento+'gg':'—']
+           [t('dv_giorni_allevamento'),giorniAllevamento!==null?giorniAllevamento+'gg':'—'],
+           // Salvati sul venduto solo dalle vendite registrate dopo l'introduzione
+           // del trasferimento: sulle vendite più vecchie restano vuoti.
+           [t('gen_padre'),v.padre_nome||v.padre_esterno||'—'],
+           [t('gen_madre'),v.madre_nome||v.madre_esterna||'—'],
+           [t('gen_genetica'),v.genetica||'—']
         ].map(([k,val])=>`
           <div style="background:var(--bg-moss);border-radius:8px;padding:10px">
             <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">${k}</div>
@@ -2181,6 +2290,416 @@ function renderDettaglioVenduto() {
   </div>`;
 
   document.getElementById('main-content').innerHTML = html;
+  bindVendutiActions();
+}
+
+// ═══════════════════════════════════════
+//  TRASFERIMENTO AL CLIENTE
+// ═══════════════════════════════════════
+// L'allevatore invia al cliente la scheda di un serpente venduto. Il cliente deve
+// accettare esplicitamente dal proprio account: finché non lo fa, sul suo account
+// non viene scritto nulla. La vendita resta comunque nei "Venduti" dell'allevatore,
+// prezzo compreso, quindi il grafico del fatturato non cambia.
+//
+// Nessuno dei due lati può scrivere direttamente: la RLS è `user_id = auth.uid()` su
+// tutte le tabelle. La creazione dell'invito passa dalla Edge Function transfer-snake
+// (che manda anche l'email), l'accettazione da una RPC SECURITY DEFINER che fa
+// l'INSERT in una sola transazione.
+
+// Più righe possono riferirsi alla stessa vendita nel tempo (un invito ritirato e poi
+// rifatto): conta solo la più significativa. Accettato batte in attesa, che batte il resto.
+function trasferimentoDelVenduto(vendutoId) {
+  const righe = _trasfInviati.filter(x => x.venduto_id === vendutoId);
+  return righe.find(x => x.stato === 'accepted')
+      || righe.find(x => x.stato === 'pending')
+      || righe[0] || null;
+}
+
+function trasferimentoAccettato(vendutoId) {
+  const tr = trasferimentoDelVenduto(vendutoId);
+  return !!(tr && tr.stato === 'accepted');
+}
+
+// Pillola di stato, stesso stile del badge VENDUTO.
+function trasferimentoPill(vendutoId) {
+  const tr = trasferimentoDelVenduto(vendutoId);
+  if (!tr) return '';
+  const stili = {
+    pending:  ['rgba(201,168,76,0.2)',  'var(--accent-gold)', t('trasf_stato_pending')],
+    accepted: ['rgba(109,181,109,0.2)', 'var(--accent-lime)', t('trasf_stato_accepted')],
+    rejected: ['rgba(192,57,43,0.2)',   'var(--accent-red)',  t('trasf_stato_rejected')],
+  };
+  const s = stili[tr.stato];
+  if (!s) return '';
+  return `<span title="${esc(tr.destinatario_email)}" style="font-size:11px;background:${s[0]};color:${s[1]};padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${s[2]}</span>`;
+}
+
+// Bottoni di trasferimento per una vendita. Se il cliente ha già accettato non c'è
+// più nulla da fare: l'animale vive sul suo account.
+function trasferimentoActions(vendutoId) {
+  const tr = trasferimentoDelVenduto(vendutoId);
+  if (tr && tr.stato === 'accepted') return '';
+  if (tr && tr.stato === 'pending') {
+    return `<button class="btn btn-ghost btn-sm vend-trasf-undo-btn" data-id="${tr.id}" style="color:var(--accent-red);border-color:var(--accent-red)">✖️ ${t('trasf_ritira')}</button>`;
+  }
+  return `<button class="btn btn-ghost btn-sm vend-send-btn" data-id="${vendutoId}" style="color:var(--accent-gold);border-color:var(--accent-gold)">📨 ${t('trasf_invia')}</button>`;
+}
+
+// Dati raccolti nella modale di invio: la foto nuova eventualmente scelta lì.
+let _inviaFotoData = null;
+
+async function showInviaClienteModal(vendutoId) {
+  const v = _venduti.find(x => x.id === vendutoId);
+  if (!v) return;
+  _inviaFotoData = null;
+
+  // Foto e genealogia non sono nella select della lista (peso): serve la riga piena
+  // per sapere davvero cosa manca, altrimenti risulterebbero sempre assenti.
+  if (!v.logs_snapshot) {
+    try {
+      const full = await SB.getVendutoFull(vendutoId);
+      if (full) Object.assign(v, full);
+    } catch(e) { toast('Errore: ' + e.message, '#c0392b'); return; }
+  }
+
+  const padre = v.padre_nome || v.padre_esterno || '';
+  const madre = v.madre_nome || v.madre_esterna || '';
+  const nLog = ultimiLogInvio(v).length;
+
+  document.getElementById('invia-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'invia-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0';
+
+  const campo = (label, id, value, ph) => `
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">${label}</label>
+      <input type="text" id="${id}" value="${esc(value)}" placeholder="${esc(ph)}" autocomplete="off" style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-size:16px;font-family:'Inter',sans-serif;outline:none">
+    </div>`;
+
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:600px;box-shadow:0 -10px 40px rgba(0,0,0,0.6);padding-bottom:calc(24px + var(--safe-bottom));max-height:90vh;overflow-y:auto">
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--accent-gold);margin-bottom:6px">📨 ${t('trasf_modal_title')}</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">${t('trasf_modal_sub')} <strong style="color:var(--text-bright)">${esc(v.nome)}</strong></div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)">${t('trasf_email_label')} *</label>
+          <input type="email" id="inv-email" placeholder="cliente@email.com" autocomplete="off" inputmode="email" style="background:var(--bg-forest);border:1px solid var(--border);color:var(--text-bright);border-radius:8px;padding:12px 14px;font-size:16px;font-family:'Inter',sans-serif;outline:none">
+        </div>
+
+        <div style="background:var(--bg-moss);border-radius:10px;padding:14px">
+          <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">${t('trasf_cosa_invii')}</div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <div id="inv-foto-preview" style="width:64px;height:64px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-forest);border:1px dashed var(--border);overflow:hidden">
+              ${v.foto_url ? `<img src="${esc(v.foto_url)}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:22px">📷</span>'}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;color:${v.foto_url ? 'var(--text-bright)' : 'var(--accent-gold)'}">${v.foto_url ? t('trasf_foto_ok') : t('trasf_foto_manca')}</div>
+              <label style="display:inline-block;margin-top:6px;font-size:12px;color:var(--accent-gold);cursor:pointer;text-decoration:underline">
+                ${v.foto_url ? t('trasf_foto_cambia') : t('trasf_foto_aggiungi')}
+                <input type="file" accept="image/*" onchange="previewFotoInvio(this)" style="display:none">
+              </label>
+            </div>
+          </div>
+
+          ${campo(t('gen_padre'), 'inv-padre', padre, t('trasf_gen_ph'))}
+          <div style="height:10px"></div>
+          ${campo(t('gen_madre'), 'inv-madre', madre, t('trasf_gen_ph'))}
+
+          <div style="font-size:12px;color:var(--text-mid);margin-top:14px;line-height:1.6">
+            ${t('trasf_riepilogo').replace('{N}', nLog)}
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.6">
+            ${t('trasf_non_invii')}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeModalEl(document.getElementById('invia-modal'))" style="padding:12px 20px;background:transparent;color:var(--text-mid);border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;cursor:pointer">${t('trasf_annulla')}</button>
+        <button id="btn-conferma-invio" onclick="confermaInvioCliente('${v.id}')" style="padding:12px 24px;background:var(--accent-gold);color:#1a0f00;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer">📨 ${t('trasf_conferma')}</button>
+      </div>
+    </div>`;
+  modal.classList.add('modal-sheet');
+  openModalEl(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModalEl(modal); });
+}
+
+async function previewFotoInvio(input) {
+  if (!input.files || !input.files[0]) return;
+  try {
+    _inviaFotoData = await compressImageToDataUrl(input.files[0]);
+  } catch(e) { toast('Errore: ' + e.message, '#c0392b'); return; }
+  const preview = document.getElementById('inv-foto-preview');
+  if (preview) {
+    preview.innerHTML = `<img src="${_inviaFotoData}" style="width:100%;height:100%;object-fit:cover">`;
+    preview.style.border = 'none';
+  }
+}
+
+// Conteggio locale dell'anteprima: deve corrispondere a ciò che la Edge Function
+// estrae davvero dal logs_snapshot, cioè l'ultima registrazione per ogni tipo.
+function ultimiLogInvio(v) {
+  const perTipo = {};
+  (v.logs_snapshot || []).forEach(l => {
+    if (!l || !l.tipo) return;
+    if (_isNewerLog(l, perTipo[l.tipo])) perTipo[l.tipo] = l;
+  });
+  return Object.values(perTipo);
+}
+
+async function confermaInvioCliente(vendutoId) {
+  const btn = document.getElementById('btn-conferma-invio');
+  if (!btn || btn.disabled) return;
+  const v = _venduti.find(x => x.id === vendutoId);
+  if (!v) return;
+
+  const email = (document.getElementById('inv-email').value || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    toast(t('trasf_err_email'), '#c0392b'); return;
+  }
+
+  const padre = (document.getElementById('inv-padre').value || '').trim();
+  const madre = (document.getElementById('inv-madre').value || '').trim();
+
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ' + t('trasf_invio_corso');
+  try {
+    // Foto e genitori inseriti qui vengono prima SALVATI sulla vendita, non solo
+    // spediti: così restano nella scheda del venduto, nel PDF e in un eventuale
+    // "Annulla vendita", invece di esistere solo dentro l'invito.
+    const patch = {};
+    if (_inviaFotoData) { patch.foto_url = _inviaFotoData; patch.foto_position = v.foto_position || '50% 50%'; }
+    if (padre !== (v.padre_nome || v.padre_esterno || '')) patch.padre_nome = padre || null;
+    if (madre !== (v.madre_nome || v.madre_esterna || '')) patch.madre_nome = madre || null;
+    if (Object.keys(patch).length) {
+      await SB.updateVenduto(vendutoId, patch);
+      Object.assign(v, patch);
+    }
+
+    const session = await getSession();
+    if (!session) throw new Error('Sessione non valida, effettua di nuovo il login.');
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/transfer-snake`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ venduto_id: vendutoId, email })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || t('trasf_err_generico'));
+
+    // La lista inviati non viene ricaricata dal server: si aggiunge la riga a mano
+    // per far comparire subito la pillola "in attesa" senza un giro di rete in più.
+    _trasfInviati.unshift({
+      id: data.id, destinatario_email: email, venduto_id: vendutoId,
+      stato: 'pending', created_at: new Date().toISOString(),
+      expires_at: data.expires_at, responded_at: null
+    });
+
+    closeModalEl(document.getElementById('invia-modal'));
+    toast('📨 ' + t('trasf_inviato'));
+    if (currentPage === 'venduti') renderVenduti();
+    else if (currentPage === 'dettaglioVenduto') renderDettaglioVenduto();
+    applyTrasferimentiUI();
+  } catch(e) {
+    toast('Errore: ' + e.message, '#c0392b');
+    btn.disabled = false; btn.innerHTML = '📨 ' + t('trasf_conferma');
+  }
+}
+
+async function ritiraTrasferimento(trasfId) {
+  if (_trasfInFlight.has(trasfId)) return;
+  const tr = _trasfInviati.find(x => x.id === trasfId);
+  if (!tr) return;
+  if (!confirm(t('trasf_conferma_ritiro').replace('{EMAIL}', tr.destinatario_email))) return;
+
+  _trasfInFlight.add(trasfId);
+  try {
+    await SB.annullaTrasferimento(trasfId);
+    tr.stato = 'cancelled';
+    toast(t('trasf_ritirato'));
+    if (currentPage === 'venduti') renderVenduti();
+    else if (currentPage === 'dettaglioVenduto') renderDettaglioVenduto();
+    applyTrasferimentiUI();
+  } catch(e) {
+    toast('Errore: ' + traduciErroreTrasf(e.message), '#c0392b');
+  } finally {
+    _trasfInFlight.delete(trasfId);
+  }
+}
+
+// Le RPC sollevano codici secchi (NOT_FOUND, FREE_LIMIT, ...) invece di frasi:
+// così il messaggio mostrato all'utente segue la lingua dell'app.
+function traduciErroreTrasf(msg) {
+  const key = {
+    NOT_FOUND:   'trasf_err_non_trovato',
+    NOT_PENDING: 'trasf_err_non_in_attesa',
+    EXPIRED:     'trasf_err_scaduto',
+    FREE_LIMIT:  'trasf_err_limite_free',
+  }[String(msg || '').trim()];
+  return key ? t(key) : msg;
+}
+
+// ═══════════════════════════════════════
+//  PAGINA TRASFERIMENTI (lato cliente)
+// ═══════════════════════════════════════
+// Voce di menu e badge compaiono solo a chi ha effettivamente qualcosa da vedere:
+// stesso approccio della sezione admin in applyPlanUI().
+function applyTrasferimentiUI() {
+  const nPending = _trasfRicevuti.length;
+  const visibile = nPending > 0 || _trasfInviati.length > 0;
+  ['trasf-nav-section', 'trasf-mnav-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visibile ? '' : 'none';
+  });
+  ['nav-trasferimenti-badge', 'mnav-trasferimenti-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = nPending;
+    el.style.display = nPending > 0 ? '' : 'none';
+  });
+}
+
+function renderTrasferimenti() {
+  const ric = _trasfRicevuti;
+  const inv = _trasfInviati.filter(x => x.stato === 'pending' || x.stato === 'accepted' || x.stato === 'rejected');
+
+  let html = `
+  <div class="page-header">
+    <h2>📨 ${t('trasf_page_title')}</h2>
+    <p>${t('trasf_page_sub')}</p>
+  </div>`;
+
+  if (!ric.length && !inv.length) {
+    html += `<div class="empty-state"><div class="empty-icon">📨</div><h3>${t('trasf_empty_title')}</h3><p>${t('trasf_empty_desc')}</p></div>`;
+    document.getElementById('main-content').innerHTML = html;
+    bindTrasferimentiActions();
+    return;
+  }
+
+  if (ric.length) {
+    html += `<div class="card-title" style="margin-bottom:12px">📥 ${t('trasf_in_arrivo')}</div>`;
+    html += '<div class="snakes-grid" style="margin-bottom:24px">' + ric.map(tr => {
+      const p = tr.payload || {};
+      const scad = tr.expires_at ? fmtDate(tr.expires_at.slice(0, 10)) : '—';
+      return `
+      <div class="snake-card" style="cursor:default;border-color:var(--accent-gold)">
+        <div class="snake-card-header">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0">
+            <div style="width:52px;height:52px;border-radius:10px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg-moss)">
+              ${p.foto_url ? `<img src="${esc(p.foto_url)}" style="width:100%;height:100%;object-fit:cover;object-position:${esc(p.foto_position || '50% 50%')}">` : '🐍'}
+            </div>
+            <div style="min-width:0">
+              <div class="snake-name">${esc(p.nome || '—')}</div>
+              <div class="snake-code">${esc(p.icd || '')}</div>
+            </div>
+          </div>
+          ${p.sesso ? `<span class="badge badge-${esc(p.sesso)}">${p.sesso === 'M' ? '♂' : '♀'}</span>` : ''}
+        </div>
+        <div class="snake-info">
+          <div class="snake-info-item"><div class="snake-info-label">${t('serpenti_specie')}</div><div class="snake-info-value">${esc(p.specie || '—')}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('lbl_morfo')}</div><div class="snake-info-value">${esc(p.morfo || '—')}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('trasf_da')}</div><div class="snake-info-value" style="word-break:break-all">${esc(tr.mittente_email || '—')}</div></div>
+          <div class="snake-info-item"><div class="snake-info-label">${t('trasf_scade')}</div><div class="snake-info-value">${scad}</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:10px;line-height:1.6">
+          ${t('trasf_contenuto').replace('{N}', (p.logs || []).length)}
+        </div>
+        <div class="snake-card-actions">
+          <button class="btn btn-green btn-sm trasf-ok-btn" data-id="${tr.id}">✅ ${t('trasf_accetta')}</button>
+          <button class="btn btn-danger btn-sm trasf-no-btn" data-id="${tr.id}">✖️ ${t('trasf_rifiuta')}</button>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  if (inv.length) {
+    html += `<div class="card-title" style="margin-bottom:12px">📤 ${t('trasf_inviati')}</div>`;
+    html += '<div class="card">' + inv.map(tr => {
+      const v = _venduti.find(x => x.id === tr.venduto_id);
+      const etichette = { pending: t('trasf_stato_pending'), accepted: t('trasf_stato_accepted'), rejected: t('trasf_stato_rejected') };
+      const colori = { pending: 'var(--accent-gold)', accepted: 'var(--accent-lime)', rejected: 'var(--accent-red)' };
+      return `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:13px;color:var(--text-bright)">${esc(v ? v.nome : t('trasf_vendita_rimossa'))}</div>
+          <div style="font-size:11px;color:var(--text-dim);word-break:break-all">${esc(tr.destinatario_email)}</div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:${colori[tr.stato]}">${etichette[tr.stato]}</div>
+        ${tr.stato === 'pending' ? `<button class="btn btn-ghost btn-sm trasf-ritira-btn" data-id="${tr.id}" style="color:var(--accent-red);border-color:var(--accent-red)">✖️ ${t('trasf_ritira')}</button>` : ''}
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  document.getElementById('main-content').innerHTML = html;
+  bindTrasferimentiActions();
+}
+
+function bindTrasferimentiActions() {
+  const mainEl = document.getElementById('main-content');
+  if (!mainEl || mainEl.dataset.trasfBound) return;
+  mainEl.dataset.trasfBound = '1';
+  mainEl.addEventListener('click', function(e) {
+    const okBtn = e.target.closest('.trasf-ok-btn');
+    const noBtn = e.target.closest('.trasf-no-btn');
+    const ritBtn = e.target.closest('.trasf-ritira-btn');
+    if (okBtn) accettaTrasferimento(okBtn.dataset.id);
+    if (noBtn) rifiutaTrasferimento(noBtn.dataset.id);
+    if (ritBtn) ritiraTrasferimento(ritBtn.dataset.id);
+  });
+}
+
+async function accettaTrasferimento(trasfId) {
+  if (_trasfInFlight.has(trasfId)) return;
+  const tr = _trasfRicevuti.find(x => x.id === trasfId);
+  if (!tr) return;
+  const nome = (tr.payload && tr.payload.nome) || '';
+  if (!confirm(t('trasf_conferma_accetta').replace('{NOME}', nome))) return;
+
+  _trasfInFlight.add(trasfId);
+  try {
+    const out = await SB.accettaTrasferimento(trasfId);
+    _trasfRicevuti = _trasfRicevuti.filter(x => x.id !== trasfId);
+
+    // Il serpente e i log sono stati creati server-side: ricarica per averli in cache
+    // con gli id veri, invece di ricostruirli a mano dal payload.
+    await loadAll();
+    toast('🐍 ' + t('trasf_accettato'));
+    const nuovoId = out && out.snake_id;
+    if (nuovoId && _snakes.some(s => s.id === nuovoId)) showPage('dettaglio', nuovoId);
+    else showPage('serpenti');
+  } catch(e) {
+    const msg = traduciErroreTrasf(e.message);
+    toast(msg, '#c0392b');
+    if (String(e.message).trim() === 'FREE_LIMIT') showUpgradeModal();
+    // Su errore l'invito resta valido lato server: si ricarica per riallineare la UI.
+    try { _trasfRicevuti = await SB.getTrasferimentiRicevuti(); } catch(_) {}
+    if (currentPage === 'trasferimenti') renderTrasferimenti();
+  } finally {
+    _trasfInFlight.delete(trasfId);
+    applyTrasferimentiUI();
+  }
+}
+
+async function rifiutaTrasferimento(trasfId) {
+  if (_trasfInFlight.has(trasfId)) return;
+  const tr = _trasfRicevuti.find(x => x.id === trasfId);
+  if (!tr) return;
+  const nome = (tr.payload && tr.payload.nome) || '';
+  if (!confirm(t('trasf_conferma_rifiuta').replace('{NOME}', nome))) return;
+
+  _trasfInFlight.add(trasfId);
+  try {
+    await SB.rifiutaTrasferimento(trasfId);
+    _trasfRicevuti = _trasfRicevuti.filter(x => x.id !== trasfId);
+    toast(t('trasf_rifiutato'), '#c0392b');
+    renderTrasferimenti();
+  } catch(e) {
+    toast(traduciErroreTrasf(e.message), '#c0392b');
+  } finally {
+    _trasfInFlight.delete(trasfId);
+    applyTrasferimentiUI();
+  }
 }
 
 // ═══════════════════════════════════════
@@ -3413,6 +3932,18 @@ function getPrivacyContent() {
     </ul>
     <p>Tutti i provider sono conformi al GDPR e, ove applicabile, al Privacy Shield UE-USA.</p>
 
+    <h3>5.1 Trasferimento di un esemplare a un altro utente</h3>
+    <p>Se vendi un esemplare puoi inviarne la scheda all'acquirente tramite la funzione <strong>"Invia al cliente"</strong>. In questo caso:</p>
+    <ul>
+      <li>Inserisci tu l'indirizzo email del cliente. Inviando la richiesta dichiari di essere autorizzato a usare quell'indirizzo per questa comunicazione.</li>
+      <li>A quell'indirizzo viene inviata <strong>una singola email transazionale</strong> (tramite Resend) che segnala la richiesta. Non viene creato alcun account e l'indirizzo non viene usato per altri scopi né per marketing.</li>
+      <li>Vengono trasmessi <strong>solo i dati dell'animale</strong>: scheda anagrafica, foto, genetica, genealogia (come testo) e l'ultima registrazione per ogni tipo di log. <strong>Non</strong> vengono trasmessi prezzo, nome dell'acquirente, note della vendita, le tue note sull'esemplare né quelle sulle singole registrazioni.</li>
+      <li>Al destinatario viene mostrato il tuo indirizzo email, per permettergli di riconoscere da chi arriva la richiesta.</li>
+      <li><strong>Nessun dato viene copiato sull'account del destinatario finché non accetta esplicitamente</strong> la richiesta dal proprio account. Accettazione e rifiuto vengono registrati con data e ora.</li>
+      <li>Le richieste non accettate scadono automaticamente dopo 30 giorni. Puoi ritirare una richiesta in attesa in qualsiasi momento.</li>
+      <li>Una volta accettata, la copia sull'account del destinatario è indipendente dalla tua: resta a lui anche se elimini la tua vendita o il tuo account.</li>
+    </ul>
+
     <h2>6. I Tuoi Diritti (GDPR)</h2>
     <p>Ai sensi del GDPR hai il diritto di:</p>
     <ul>
@@ -3534,7 +4065,17 @@ function getTermsContent() {
     <h3>5.2 Esportazione dei dati</h3>
     <p>Puoi esportare i tuoi dati in formato PDF in qualsiasi momento tramite la funzione integrata nel Servizio. Su richiesta, possiamo fornire un export completo in formato JSON entro 30 giorni.</p>
 
-    <h3>5.3 Proprietà intellettuale di SnakeKeeper</h3>
+    <h3>5.3 Trasferimento di un esemplare a un altro utente</h3>
+    <p>Il Servizio permette di inviare la scheda di un esemplare venduto all'account dell'acquirente. Usando questa funzione:</p>
+    <ul>
+      <li>dichiari di aver effettivamente ceduto l'animale e di essere autorizzato a usare l'indirizzo email del destinatario per questa comunicazione;</li>
+      <li>il trasferimento si perfeziona <strong>solo</strong> con l'accettazione esplicita del destinatario dal proprio account;</li>
+      <li>una volta accettato, il trasferimento è <strong>definitivo</strong>: la copia sull'account del destinatario è indipendente e non può essere revocata da te. Finché la richiesta è ancora in attesa puoi ritirarla in qualsiasi momento;</li>
+      <li>la vendita resta registrata nel tuo archivio "Venduti", prezzo compreso;</li>
+      <li>è vietato usare questa funzione per inviare comunicazioni non richieste. L'abuso comporta la sospensione dell'account.</li>
+    </ul>
+
+    <h3>5.4 Proprietà intellettuale di SnakeKeeper</h3>
     <p>Il codice, il design, i loghi e tutti gli elementi del Servizio sono proprietà di SnakeKeeper e protetti dalle leggi sul copyright. Non puoi copiare, modificare o distribuire il Servizio senza autorizzazione scritta.</p>
 
     <h2>6. Uso Accettabile</h2>
@@ -3690,6 +4231,18 @@ function getPrivacyContentEN() {
     </ul>
     <p>All providers are GDPR-compliant and, where applicable, comply with the relevant EU-US data transfer frameworks.</p>
 
+    <h3>5.1 Transferring an animal to another user</h3>
+    <p>When you sell an animal you can send its record to the buyer using the <strong>"Send to buyer"</strong> feature. In that case:</p>
+    <ul>
+      <li>You enter the buyer's email address yourself. By sending the request you confirm you are entitled to use that address for this communication.</li>
+      <li><strong>A single transactional email</strong> (via Resend) is sent to that address to notify them of the request. No account is created, and the address is not used for any other purpose or for marketing.</li>
+      <li>Only <strong>the animal's data</strong> is transferred: profile, photo, genetics, genealogy (as text) and the latest entry for each log type. Price, buyer name, sale notes, your notes on the animal and on individual log entries are <strong>not</strong> transferred.</li>
+      <li>Your email address is shown to the recipient, so they can recognise who the request comes from.</li>
+      <li><strong>No data is copied to the recipient's account until they explicitly accept</strong> the request from their own account. Acceptance and refusal are recorded with a timestamp.</li>
+      <li>Requests that are not accepted expire automatically after 30 days. You can withdraw a pending request at any time.</li>
+      <li>Once accepted, the copy on the recipient's account is independent of yours: it remains theirs even if you delete your sale record or your account.</li>
+    </ul>
+
     <h2>6. Your Rights (GDPR)</h2>
     <p>Under the GDPR, you have the right to:</p>
     <ul>
@@ -3811,7 +4364,17 @@ function getTermsContentEN() {
     <h3>5.2 Data export</h3>
     <p>You can export your data in PDF format at any time using the feature built into the Service. Upon request, we can provide a complete export in JSON format within 30 days.</p>
 
-    <h3>5.3 SnakeKeeper's intellectual property</h3>
+    <h3>5.3 Transferring an animal to another user</h3>
+    <p>The Service lets you send the record of a sold animal to the buyer's account. By using this feature:</p>
+    <ul>
+      <li>you confirm that you have actually sold the animal and that you are entitled to use the recipient's email address for this communication;</li>
+      <li>the transfer is completed <strong>only</strong> once the recipient explicitly accepts it from their own account;</li>
+      <li>once accepted, the transfer is <strong>final</strong>: the copy on the recipient's account is independent and cannot be revoked by you. While a request is still pending you may withdraw it at any time;</li>
+      <li>the sale remains recorded in your "Sold" archive, price included;</li>
+      <li>using this feature to send unsolicited messages is prohibited. Abuse will result in account suspension.</li>
+    </ul>
+
+    <h3>5.4 SnakeKeeper's intellectual property</h3>
     <p>The code, design, logos, and all elements of the Service are the property of SnakeKeeper and are protected by copyright law. You may not copy, modify, or distribute the Service without written authorisation.</p>
 
     <h2>6. Acceptable Use</h2>
@@ -5552,6 +6115,35 @@ const I18N = {
     trial_countdown_days_left: 'giorni', trial_countdown_day_left: 'giorno',
     trial_countdown_desc_3: 'Dopo la scadenza il tuo account tornerà al piano Free.',
     trial_countdown_cta: 'Passa a Pro ora', trial_countdown_dismiss: 'Ho capito',
+    trasf_stato_pending: 'IN ATTESA', trasf_stato_accepted: 'ACCETTATO', trasf_stato_rejected: 'RIFIUTATO',
+    trasf_invia: 'Invia al cliente', trasf_ritira: 'Ritira invito',
+    trasf_modal_title: 'Invia al cliente', trasf_modal_sub: 'Stai inviando la scheda di',
+    trasf_email_label: 'Email del cliente', trasf_cosa_invii: 'Cosa riceverà il cliente',
+    trasf_foto_ok: 'Foto inclusa nell\'invio', trasf_foto_manca: 'Nessuna foto salvata per questa vendita',
+    trasf_foto_cambia: 'Cambia foto', trasf_foto_aggiungi: 'Aggiungi una foto',
+    trasf_gen_ph: 'Nome del genitore',
+    trasf_riepilogo: 'Scheda completa (specie, morfo, sesso, nascita, peso, provenienza, ICD, genetica), foto, genealogia e le ultime {N} registrazioni del registro.',
+    trasf_non_invii: 'Restano tuoi e non vengono inviati: prezzo, nome dell\'acquirente, note della vendita, le tue note sul serpente e quelle sulle singole registrazioni.',
+    trasf_annulla: 'Annulla', trasf_conferma: 'Invia richiesta', trasf_invio_corso: 'Invio…',
+    trasf_inviato: 'Richiesta inviata al cliente!', trasf_err_email: 'Inserisci un indirizzo email valido',
+    trasf_err_generico: 'Invio non riuscito',
+    trasf_conferma_ritiro: 'Ritirare l\'invito inviato a {EMAIL}?\n\nIl cliente non potrà più accettarlo. Potrai inviarne uno nuovo quando vuoi.',
+    trasf_ritirato: 'Invito ritirato',
+    trasf_err_non_trovato: 'Richiesta non trovata',
+    trasf_err_non_in_attesa: 'Questa richiesta non è più in attesa',
+    trasf_err_scaduto: 'Questa richiesta è scaduta',
+    trasf_err_limite_free: 'Hai raggiunto il limite di 3 serpenti del piano Free. La richiesta resta valida: passa a Pro o libera un posto, poi accettala.',
+    trasf_err_gia_accettato: 'Il cliente ha già accettato il trasferimento: non puoi più annullare questa vendita.',
+    trasf_page_title: 'Trasferimenti', trasf_page_sub: 'Serpenti ricevuti dagli allevatori e richieste che hai inviato',
+    trasf_empty_title: 'Nessun trasferimento', trasf_empty_desc: 'Qui compaiono i serpenti che un allevatore ti invia dopo un acquisto.',
+    trasf_in_arrivo: 'In arrivo per te', trasf_inviati: 'Richieste inviate',
+    trasf_da: 'Da', trasf_scade: 'Scade il',
+    trasf_contenuto: 'Include scheda completa, foto, genealogia e {N} registrazioni recenti.',
+    trasf_accetta: 'Accetta', trasf_rifiuta: 'Rifiuta',
+    trasf_vendita_rimossa: 'Vendita rimossa',
+    trasf_conferma_accetta: 'Aggiungere "{NOME}" ai tuoi serpenti?\n\nAccettando, la scheda e le registrazioni inviate dall\'allevatore vengono copiate sul tuo account.',
+    trasf_conferma_rifiuta: 'Rifiutare "{NOME}"?\n\nLa richiesta viene chiusa e nessun dato verrà copiato sul tuo account.',
+    trasf_accettato: 'Serpente aggiunto alla tua collezione!', trasf_rifiutato: 'Richiesta rifiutata',
   },
   en: {
     dashboard_welcome: 'Welcome to your dashboard',
@@ -5685,6 +6277,35 @@ const I18N = {
     trial_countdown_days_left: 'days', trial_countdown_day_left: 'day',
     trial_countdown_desc_3: 'After it ends your account will return to the Free plan.',
     trial_countdown_cta: 'Upgrade to Pro now', trial_countdown_dismiss: 'Got it',
+    trasf_stato_pending: 'PENDING', trasf_stato_accepted: 'ACCEPTED', trasf_stato_rejected: 'DECLINED',
+    trasf_invia: 'Send to buyer', trasf_ritira: 'Withdraw',
+    trasf_modal_title: 'Send to buyer', trasf_modal_sub: 'You are sending the record for',
+    trasf_email_label: 'Buyer\'s email', trasf_cosa_invii: 'What the buyer will receive',
+    trasf_foto_ok: 'Photo included', trasf_foto_manca: 'No photo saved for this sale',
+    trasf_foto_cambia: 'Change photo', trasf_foto_aggiungi: 'Add a photo',
+    trasf_gen_ph: 'Parent name',
+    trasf_riepilogo: 'Full record (species, morph, sex, birth, weight, origin, ICD, genetics), photo, genealogy and the latest {N} log entries.',
+    trasf_non_invii: 'Kept private and not sent: price, buyer name, sale notes, your notes on the snake and on individual log entries.',
+    trasf_annulla: 'Cancel', trasf_conferma: 'Send request', trasf_invio_corso: 'Sending…',
+    trasf_inviato: 'Request sent to the buyer!', trasf_err_email: 'Enter a valid email address',
+    trasf_err_generico: 'Sending failed',
+    trasf_conferma_ritiro: 'Withdraw the request sent to {EMAIL}?\n\nThe buyer will no longer be able to accept it. You can send a new one at any time.',
+    trasf_ritirato: 'Request withdrawn',
+    trasf_err_non_trovato: 'Request not found',
+    trasf_err_non_in_attesa: 'This request is no longer pending',
+    trasf_err_scaduto: 'This request has expired',
+    trasf_err_limite_free: 'You have reached the Free plan limit of 3 snakes. The request stays valid: upgrade to Pro or free up a slot, then accept it.',
+    trasf_err_gia_accettato: 'The buyer has already accepted the transfer, so this sale can no longer be undone.',
+    trasf_page_title: 'Transfers', trasf_page_sub: 'Snakes sent to you by breeders, and requests you have sent',
+    trasf_empty_title: 'No transfers', trasf_empty_desc: 'Snakes a breeder sends you after a purchase will show up here.',
+    trasf_in_arrivo: 'Waiting for you', trasf_inviati: 'Requests you sent',
+    trasf_da: 'From', trasf_scade: 'Expires on',
+    trasf_contenuto: 'Includes the full record, photo, genealogy and {N} recent log entries.',
+    trasf_accetta: 'Accept', trasf_rifiuta: 'Decline',
+    trasf_vendita_rimossa: 'Sale removed',
+    trasf_conferma_accetta: 'Add "{NOME}" to your snakes?\n\nBy accepting, the record and log entries sent by the breeder are copied to your account.',
+    trasf_conferma_rifiuta: 'Decline "{NOME}"?\n\nThe request will be closed and no data will be copied to your account.',
+    trasf_accettato: 'Snake added to your collection!', trasf_rifiutato: 'Request declined',
   }
 };
 
