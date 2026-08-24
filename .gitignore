@@ -1,3 +1,8 @@
 # Graphify: percorsi assoluti specifici di questo PC, non portabili tra macchine
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+
+# Graphify: snapshot datati lasciati da ogni ricostruzione (~400 KB l'uno).
+# Sono copie intermedie gia' superate dal grafo in graphify-out/, che e' quello
+# canonico e versionato: tenerle significherebbe far crescere il repo a ogni run.
+graphify-out/20??-??-??/
