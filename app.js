@@ -5474,6 +5474,7 @@ function renderAdminFiera(eventi, plans) {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="copyFieraLink('${esc(link)}')">📋 Copia link</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="showFieraQr('${esc(link)}','${esc(ev.nome)}')">📱 QR</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px;color:var(--accent-gold)" onclick="printVolantinoFiera('${ev.id}')">🖨️ Volantino</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="editFieraEvent('${ev.id}')">✏️ Modifica</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="showFieraHistory('${ev.id}','${esc(ev.nome)}')">🕓 Cronologia</button>
           <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="toggleFieraAttivo('${ev.id}', ${ev.attivo})">${ev.attivo ? '⏸️ Disattiva' : '▶️ Riattiva'}</button>
@@ -5616,6 +5617,260 @@ function showFieraQr(link, nome) {
     </div>`;
   overlay.addEventListener('click', () => overlay.remove());
   document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════
+//  ADMIN FIERA — VOLANTINO A5 STAMPABILE
+// ═══════════════════════════════════════
+// Volantino da banchetto: A5 fronte-retro nello stile della landing, col QR
+// dell'evento in basso sul fronte. Si genera in una finestra a parte perché
+// l'unico @media print del sito (style.css) nasconde ogni figlio di <body> e
+// mostra solo #print-area: stampare index.html darebbe una pagina bianca.
+//
+// Tre dettagli che sembrano cosmetici e non lo sono:
+//  - print-color-adjust:exact, senza il quale il browser scarta il fondo scuro
+//    in stampa e il volantino esce bianco con testo chiaro, cioè illeggibile;
+//  - QR a 1000px invece dei 260px usati altrove: a 45mm quello piccolo starebbe
+//    sotto i 150 dpi e in stampa diventa inaffidabile da inquadrare;
+//  - nessun print() automatico, perché il QR è un'immagine remota che potrebbe
+//    non essere ancora arrivata (stessa scelta di printLabel).
+function printVolantinoFiera(id) {
+  const ev = _fieraEventiCache.find(e => e.id === id);
+  if (!ev) return;
+
+  if (!ev.attivo && !confirm(`"${ev.nome}" è disattivato: il codice ${ev.codice_promo} in questo momento non funziona.\n\nStampare comunque il volantino?`)) return;
+
+  const baseUrl = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+  const link = `${baseUrl}/fiera.html?c=${encodeURIComponent(ev.codice_promo)}`;
+  const qrGrande = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(link)}&margin=0&color=0d1f0f&bgcolor=ffffff`;
+  const qrPiccolo = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(link)}&margin=0&color=0d1f0f&bgcolor=ffffff`;
+
+  // Luogo e date sono opzionali: la riga si costruisce solo con quello che c'è,
+  // altrimenti restano trattini e separatori appesi nel vuoto.
+  const periodo = (ev.data_inizio && ev.data_fine) ? `${fmtDate(ev.data_inizio)} – ${fmtDate(ev.data_fine)}`
+                : ev.data_inizio ? `dal ${fmtDate(ev.data_inizio)}`
+                : ev.data_fine ? `fino al ${fmtDate(ev.data_fine)}` : '';
+  const sottoTitoloEvento = [ev.luogo, periodo].filter(Boolean).map(esc).join(' · ');
+
+  const FEATURES = [
+    ['🐍', 'Schede complete', 'Specie, morfo, sesso, provenienza, foto e tutto quello che serve per ogni esemplare.'],
+    ['🥩', 'Registro pasti', 'Traccia ogni pasto con tipo di preda, peso e note. Ricevi alert se un serpente non mangia.'],
+    ['⚖️', 'Monitoraggio peso', 'Curva di crescita nel tempo con grafico. Tieni sotto controllo la salute di ogni esemplare.'],
+    ['🦎', 'Registro mute', 'Traccia ogni ecdisi con data e esito. Identifica problemi prima che diventino seri.'],
+    ['📄', 'Export PDF', 'Genera una scheda professionale per ogni serpente da condividere col veterinario.'],
+    ['💰', 'Gestione vendite', 'Registra ogni vendita con acquirente e prezzo, e passa la scheda completa al cliente.'],
+  ];
+  const PASSI = [
+    ['Registrati', 'Inquadra il QR e crea il tuo account. Nessuna carta richiesta.'],
+    ['Aggiungi i tuoi serpenti', 'Inserisci le schede dei tuoi esemplari con foto e dati.'],
+    ['Inizia a tracciare', 'Registra pasti, mute, pesi e tutto il resto in pochi tap.'],
+  ];
+
+  const html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Volantino — ${esc(ev.nome)}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #4a4a4a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+@page { size: A5; margin: 0; }
+
+.facciata {
+  width: 148mm; height: 210mm;
+  background: #060d07; color: #c8d5c9;
+  font-family: 'Inter', Arial, sans-serif;
+  padding: 9mm 9mm;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+/* Alone verde/oro della hero, riprodotto come due radiali morbide */
+.facciata::before { content:''; position:absolute; top:-30mm; left:50%; transform:translateX(-50%);
+  width:150mm; height:90mm; background:radial-gradient(ellipse,rgba(77,222,128,0.10) 0%,transparent 70%); pointer-events:none; }
+.facciata::after { content:''; position:absolute; bottom:-20mm; left:-30mm;
+  width:120mm; height:80mm; background:radial-gradient(ellipse,rgba(201,168,76,0.08) 0%,transparent 70%); pointer-events:none; }
+.facciata > * { position: relative; z-index: 1; }
+
+/* ── Lockup ── */
+.marchio { text-align:center; }
+.marchio-nome { font-family:'Cinzel',serif; font-weight:700; font-size:19pt; color:#c9a84c; letter-spacing:2.5px; }
+.marchio-sub { font-size:6.5pt; color:#6b8f6e; letter-spacing:2.5px; text-transform:uppercase; margin-top:1.5mm; }
+.filetto { height:1mm; width:34mm; margin:3.5mm auto 0; border-radius:1mm;
+  background:linear-gradient(90deg,#4ade80,#c9a84c); }
+
+/* ── Fronte ── */
+.centro { flex:1; display:flex; flex-direction:column; justify-content:center; text-align:center; }
+.titolo { font-family:'Cinzel',serif; font-size:25pt; line-height:1.15; letter-spacing:-0.01em;
+  background:linear-gradient(135deg,#4ade80,#c9a84c); -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:#c9a84c; }
+.sottotitolo { font-size:9.5pt; line-height:1.65; color:#a0b5a1; margin-top:5mm; padding:0 4mm; }
+
+.offerta { margin-top:7mm; border:0.4mm solid rgba(201,168,76,0.5); background:rgba(20,40,22,0.8);
+  border-radius:5mm; padding:5mm 4mm; }
+.offerta-nome { font-family:'Cinzel',serif; font-size:13pt; color:#fff; }
+.offerta-dove { font-size:8pt; color:#6b8f6e; margin-top:1.5mm; }
+.offerta-premio { font-size:14pt; font-weight:600; color:#4ade80; margin-top:3.5mm; line-height:1.3; }
+
+/* ── QR ── */
+.qr-zona { text-align:center; margin-top:auto; }
+.qr-invito { font-size:8pt; color:#6b8f6e; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3mm; }
+.qr-cornice { width:47mm; height:47mm; margin:0 auto; background:#fff; border-radius:3mm; padding:2.5mm; }
+.qr-cornice img { display:block; width:100%; height:100%; }
+.qr-codice { margin-top:3.5mm; font-family:'Courier New',monospace; font-size:12pt; font-weight:700;
+  color:#c9a84c; letter-spacing:3px; }
+.qr-manuale { font-size:6.5pt; color:#4a6b4d; margin-top:1.5mm; }
+.piede { text-align:center; margin-top:5mm; font-size:8pt; color:#6b8f6e; }
+.piede strong { color:#c8d5c9; font-weight:600; }
+
+/* ── Retro ── */
+.occhiello { font-size:7pt; color:#4ade80; text-transform:uppercase; letter-spacing:3px; text-align:center; margin-top:4mm; }
+.titolo-sez { font-family:'Cinzel',serif; font-size:14pt; color:#fff; text-align:center; margin-top:2mm; }
+/* gap e padding qui sotto sono volutamente spaiati (2.4 e 2.6 invece di 2.8 e 3):
+   arrotondandoli il retro cresce di 3.2mm e la riga di chiusura scende a 5.8mm dal
+   bordo, dentro il margine che molte stampanti non stampano. Il fronte non ha il
+   problema perché il QR è ancorato con margin-top:auto e assorbe lo scarto. */
+.griglia { display:grid; grid-template-columns:1fr 1fr; gap:2.4mm; margin-top:4mm; }
+.funz { background:rgba(13,31,15,0.6); border:0.3mm solid rgba(45,80,48,0.4); border-radius:3mm; padding:2.6mm; }
+.funz-ico { font-size:11pt; }
+.funz-nome { font-size:8.5pt; font-weight:600; color:#c8d5c9; margin-top:1mm; }
+.funz-desc { font-size:6.8pt; line-height:1.4; color:#6b8f6e; margin-top:1mm; }
+.passo { display:flex; gap:3mm; align-items:flex-start; margin-top:2.8mm; }
+.passo-num { flex:0 0 6.5mm; height:6.5mm; border-radius:50%; background:linear-gradient(135deg,#4ade80,#2d9b4a);
+  color:#060d07; font-family:'Cinzel',serif; font-weight:700; font-size:8.5pt;
+  display:flex; align-items:center; justify-content:center; }
+.passo-testo-nome { font-size:8.5pt; font-weight:600; color:#c8d5c9; }
+.passo-testo-desc { font-size:7pt; line-height:1.45; color:#6b8f6e; margin-top:0.5mm; }
+.rassicura { display:flex; justify-content:center; gap:5mm; margin-top:4mm;
+  border-top:0.3mm solid rgba(45,80,48,0.4); padding-top:3mm; font-size:7pt; color:#6b8f6e; }
+.chiusura { margin-top:auto; display:flex; align-items:center; gap:4mm;
+  border-top:0.3mm solid rgba(45,80,48,0.4); padding-top:3.5mm; }
+.chiusura-qr { flex:0 0 18mm; height:18mm; background:#fff; border-radius:2mm; padding:1.2mm; }
+.chiusura-qr img { display:block; width:100%; height:100%; }
+.chiusura-sito { font-family:'Cinzel',serif; font-size:12pt; color:#c9a84c; }
+.chiusura-riga { font-size:7.5pt; color:#6b8f6e; margin-top:1.5mm; line-height:1.6; }
+
+/* ── Barra di servizio, solo a schermo ── */
+.no-print { position:sticky; top:0; z-index:10; background:#1a3320; color:#e8f5e0;
+  padding:12px 16px; font-family:'Inter',Arial,sans-serif; font-size:13px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.no-print button { padding:8px 16px; border:none; border-radius:8px; cursor:pointer;
+  font-family:'Inter',Arial,sans-serif; font-size:13px; font-weight:600; }
+.no-print .stampa { background:#c9a84c; color:#1a0f00; }
+.no-print .chiudi { background:transparent; color:#a8c8a0; border:1px solid #2d5030; }
+.no-print .nota { font-size:11px; color:#a8c8a0; line-height:1.5; flex:1 1 240px; min-width:0; }
+
+@media screen { .facciata { margin:16px auto; box-shadow:0 6px 30px rgba(0,0,0,0.6); } }
+@media print {
+  .no-print { display:none !important; }
+  html, body { background:#fff; }
+  .facciata { margin:0; box-shadow:none; }
+  /* Solo TRA le due facciate: un page-break dopo l'ultima creerebbe una terza pagina vuota */
+  .facciata + .facciata { page-break-before: always; }
+}
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="stampa" onclick="window.print()">🖨️ Stampa</button>
+  <button class="chiudi" onclick="window.close()">✕ Chiudi</button>
+  <div class="nota">
+    Formato A5 fronte-retro. Per il file da portare in tipografia: <strong>Stampa → Salva come PDF</strong>.<br>
+    Il fondo scuro consuma parecchio inchiostro: in stampa casalinga conviene provarne prima una copia.
+  </div>
+</div>
+
+<!-- ═══════════ FRONTE ═══════════ -->
+<div class="facciata">
+  <div class="marchio">
+    <div class="marchio-nome">🐍 SNAKEKEEPER</div>
+    <div class="marchio-sub">Gestionale Allevamento</div>
+    <div class="filetto"></div>
+  </div>
+
+  <div class="centro">
+    <div class="titolo">Gestisci il tuo<br>allevamento<br>come un professionista</div>
+    <div class="sottotitolo">
+      Schede dettagliate, registro pasti, monitoraggio mute e peso.<br>
+      Tutto il tuo allevamento in un unico posto.
+    </div>
+
+    <div class="offerta">
+      <div class="offerta-nome">🎪 ${esc(ev.nome)}</div>
+      ${sottoTitoloEvento ? `<div class="offerta-dove">${sottoTitoloEvento}</div>` : ''}
+      <div class="offerta-premio">${ev.durata_trial_giorni} giorni di<br>SnakeKeeper Pro gratis</div>
+    </div>
+  </div>
+
+  <div class="qr-zona">
+    <div class="qr-invito">Inquadra con la fotocamera</div>
+    <div class="qr-cornice"><img src="${qrGrande}" alt="QR"></div>
+    <div class="qr-codice">${esc(ev.codice_promo)}</div>
+    <div class="qr-manuale">oppure inserisci il codice a mano su snakekeeper.it/fiera.html</div>
+    <div class="piede"><strong>snakekeeper.it</strong> · Nessuna carta di credito richiesta</div>
+  </div>
+</div>
+
+<!-- ═══════════ RETRO ═══════════ -->
+<div class="facciata">
+  <div class="marchio">
+    <div class="marchio-nome">🐍 SNAKEKEEPER</div>
+    <div class="filetto"></div>
+  </div>
+
+  <div class="occhiello">Funzionalità</div>
+  <div class="titolo-sez">Tutto quello che ti serve</div>
+
+  <div class="griglia">
+    ${FEATURES.map(([ico, nome, desc]) => `
+    <div class="funz">
+      <div class="funz-ico">${ico}</div>
+      <div class="funz-nome">${nome}</div>
+      <div class="funz-desc">${desc}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="occhiello" style="margin-top:5mm">Come funziona</div>
+  <div class="titolo-sez">Inizia in 3 minuti</div>
+  <div style="margin-top:3mm">
+    ${PASSI.map(([nome, desc], i) => `
+    <div class="passo">
+      <div class="passo-num">${i + 1}</div>
+      <div>
+        <div class="passo-testo-nome">${nome}</div>
+        <div class="passo-testo-desc">${desc}</div>
+      </div>
+    </div>`).join('')}
+  </div>
+
+  <div class="rassicura">
+    <span>🔒 Conforme al GDPR</span>
+    <span>📱 Funziona offline</span>
+    <span>↩️ Rimborso 14 giorni</span>
+  </div>
+
+  <div class="chiusura">
+    <div class="chiusura-qr"><img src="${qrPiccolo}" alt="QR"></div>
+    <div>
+      <div class="chiusura-sito">snakekeeper.it</div>
+      <div class="chiusura-riga">
+        Codice fiera: <strong style="color:#c9a84c">${esc(ev.codice_promo)}</strong><br>
+        snakekeeper.it@gmail.com
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=760,height=980');
+  // printLabel non fa questo controllo e con i popup bloccati esplode in silenzio.
+  if (!win) { toast(t('pdf_no_popup'), '#c0392b'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 // ═══════════════════════════════════════
