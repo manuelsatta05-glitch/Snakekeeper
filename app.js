@@ -758,11 +758,31 @@ function renderDashboard() {
   ${_dataLoadFailed ? renderLoadErrorBanner() : ""}
   <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
     ${[
-      ["🐍", _dataLoadFailed ? "—" : _snakes.length, t("dashboard_totale"), "var(--accent-gold)"],
+      [
+        "🐍",
+        _dataLoadFailed ? "—" : _snakes.length,
+        t("dashboard_totale"),
+        "var(--accent-gold)",
+      ],
       ["♂️", _dataLoadFailed ? "—" : totM, t("dashboard_maschi"), "#5b9bd5"],
-      ["♀️", _dataLoadFailed ? "—" : totF, t("dashboard_femmine"), "var(--accent-pink)"],
-      ["🥩", _dataLoadFailed ? "—" : foodMonth, t("dashboard_pasti_mese"), "var(--accent-lime)"],
-      ["🥚", _dataLoadFailed ? "—" : eggsTotal, t("dashboard_deposizioni"), "var(--accent-pink)"],
+      [
+        "♀️",
+        _dataLoadFailed ? "—" : totF,
+        t("dashboard_femmine"),
+        "var(--accent-pink)",
+      ],
+      [
+        "🥩",
+        _dataLoadFailed ? "—" : foodMonth,
+        t("dashboard_pasti_mese"),
+        "var(--accent-lime)",
+      ],
+      [
+        "🥚",
+        _dataLoadFailed ? "—" : eggsTotal,
+        t("dashboard_deposizioni"),
+        "var(--accent-pink)",
+      ],
     ]
       .map(
         ([ico, val, lab, col]) => `
@@ -863,7 +883,7 @@ function renderSerpenti() {
         <div class="snake-card-header">
           <div style="display:flex;align-items:center;gap:10px">
             ${s.foto_url ? `<img src="${esc(s.foto_url)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;object-position:${esc(s.foto_position || "50% 50%")};flex-shrink:0;cursor:zoom-in" onclick="event.stopPropagation();showPhotoLightbox('${esc(s.foto_url)}','${esc(s.nome)}')">` : ""}
-            <div><div class="snake-name">${esc(s.nome)}</div><div class="snake-code">${s.icd}</div></div>
+            <div><div class="snake-name">${esc(s.nome)}</div><div class="snake-code">${esc(s.icd)}</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:7px">
             ${locked ? `<span title="${t("serpenti_locked_tooltip")}" style="font-size:14px">🔒</span>` : ""}
@@ -1105,7 +1125,7 @@ function renderDettaglio() {
         ${snake.sesso === "F" ? `<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">${t("dashboard_deposizioni")}</div></div>` : ""}
         <div class="stat"><div class="stat-val">${mutaLogs.length}</div><div class="stat-lab">${t("det_mute")}</div></div>
       </div>
-      <div class="sdh-icd">${snake.icd}</div>
+      <div class="sdh-icd">${esc(snake.icd)}</div>
     </div>
   </div>
 
@@ -2726,7 +2746,7 @@ function renderVenduti() {
         <div class="snake-card-header">
           <div>
             <div class="snake-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${esc(v.nome)} <span style="font-size:11px;background:rgba(201,168,76,0.2);color:var(--accent-gold);padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif;font-weight:600">${t("venduti_badge")}</span>${trasferimentoPill(v.id)}</div>
-            <div class="snake-code">${v.icd}</div>
+            <div class="snake-code">${esc(v.icd)}</div>
           </div>
           <span class="badge badge-${esc(v.sesso)}">${v.sesso === "M" ? "♂" : "♀"}</span>
         </div>
@@ -2989,7 +3009,7 @@ function renderDettaglioVenduto() {
         ${v.sesso === "F" ? `<div class="stat"><div class="stat-val">${eggsLogs.length}</div><div class="stat-lab">${t("dashboard_deposizioni")}</div></div>` : ""}
         ${giorniAllevamento !== null ? `<div class="stat"><div class="stat-val">${giorniAllevamento}</div><div class="stat-lab">${t("dv_giorni")}</div></div>` : ""}
       </div>
-      <div class="sdh-icd">${v.icd}</div>
+      <div class="sdh-icd">${esc(v.icd)}</div>
     </div>
   </div>
 
@@ -3790,7 +3810,7 @@ async function printResoconto(vendutoId) {
           <span class="sesso-badge sesso-${esc(v.sesso)}">${v.sesso === "M" ? "♂ " + t("aggiungi_maschio") : "♀ " + t("aggiungi_femmina")}</span>
         </div>
         <div class="snake-specie">${esc(v.specie || "")}${v.morfo ? " · " + esc(v.morfo) : ""}</div>
-        <div class="snake-icd">ICD: ${v.icd}</div>
+        <div class="snake-icd">ICD: ${esc(v.icd)}</div>
       </div>
       <img src="${qrUrl}" width="80" height="80" style="border:1px solid #ddd;border-radius:2mm" />
     </div>
@@ -3919,7 +3939,7 @@ async function printResoconto(vendutoId) {
   <!-- FOOTER -->
   <div class="doc-footer">
     <span>SnakeKeeper — ${t("pdf_gestionale_sub")}</span>
-    <span>ICD: ${v.icd} · ${t("pdf_doc_generato")} ${new Date().toLocaleDateString(dateLocale)}</span>
+    <span>ICD: ${esc(v.icd)} · ${t("pdf_doc_generato")} ${new Date().toLocaleDateString(dateLocale)}</span>
   </div>
 
 </div>
@@ -4213,7 +4233,7 @@ ${
 
 <div class="footer">
   <div>SnakeKeeper — ${t("pdf_gestionale_sub")}<br>snakekeeper.it</div>
-  <div style="text-align:right">ICD: ${snake.icd}<br>${t("pdf_generato_footer")} ${today}</div>
+  <div style="text-align:right">ICD: ${esc(snake.icd)}<br>${t("pdf_generato_footer")} ${today}</div>
 </div>
 </body></html>`);
   win.document.close();
@@ -4380,7 +4400,7 @@ function printLabel(id) {
       <div class="col-qr-label">${t("pdf_scansiona_apri")}</div>
       <div class="qr-border">
         <img src="${qrLargeUrl}" alt="QR Code" />
-        <div class="qr-icd">${snake.icd}</div>
+        <div class="qr-icd">${esc(snake.icd)}</div>
       </div>
       <div class="qr-hint">${t("pdf_inquadra_camera")}</div>
     </div>
@@ -4404,7 +4424,7 @@ function printLabel(id) {
         ${snake.specie ? `<div class="dati-field"><span class="lbl">${t("lbl_specie")}</span><span class="val" style="font-size:9pt;font-style:italic">${esc(snake.specie)}</span></div>` : ""}
       </div>
       <div class="icd-box">
-        <div><div class="lbl">${t("lbl_icd")}</div><div class="val">${snake.icd}</div></div>
+        <div><div class="lbl">${t("lbl_icd")}</div><div class="val">${esc(snake.icd)}</div></div>
       </div>
     </div>
   </div>
@@ -4431,7 +4451,7 @@ function printLabel(id) {
           ${snake.provenienza ? `<div class="teca-field"><span class="lbl">${t("lbl_provenienza")}</span><span class="val">${esc(snake.provenienza)}</span></div>` : ""}
         </div>
         <div>
-          <div class="teca-icd">ICD: ${snake.icd}</div>
+          <div class="teca-icd">ICD: ${esc(snake.icd)}</div>
           <div class="teca-scan">📷 ${t("pdf_scansiona_qr")}</div>
         </div>
       </div>
@@ -6432,7 +6452,7 @@ function applyPlanUI() {
       for_life: "var(--accent-lime)",
     };
     userEl.innerHTML = `
-      <div style="font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${_currentUser.email || ""}</div>
+      <div style="font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${esc(_currentUser.email || "")}</div>
       <div style="font-size:10px;color:${planColors[_userPlan] || "var(--text-dim)"};margin-top:2px;font-weight:600">${planLabels[_userPlan] || "Free"}</div>
     `;
   }
