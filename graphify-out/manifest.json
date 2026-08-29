@@ -1,211 +1,211 @@
 {
   ".claude/settings.json": {
     "mtime": 1786659314.3443754,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "2c24fc9ab1b4d01fe96cbc1d604a4ae3",
     "semantic_hash": "2c24fc9ab1b4d01fe96cbc1d604a4ae3"
   },
   "manifest.json": {
     "mtime": 1785965247.685394,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "8d679d010e837714c3e930838eead0a6",
     "semantic_hash": "8d679d010e837714c3e930838eead0a6"
   },
   "sw.js": {
     "mtime": 1787996597.7603464,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "731ea14a783dda661f6df3b1b4937956",
     "semantic_hash": ""
   },
   ".claude/CLAUDE.md": {
     "mtime": 1786659244.427446,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "c232166e6492ba1ed955030b16979b05",
     "semantic_hash": "c232166e6492ba1ed955030b16979b05"
   },
   ".claude/skills/graphify/SKILL.md": {
     "mtime": 1786659244.4249396,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "3953c31b4ef6d89d3b1cb43f0110817d",
     "semantic_hash": "3953c31b4ef6d89d3b1cb43f0110817d"
   },
   ".claude/skills/graphify/references/add-watch.md": {
     "mtime": 1786659228.0928733,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "d59d027fe449f06aa03905a01184e779",
     "semantic_hash": "d59d027fe449f06aa03905a01184e779"
   },
   ".claude/skills/graphify/references/exports.md": {
     "mtime": 1786659228.0928733,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "9da2a2152e60a22f07f05fed5158f287",
     "semantic_hash": "9da2a2152e60a22f07f05fed5158f287"
   },
   ".claude/skills/graphify/references/extraction-spec.md": {
     "mtime": 1786659228.0948362,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "42fef56a01698118f7fd722acdadea34",
     "semantic_hash": "42fef56a01698118f7fd722acdadea34"
   },
   ".claude/skills/graphify/references/github-and-merge.md": {
     "mtime": 1786659228.0948362,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
     "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
   },
   ".claude/skills/graphify/references/hooks.md": {
     "mtime": 1786659228.0958505,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "3f545db6ce646650bb9de588f5512a27",
     "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
   },
   ".claude/skills/graphify/references/query.md": {
     "mtime": 1786659228.096874,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "3c46f8ad006874260614ed8657d02307",
     "semantic_hash": "3c46f8ad006874260614ed8657d02307"
   },
   ".claude/skills/graphify/references/transcribe.md": {
     "mtime": 1786659228.09797,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "67b6a5fa6c0974e18f60db9f8932fbd8",
     "semantic_hash": "67b6a5fa6c0974e18f60db9f8932fbd8"
   },
   ".claude/skills/graphify/references/update.md": {
     "mtime": 1786659228.09797,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "9378bd03d56baaf78bd738ab3848f142",
     "semantic_hash": "9378bd03d56baaf78bd738ab3848f142"
   },
   "CLAUDE.md": {
     "mtime": 1786659244.4366865,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "8a6643a420fdad6bfb583523bc6cef16",
     "semantic_hash": "8a6643a420fdad6bfb583523bc6cef16"
   },
   "fiera.html": {
     "mtime": 1786202251.53114,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "33bf4ef11ffe813c8feaefe286ddbe1e",
     "semantic_hash": "33bf4ef11ffe813c8feaefe286ddbe1e"
   },
   "guide/muta-serpenti.html": {
     "mtime": 1787261112.2084036,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "1440469a6c8a7f597b073c435d739133",
     "semantic_hash": ""
   },
   "guide/pasti-serpenti.html": {
     "mtime": 1787261106.645124,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "f13c92822c8582494e492d629ade2798",
     "semantic_hash": ""
   },
   "guide/registro-allevamento.html": {
     "mtime": 1787261118.2355793,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "9832949f8923b5ab687855b76c61adfd",
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1787996852.434212,
-    "seen": 1787997183.930177,
-    "ast_hash": "d5e61e0716c6eae85ebcadf0e1f85e82",
+    "mtime": 1787997697.9502745,
+    "seen": 1787998804.0010912,
+    "ast_hash": "2ab7d7264fb9f38452c649c524d0e033",
     "semantic_hash": ""
   },
   "llms.txt": {
     "mtime": 1785965247.685394,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "3efcd7d95074bb3af943c65cb5b6a5b9",
     "semantic_hash": "3efcd7d95074bb3af943c65cb5b6a5b9"
   },
   "monitor.html": {
     "mtime": 1786893181.522889,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "df22b096d50bc78163c0dc608e3047bf",
     "semantic_hash": ""
   },
   "private-monitor-9x7k2.html": {
     "mtime": 1786893187.4473283,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "0fbd888f262926f963b252bc0fc571c3",
     "semantic_hash": ""
   },
   "robots.txt": {
     "mtime": 1785965247.6877267,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "c755c4f772c7a6709268e0292126977b",
     "semantic_hash": "c755c4f772c7a6709268e0292126977b"
   },
   "hero-snake.jpg": {
     "mtime": 1785965247.6794095,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "4eeb06381fc80ac66a4db8d01792daee",
     "semantic_hash": ""
   },
   "icon-180.png": {
     "mtime": 1785965247.6804068,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "4261c96a1921ae91c723f97fd085d7d2",
     "semantic_hash": ""
   },
   "icon-192.png": {
     "mtime": 1785965247.6804068,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "3e730282cdd2b5657243fa9c6acca98a",
     "semantic_hash": ""
   },
   "icon-512.png": {
     "mtime": 1785965247.681404,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "aa9a586951e9712fa9f2321ed5dc569d",
     "semantic_hash": ""
   },
   "hero-snake.webp": {
     "mtime": 1787008129.6954503,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "896d9bf294cc985aaae644cffe36cd96",
     "semantic_hash": ""
   },
   "guide/en/breeding-log-guide.html": {
     "mtime": 1787261544.1198525,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "198501abd7f3f82c89bcb17c7cadca36",
     "semantic_hash": ""
   },
   "guide/en/snake-feeding-log.html": {
     "mtime": 1787261492.2610846,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "ca4f533851ddbb4676fcde4101cc20b1",
     "semantic_hash": ""
   },
   "guide/en/snake-shedding-guide.html": {
     "mtime": 1787261519.0339978,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "419fa5cf8a1cd575566e18595df0c1a5",
     "semantic_hash": ""
   },
   "app.js": {
-    "mtime": 1787997140.3777857,
-    "seen": 1787997183.930177,
-    "ast_hash": "7a8d2780b6219f53fda94b8dfa7f6511",
+    "mtime": 1787998584.565448,
+    "seen": 1787998804.0010912,
+    "ast_hash": "1aa615dcb438edd283be3e7b1fa92e5a",
     "semantic_hash": ""
   },
   ".github/workflows/deploy.yml": {
     "mtime": 1787267477.024249,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "1b459ad6b84cfbb031c709b743d42b51",
     "semantic_hash": ""
   },
   "supabase/functions/transfer-snake/index.ts": {
     "mtime": 1787573622.7004287,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "52acf4ac5ef7c2e3aaa151b61de4a157",
     "semantic_hash": ""
   },
   "supabase/functions/README.md": {
     "mtime": 1787573653.3683977,
-    "seen": 1787997183.930177,
+    "seen": 1787998804.0010912,
     "ast_hash": "068111958b32a1babfbb2dfe462477e4",
     "semantic_hash": ""
   }

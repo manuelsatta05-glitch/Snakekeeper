@@ -1,16 +1,16 @@
 # Graph Report - Snakekeeper-repo  (2026-08-29)
 
 ## Corpus Check
-- 17 files · ~69,864 words
+- 17 files · ~69,964 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 387 nodes · 831 edges · 24 communities (22 shown, 2 thin omitted)
+- 387 nodes · 832 edges · 23 communities (21 shown, 2 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.66)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `da3532e0`
+- Built from commit: `49e68164`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -32,18 +32,17 @@
 - Autenticazione & Sessione
 - loadAll
 - Landing Page & Animazioni
-- saveSerpente
+- showPage
 - index.ts
 - Drawer Mobile
 - landingLogin
 - Fisica Touch (Rubberband)
-- checkTrialCountdown
 - Edge Functions
 
 ## God Nodes (most connected - your core abstractions)
 1. `toast()` - 48 edges
 2. `t()` - 37 edges
-3. `esc()` - 28 edges
+3. `esc()` - 29 edges
 4. `showPage()` - 26 edges
 5. `renderDettaglio()` - 22 edges
 6. `SnakeKeeper Web App` - 19 edges
@@ -72,7 +71,7 @@
 - **graphify Build Pipeline (Steps 1-9)** — _claude_skills_graphify_skill_step1_interpreter_detection, _claude_skills_graphify_skill_step2_detect_files, _claude_skills_graphify_skill_step3_extraction, _claude_skills_graphify_skill_step4_build_graph, _claude_skills_graphify_skill_step4_5_health_check, _claude_skills_graphify_skill_step5_label_communities, _claude_skills_graphify_skill_step6_exports, _claude_skills_graphify_skill_step9_manifest_cost [EXTRACTED 1.00]
 - **showPage() Page Router Dispatch Table** — index_showpage, index_renderdashboard, index_renderserpenti, index_renderaggiungi, index_renderdettaglio, index_renderregistro, index_rendervenduti, index_renderadmin, index_renderprofilo [EXTRACTED 1.00]
 
-## Communities (24 total, 2 thin omitted)
+## Communities (23 total, 2 thin omitted)
 
 ### Community 0 - "SnakeKeeper Web App"
 Cohesion: 0.07
@@ -91,16 +90,16 @@ Cohesion: 0.09
 Nodes (30): Extra Exports & Benchmark Reference, FalkorDB Export, MCP Server (graphify.serve), Neo4j Export, SVG/GraphML Export, Token Reduction Benchmark, Wiki Export (--wiki), BFS/DFS Traversal Modes (+22 more)
 
 ### Community 4 - "t"
-Cohesion: 0.08
-Nodes (62): accettaTrasferimento(), addLogsToCaches(), addLogToCaches(), age(), annullaVendita(), applySnakeLockUI(), applyTrasferimentiUI(), bindTrasferimentiActions() (+54 more)
+Cohesion: 0.11
+Nodes (44): addLogToCaches(), age(), applySnakeLockUI(), canAddSnake(), canEditSnake(), deleteLogEntry(), esc(), fmtDate() (+36 more)
 
 ### Community 5 - "Manifest PWA"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, scope, short_name (+2 more)
 
 ### Community 6 - "toast"
-Cohesion: 0.10
-Nodes (38): adminAddUser(), applyAppLang(), applyPlanUI(), centerOnSquareCanvas(), changeAppLang(), changePlan(), clearSession(), closeToastEl() (+30 more)
+Cohesion: 0.09
+Nodes (42): adminAddUser(), applyAppLang(), applyPlanUI(), centerOnSquareCanvas(), changeAppLang(), changePlan(), checkTrialCountdown(), clearSession() (+34 more)
 
 ### Community 7 - "app.js"
 Cohesion: 0.05
@@ -134,9 +133,9 @@ Nodes (10): addToOfflineQueue(), getOfflineQueue(), loadAll(), replayOfflineQueu
 Cohesion: 0.25
 Nodes (8): closeMobileNav(), initLanding(), initLandingNav(), initParticles(), initScrollReveal(), mobileNavGo(), showLanding(), smoothScrollTo()
 
-### Community 17 - "saveSerpente"
-Cohesion: 0.33
-Nodes (7): canAddSnake(), genICD(), genId(), isNameTaken(), readParentFields(), saveEditSerpente(), saveSerpente()
+### Community 17 - "showPage"
+Cohesion: 0.13
+Nodes (25): accettaTrasferimento(), addLogsToCaches(), annullaVendita(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions(), checkHash(), confermaVendita() (+17 more)
 
 ### Community 18 - "index.ts"
 Cohesion: 0.22
@@ -153,10 +152,6 @@ Nodes (6): doLogout(), hideLanding(), landingLogin(), landingRegister(), showLog
 ### Community 21 - "Fisica Touch (Rubberband)"
 Cohesion: 0.50
 Nodes (4): applyTranslate(), clampWithRubberband(), onMove(), rubberband()
-
-### Community 22 - "checkTrialCountdown"
-Cohesion: 0.50
-Nodes (4): checkTrialCountdown(), daysUntil(), markTrialNotifiedServer(), todayStr()
 
 ### Community 23 - "Edge Functions"
 Cohesion: 0.33
