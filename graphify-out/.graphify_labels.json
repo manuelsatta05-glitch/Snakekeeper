@@ -16,10 +16,11 @@
   "14": "Autenticazione & Sessione",
   "15": "loadAll",
   "16": "Landing Page & Animazioni",
-  "17": "showPage",
+  "17": "saveSerpente",
   "18": "index.ts",
   "19": "Drawer Mobile",
-  "20": "Transizioni Login/Landing",
+  "20": "landingLogin",
   "21": "Fisica Touch (Rubberband)",
+  "22": "checkTrialCountdown",
   "23": "Edge Functions"
 }
