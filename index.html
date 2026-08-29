@@ -151,13 +151,13 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
     <div class="auth-card">
 
       <!-- Tabs -->
-      <div class="auth-tabs">
-        <button id="tab-login-btn" class="auth-tab active" onclick="switchAuthTab('login')">Accedi</button>
-        <button id="tab-register-btn" class="auth-tab" onclick="switchAuthTab('register')">Registrati</button>
+      <div class="auth-tabs" role="tablist">
+        <button id="tab-login-btn" class="auth-tab active" role="tab" aria-selected="true" aria-controls="form-login" onclick="switchAuthTab('login')">Accedi</button>
+        <button id="tab-register-btn" class="auth-tab" role="tab" aria-selected="false" aria-controls="form-register" onclick="switchAuthTab('register')">Registrati</button>
       </div>
 
       <!-- Form Login -->
-      <div id="form-login">
+      <div id="form-login" role="tabpanel" aria-labelledby="tab-login-btn">
         <div style="display:flex;flex-direction:column;gap:14px">
           <div class="auth-field">
             <label>Email</label>
@@ -173,7 +173,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
       </div>
 
       <!-- Form Register -->
-      <div id="form-register" style="display:none">
+      <div id="form-register" role="tabpanel" aria-labelledby="tab-register-btn" style="display:none">
         <div style="display:flex;flex-direction:column;gap:14px">
           <div class="auth-field">
             <label>Email</label>

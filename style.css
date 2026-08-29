@@ -427,7 +427,7 @@
   }
   .auth-tabs{display:flex;gap:4px;background:rgba(13,31,15,0.7);padding:4px;border-radius:11px;border:1px solid var(--border);margin-bottom:24px;position:relative}
   .auth-tab{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;background:none;color:var(--text-dim);transition:color .25s,background .3s var(--ease-spring);position:relative;z-index:1}
-  .auth-tab.active{background:var(--bg-card);color:var(--text-bright)}
+  .auth-tab.active{background:var(--bg-card2);color:var(--accent-gold);font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.3)}
   .auth-tab:active{transform:scale(0.98)}
   .auth-field{display:flex;flex-direction:column;gap:6px}
   .auth-field label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}

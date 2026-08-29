@@ -1,5 +1,5 @@
 // SnakeKeeper Service Worker
-const CACHE_VERSION = 'sk-v13';
+const CACHE_VERSION = 'sk-v14';
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -38,10 +38,16 @@ self.addEventListener('fetch', event => {
   if (url.hostname.includes('supabase.co') || url.hostname.includes('stripe.com') || url.hostname.includes('qrserver.com') || url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
       fetch(event.request).catch(() => {
-        if (url.hostname.includes('supabase.co')) {
-          return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
-        }
-        return new Response('', { status: 503 });
+        // Prima restituiva un finto 200 con [] per le chiamate Supabase: sembrava un
+        // aiuto "offline-friendly", ma nascondeva ogni fallimento di rete dietro una
+        // risposta indistinguibile da un account vuoto — l'app non poteva più sapere
+        // che il caricamento era fallito. Un 503 reale lascia che SB.req() lanci
+        // l'errore come previsto, così l'app può gestirlo (retry, banner) invece di
+        // credere che i dati siano semplicemente assenti.
+        return new Response(JSON.stringify({ message: 'offline' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        });
       })
     );
     return;

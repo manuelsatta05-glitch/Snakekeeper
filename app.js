@@ -383,21 +383,40 @@ function addLogsToCaches(snakeId, logs) {
   _refreshLastLogsForSnake(snakeId);
 }
 let _isOnline = false;
+// Vero solo quando loadAll() non è riuscita a caricare serpenti+log, anche dopo il
+// retry automatico. Diverso da _isOnline (badge di connessione, aggiornato anche
+// dagli eventi online/offline del browser senza ricaricare i dati): usare _isOnline
+// per decidere se mostrare il banner d'errore farebbe scattare il banner anche
+// quando l'app va semplicemente offline mentre i dati già in memoria sono validi.
+let _dataLoadFailed = false;
 
-// Helper: fetch con timeout
+// Helper: fetch con timeout che si ARRENDE restituendo un fallback (per chiamate
+// non critiche, dove "niente dati" è un degrado accettabile).
 function withTimeout(promise, ms, fallback) {
   return Promise.race([
     promise,
     new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
 }
+// Variante per chiamate CRITICHE (serpenti, log): un timeout deve contare come
+// fallimento vero, non come "successo" con dati vuoti — altrimenti una connessione
+// lenta produce esattamente lo stesso falso-vuoto che questo fix vuole evitare.
+function withTimeoutReject(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`timeout: ${label}`)), ms),
+    ),
+  ]);
+}
 
-async function loadAll() {
+async function loadAll(_isRetry = false) {
   // Se ci sono modifiche fatte offline e ora si è tornati online, sincronizzale PRIMA di
   // leggere dal server — altrimenti, ricaricando la pagina senza passare da una transizione
   // 'online' dal vivo (l'unico altro punto in cui scatta la sync), restavano bloccate in
   // coda e sparivano dalla UI al refresh pur essendo ancora salvate in locale.
-  if (navigator.onLine) {
+  // Solo al primo giro: il retry automatico non deve rigiocare la stessa coda due volte.
+  if (navigator.onLine && !_isRetry) {
     try {
       await replayOfflineQueue();
     } catch (e) {
@@ -405,10 +424,12 @@ async function loadAll() {
     }
   }
 
-  // Carica ogni tabella individualmente — se una fallisce, le altre funzionano comunque
+  // Carica ogni tabella individualmente — se una fallisce, le altre funzionano comunque.
+  // Serpenti e log sono critici: un timeout deve propagarsi come fallimento vero (vedi
+  // withTimeoutReject sopra), le altre tabelle possono degradare a [] senza problemi.
   const results = await Promise.allSettled([
-    withTimeout(SB.getSerpenti(), 15000, []),
-    withTimeout(SB.getRecentLogs(RECENT_LOGS_LIMIT), 15000, []),
+    withTimeoutReject(SB.getSerpenti(), 15000, "serpenti"),
+    withTimeoutReject(SB.getRecentLogs(RECENT_LOGS_LIMIT), 15000, "logs"),
     withTimeout(SB.getVenduti(), 15000, []),
     withTimeout(SB.getLastLogsPerSnake(), 15000, []),
     withTimeout(SB.getTrasferimentiRicevuti(), 15000, []),
@@ -449,7 +470,53 @@ async function loadAll() {
   // Considera online se almeno serpenti e logs sono caricati
   const ok =
     results[0].status === "fulfilled" && results[1].status === "fulfilled";
+
+  // Un singolo fallimento è spesso solo un hiccup temporaneo (connessione fredda
+  // a Supabase, rete lenta al primo giro dopo il login) — riprova UNA volta in
+  // automatico prima di arrenderci, così l'utente non vede mai statistiche
+  // azzerate false senza nemmeno sapere che deve ricaricare la pagina.
+  if (!ok && !_isRetry) {
+    await new Promise((r) => setTimeout(r, 1500));
+    return loadAll(true);
+  }
+  _dataLoadFailed = !ok;
   setOnline(ok);
+}
+
+// Richiamato dal banner di errore in dashboard/lista serpenti quando anche il
+// retry automatico di loadAll() fallisce (es. utente davvero offline).
+// Guardia anti-concorrenza: senza, click ripetuti sul bottone "Riprova" farebbero
+// partire più loadAll() in parallelo, che rigiocano la coda offline in contemporanea
+// e possono inviare la stessa scrittura due volte (righe duplicate sul server).
+let _loadAllInFlight = null;
+async function retryLoadAll() {
+  if (_loadAllInFlight) return _loadAllInFlight;
+  const btn = document.getElementById("btn-retry-load");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+  }
+  _loadAllInFlight = loadAll().finally(() => {
+    _loadAllInFlight = null;
+  });
+  await _loadAllInFlight;
+  showPage(currentPage, currentSnakeId);
+}
+
+// Banner mostrato al posto (o sopra) dei dati quando il caricamento da Supabase
+// è fallito, per non far credere all'utente che il suo allevamento sia vuoto.
+function renderLoadErrorBanner() {
+  return `
+  <div style="background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.35);border-radius:10px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:22px">⚠️</div>
+      <div>
+        <div style="font-size:13px;color:var(--accent-red);font-weight:700">${t("load_error_title")}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">${t("load_error_desc")}</div>
+      </div>
+    </div>
+    <button id="btn-retry-load" class="btn btn-ghost btn-sm" onclick="retryLoadAll()">🔄 ${t("load_error_retry")}</button>
+  </div>`;
 }
 
 function setOnline(val) {
@@ -688,13 +755,14 @@ function renderDashboard() {
 
   document.getElementById("main-content").innerHTML = `
   <div class="page-header"><h2>🌿 Dashboard</h2><p>${t("dashboard_welcome")} · ☁️ Dati su Supabase</p></div>
+  ${_dataLoadFailed ? renderLoadErrorBanner() : ""}
   <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
     ${[
-      ["🐍", _snakes.length, t("dashboard_totale"), "var(--accent-gold)"],
-      ["♂️", totM, t("dashboard_maschi"), "#5b9bd5"],
-      ["♀️", totF, t("dashboard_femmine"), "var(--accent-pink)"],
-      ["🥩", foodMonth, t("dashboard_pasti_mese"), "var(--accent-lime)"],
-      ["🥚", eggsTotal, t("dashboard_deposizioni"), "var(--accent-pink)"],
+      ["🐍", _dataLoadFailed ? "—" : _snakes.length, t("dashboard_totale"), "var(--accent-gold)"],
+      ["♂️", _dataLoadFailed ? "—" : totM, t("dashboard_maschi"), "#5b9bd5"],
+      ["♀️", _dataLoadFailed ? "—" : totF, t("dashboard_femmine"), "var(--accent-pink)"],
+      ["🥩", _dataLoadFailed ? "—" : foodMonth, t("dashboard_pasti_mese"), "var(--accent-lime)"],
+      ["🥚", _dataLoadFailed ? "—" : eggsTotal, t("dashboard_deposizioni"), "var(--accent-pink)"],
     ]
       .map(
         ([ico, val, lab, col]) => `
@@ -723,11 +791,13 @@ function renderDashboard() {
     <div class="card">
       <div class="card-title">⚠️ ${t("dashboard_attenzione")}</div>
       ${
-        warnings.length === 0
-          ? `<div style="color:var(--text-dim);font-size:14px;padding:8px 0">✅ ${t("dashboard_tutto_regola")}</div>`
-          : warnings
-              .map(
-                (w) => `
+        _dataLoadFailed
+          ? `<div style="color:var(--text-dim);font-size:14px;padding:8px 0">${t("dashboard_dati_non_disponibili")}</div>`
+          : warnings.length === 0
+            ? `<div style="color:var(--text-dim);font-size:14px;padding:8px 0">✅ ${t("dashboard_tutto_regola")}</div>`
+            : warnings
+                .map(
+                  (w) => `
           <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
             <span>🐍</span>
             <div style="flex:1;min-width:0">
@@ -736,13 +806,13 @@ function renderDashboard() {
             </div>
             <button class="btn btn-ghost btn-sm" onclick="showPage('dettaglio','${w.id}')" style="padding:6px 10px;font-size:11px">${t("dashboard_vai")}</button>
           </div>`,
-              )
-              .join("")
+                )
+                .join("")
       }
     </div>
   </div>
   ${
-    _snakes.length === 0
+    _snakes.length === 0 && !_dataLoadFailed
       ? `
   <div class="card mt-24" style="text-align:center;padding:40px 20px">
     <div style="font-size:56px;margin-bottom:12px">🐍</div>
@@ -759,8 +829,10 @@ function renderDashboard() {
 // ═══════════════════════════════════════
 function renderSerpenti() {
   let html = `
-  <div class="page-header"><h2>🐍 ${t("serpenti_title")}</h2><p>${_snakes.length} ${t("serpenti_count_suffix")}</p></div>
+  <div class="page-header"><h2>🐍 ${t("serpenti_title")}</h2><p>${_dataLoadFailed ? "—" : _snakes.length} ${t("serpenti_count_suffix")}</p></div>
   <div style="margin-bottom:16px"><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ ${t("serpenti_aggiungi")}</button></div>`;
+
+  if (_dataLoadFailed) html += renderLoadErrorBanner();
 
   const nLocked = lockedSnakesCount();
   if (nLocked > 0) {
@@ -776,9 +848,9 @@ function renderSerpenti() {
     </div>`;
   }
 
-  if (!_snakes.length) {
+  if (!_snakes.length && !_dataLoadFailed) {
     html += `<div class="empty-state"><div class="empty-icon">🐍</div><h3>${t("serpenti_empty_title")}</h3><p>${t("serpenti_empty_desc")}</p><button class="btn btn-primary" onclick="showPage('aggiungi')">➕ ${t("serpenti_aggiungi")}</button></div>`;
-  } else {
+  } else if (_snakes.length) {
     html +=
       '<div class="snakes-grid">' +
       _snakes
@@ -7724,31 +7796,13 @@ function hideLanding() {
 function landingLogin() {
   hideLanding();
   showLoginScreen();
-  setTimeout(() => {
-    document
-      .querySelectorAll(".auth-tab")
-      .forEach((t) => t.classList.remove("active"));
-    document.getElementById("tab-login")?.classList.add("active");
-    document.getElementById("login-form")?.style &&
-      (document.getElementById("login-form").style.display = "block");
-    document.getElementById("register-form")?.style &&
-      (document.getElementById("register-form").style.display = "none");
-  }, 50);
+  setTimeout(() => switchAuthTab("login"), 50);
 }
 
 function landingRegister() {
   hideLanding();
   showLoginScreen();
-  setTimeout(() => {
-    document
-      .querySelectorAll(".auth-tab")
-      .forEach((t) => t.classList.remove("active"));
-    document.getElementById("tab-register")?.classList.add("active");
-    document.getElementById("login-form")?.style &&
-      (document.getElementById("login-form").style.display = "none");
-    document.getElementById("register-form")?.style &&
-      (document.getElementById("register-form").style.display = "block");
-  }, 50);
+  setTimeout(() => switchAuthTab("register"), 50);
 }
 
 let _landingLang = "it";
@@ -7800,6 +7854,11 @@ const I18N = {
     dashboard_ieri: "ieri",
     dashboard_oggi: "oggi",
     dashboard_tutto_regola: "Tutto in regola!",
+    dashboard_dati_non_disponibili: "— dati non disponibili",
+    load_error_title: "Impossibile caricare i tuoi dati",
+    load_error_desc:
+      "I tuoi serpenti sono al sicuro: è un problema temporaneo di connessione, non li hai persi.",
+    load_error_retry: "Riprova",
     dashboard_inizia: "Inizia l'allevamento",
     dashboard_aggiungi_primo: "Aggiungi il primo serpente per cominciare.",
     dashboard_aggiungi_serpente: "Aggiungi Serpente",
@@ -8181,6 +8240,11 @@ const I18N = {
     dashboard_ieri: "yesterday",
     dashboard_oggi: "today",
     dashboard_tutto_regola: "All good!",
+    dashboard_dati_non_disponibili: "— data unavailable",
+    load_error_title: "Couldn't load your data",
+    load_error_desc:
+      "Your snakes are safe: this is a temporary connection issue, you haven't lost anything.",
+    load_error_retry: "Retry",
     dashboard_inizia: "Start your collection",
     dashboard_aggiungi_primo: "Add your first snake to get started.",
     dashboard_aggiungi_serpente: "Add Snake",
@@ -8609,6 +8673,12 @@ function switchAuthTab(tab) {
   document
     .getElementById("tab-register-btn")
     .classList.toggle("active", !isLogin);
+  document
+    .getElementById("tab-login-btn")
+    .setAttribute("aria-selected", String(isLogin));
+  document
+    .getElementById("tab-register-btn")
+    .setAttribute("aria-selected", String(!isLogin));
   document.getElementById("auth-message").style.display = "none";
 }
 
@@ -8961,13 +9031,17 @@ function showAuthSuccess(type) {
 
 window.addEventListener("DOMContentLoaded", async () => {
   // Timeout di sicurezza: se dopo 20s siamo ancora sul loading, mostra login
+  // 45s: copre il caso peggiore di loadAll() con retry automatico incluso
+  // (8s getSession + 15s + 1.5s pausa + 15s ≈ 39.5s) con margine, altrimenti un
+  // utente già loggato su rete lenta vedrebbe comparire il login proprio mentre
+  // il caricamento sta per completarsi con successo.
   const safetyTimeout = setTimeout(() => {
     const ls = document.getElementById("loading-screen");
     if (ls && ls.style.display !== "none") {
       ls.style.display = "none";
       showLoginScreen();
     }
-  }, 20000);
+  }, 45000);
 
   try {
     // Controlla se arriviamo da link email Supabase (token nell'hash)
