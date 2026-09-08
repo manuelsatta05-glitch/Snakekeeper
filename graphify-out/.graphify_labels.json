@@ -25,10 +25,11 @@
   "23": "Edge Functions",
   "24": "delete-account/index.ts",
   "25": "Snake Management Feature",
-  "26": "previewFoto",
+  "26": "renderProfilo",
   "27": "check_fiera_code RPC",
   "28": "Admin Panel Feature",
   "29": "loadUserPlan",
   "30": "Auth System",
-  "31": "Dashboard Feature"
+  "31": "Dashboard Feature",
+  "32": "saveSerpente"
 }

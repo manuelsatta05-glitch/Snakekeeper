@@ -10,7 +10,8 @@
 //
 // sk-v15: fix di sicurezza (escaping XSS nei log e nel pannello admin, password
 // minima a 10 caratteri) + aggiornamento di pdf.js alla 6.3.289.
-const CACHE_VERSION = "sk-v15";
+// sk-v16: protezione anti-bot Turnstile sulle form di autenticazione.
+const CACHE_VERSION = "sk-v16";
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [

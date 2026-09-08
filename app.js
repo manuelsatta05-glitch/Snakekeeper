@@ -7802,19 +7802,144 @@ async function adminAddUser() {
 //  AUTH SUPABASE
 // ═══════════════════════════════════════
 
-async function authReq(endpoint, body) {
+// ── PROTEZIONE ANTI-BOT (Cloudflare Turnstile) ─────────────────────────────
+// L'interruttore CAPTCHA di Supabase e' unico e copre insieme login,
+// registrazione e recupero password: o li protegge tutti o nessuno. Quindi il
+// token va allegato a TUTTE le chiamate di auth, non solo alla registrazione,
+// altrimenti accendendo l'interruttore si blocca il login.
+//
+// Rollout in due fasi: finche' l'interruttore su Supabase e' spento il token
+// viene semplicemente ignorato, quindi questo codice si puo' pubblicare senza
+// che cambi nulla. Solo dopo si accende dal pannello, ed e' reversibile in
+// pochi secondi senza un nuovo deploy.
+//
+// ATTENZIONE: 0x4AAAAAAEs6mkAg8OwziuJr e' la sitekey DI TEST di Cloudflare, che
+// passa sempre. Va sostituita con quella vera del widget prima di accendere
+// l'interruttore su Supabase, altrimenti nessuno riesce piu' ad autenticarsi.
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEs6mkAg8OwziuJr";
+
+let _turnstilePromise = null;
+function loadTurnstile() {
+  if (_turnstilePromise) return _turnstilePromise;
+  _turnstilePromise = loadScriptOnce(
+    "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+  ).catch((err) => {
+    _turnstilePromise = null; // un errore di rete non deve restare in cache
+    throw err;
+  });
+  return _turnstilePromise;
+}
+
+// Restituisce un token monouso, oppure null se non e' stato possibile ottenerlo.
+// Deliberatamente NON blocca l'invio quando fallisce: se restituisse un errore,
+// un adblocker o un problema di rete impedirebbero a un cliente pagante di
+// accedere ai propri dati. Meglio inviare la richiesta senza token e lasciare
+// che sia il server a decidere: il messaggio d'errore viene poi tradotto in
+// qualcosa di comprensibile.
+async function getCaptchaToken(containerId) {
+  if (!TURNSTILE_SITE_KEY) return null;
+  const host = document.getElementById(containerId);
+  if (!host) return null;
+  try {
+    await loadTurnstile();
+    if (typeof turnstile === "undefined") return null;
+    return await new Promise((resolve, reject) => {
+      // Il token e' monouso e scade: se ne genera uno nuovo a ogni invio. Il
+      // widget precedente va tolto con turnstile.remove(), non svuotando il
+      // contenitore: cancellando solo l'HTML, Turnstile continua a credere che
+      // il vecchio widget esista e sporca la console di "Cannot find Widget".
+      // Un tentativo precedente puo' aver lasciato un widget ancora in sospeso
+      // (l'utente ha premuto due volte, o la sfida e' rimasta aperta): va
+      // rimosso prima di crearne un altro, altrimenti se ne accumulano.
+      if (host.dataset.turnstileId) {
+        try {
+          turnstile.remove(host.dataset.turnstileId);
+        } catch (e) {
+          /* gia' rimosso */
+        }
+        delete host.dataset.turnstileId;
+        host.innerHTML = "";
+      }
+
+      let widgetId = null;
+      let timer = null;
+      const chiudi = (fn) => (arg) => {
+        if (timer) clearTimeout(timer);
+        try {
+          if (widgetId !== null) turnstile.remove(widgetId);
+        } catch (e) {
+          /* widget gia' rimosso */
+        }
+        delete host.dataset.turnstileId;
+        fn(arg);
+      };
+
+      // Timeout solo per il caso silenzioso: il widget non risponde e non
+      // chiede nulla. Se invece all'utente viene mostrata una sfida da
+      // risolvere, il tempo lo decide lui (vedi before-interactive-callback):
+      // 20 secondi non bastano a leggere e cliccare, e scadere li' significava
+      // inviare la richiesta senza token proprio a chi la sfida l'aveva avuta.
+      timer = setTimeout(
+        () => chiudi(reject)(new Error("Timeout verifica anti-bot")),
+        8000,
+      );
+
+      widgetId = turnstile.render(host, {
+        sitekey: TURNSTILE_SITE_KEY,
+        // Resta invisibile e non chiede nulla, a meno che Cloudflare non
+        // giudichi la richiesta sospetta: allora compare la sfida.
+        appearance: "interaction-only",
+        "before-interactive-callback": () => {
+          // Da qui in poi sta all'utente: niente scadenza automatica.
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+        },
+        callback: (token) => chiudi(resolve)(token),
+        "error-callback": () =>
+          chiudi(reject)(new Error("Verifica anti-bot non riuscita")),
+        "expired-callback": () =>
+          chiudi(reject)(new Error("Verifica anti-bot scaduta")),
+        "timeout-callback": () =>
+          chiudi(reject)(new Error("Verifica anti-bot scaduta")),
+      });
+      host.dataset.turnstileId = widgetId;
+    });
+  } catch (e) {
+    console.warn("Turnstile non disponibile:", e.message);
+    return null;
+  }
+}
+
+// Traduce l'errore che Supabase restituisce quando il CAPTCHA e' obbligatorio
+// ma il token manca o non e' valido: senza questo l'utente leggerebbe un
+// messaggio tecnico in inglese senza capire cosa fare.
+function traduciErroreCaptcha(msg) {
+  if (/captcha/i.test(msg || "")) {
+    return "Verifica anti-bot non superata. Ricarica la pagina e riprova; se usi un blocco pubblicità, disattivalo per questo sito.";
+  }
+  return msg;
+}
+
+async function authReq(endpoint, body, captchaToken) {
+  const payload = captchaToken
+    ? { ...body, gotrue_meta_security: { captcha_token: captchaToken } }
+    : body;
   const res = await fetch(`${SUPABASE_URL}/auth/v1/${endpoint}`, {
     method: "POST",
     headers: {
       apikey: SUPABASE_KEY,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
   if (!res.ok)
     throw new Error(
-      data.error_description || data.msg || "Errore autenticazione",
+      traduciErroreCaptcha(
+        data.error_description || data.msg || "Errore autenticazione",
+      ),
     );
   return data;
 }
@@ -8809,10 +8934,12 @@ async function doLogin() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Accesso...';
   try {
-    const data = await authReq("token?grant_type=password", {
-      email,
-      password,
-    });
+    const captchaToken = await getCaptchaToken("login-captcha");
+    const data = await authReq(
+      "token?grant_type=password",
+      { email, password },
+      captchaToken,
+    );
     saveSession(data);
     hideLoginScreen();
     await loadAll();
@@ -8852,7 +8979,12 @@ async function doRegister() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Registrazione...';
   try {
-    await authReq("signup", { email, password, data: { lang: _regLang } });
+    const captchaToken = await getCaptchaToken("register-captcha");
+    await authReq(
+      "signup",
+      { email, password, data: { lang: _regLang } },
+      captchaToken,
+    );
     showAuthMsg(
       "✅ Registrazione completata! Controlla SUBITO la tua email (anche lo spam) e clicca il link per verificare l'account. Il link scade dopo un po', quindi verificalo appena possibile.",
     );
@@ -8872,7 +9004,10 @@ async function doForgotPassword() {
     return;
   }
   try {
-    await authReq("recover", { email });
+    // Il recupero password rientra nell'interruttore CAPTCHA di Supabase: parte
+    // dalla schermata di login, quindi riusa il contenitore di quella form.
+    const captchaToken = await getCaptchaToken("login-captcha");
+    await authReq("recover", { email }, captchaToken);
     showAuthMsg("✅ Email di recupero inviata! Controlla la tua casella.");
   } catch (e) {
     showAuthMsg("❌ " + e.message, true);
@@ -9009,6 +9144,7 @@ function showExpiredLinkModal(errorCode, errorDesc) {
         <label>La tua email</label>
         <input type="email" id="resend-email" placeholder="nome@email.com" autocomplete="email" style="width:100%">
       </div>
+      <div id="resend-captcha" style="display:flex;justify-content:center;margin-bottom:10px"></div>
       <button id="btn-resend" onclick="resendVerificationEmail()"
         style="width:100%;padding:14px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px">
         📧 Invia nuova email di verifica
@@ -9031,6 +9167,7 @@ async function resendVerificationEmail() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Invio in corso...';
   try {
+    const captchaToken = await getCaptchaToken("resend-captcha");
     const res = await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
       method: "POST",
       headers: {
@@ -9041,6 +9178,9 @@ async function resendVerificationEmail() {
         type: "signup",
         email: email,
         options: { emailRedirectTo: BASE_URL },
+        ...(captchaToken
+          ? { gotrue_meta_security: { captcha_token: captchaToken } }
+          : {}),
       }),
     });
     if (res.ok) {

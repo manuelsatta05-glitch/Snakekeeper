@@ -1,16 +1,16 @@
 # Graph Report - Snakekeeper-repo  (2026-09-08)
 
 ## Corpus Check
-- 19 files · ~205,225 words
+- 19 files · ~205,578 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 411 nodes · 860 edges · 32 communities (26 shown, 6 thin omitted)
+- 412 nodes · 862 edges · 33 communities (27 shown, 6 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 28 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `11162342`
+- Built from commit: `086a82a5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -41,12 +41,13 @@
 - Edge Functions
 - delete-account/index.ts
 - Snake Management Feature
-- previewFoto
+- renderProfilo
 - check_fiera_code RPC
 - Admin Panel Feature
 - loadUserPlan
 - Auth System
 - Dashboard Feature
+- saveSerpente
 
 ## God Nodes (most connected - your core abstractions)
 1. `toast()` - 48 edges
@@ -65,10 +66,10 @@
   guide/muta-serpenti.html → index.html
 - `Registro Pasti (Feeding Log)` --semantically_similar_to--> `Feeding Log Feature`  [INFERRED] [semantically similar]
   guide/pasti-serpenti.html → index.html
-- `Codice Promozionale Fiera` --semantically_similar_to--> `Fiera Event Admin Feature`  [INFERRED] [semantically similar]
-  fiera.html → index.html
 - `graphify claude install` --references--> `SnakeKeeper graphify Project Rules`  [INFERRED]
   .claude/skills/graphify/references/hooks.md → CLAUDE.md
+- `Codice Promozionale Fiera` --semantically_similar_to--> `Fiera Event Admin Feature`  [INFERRED] [semantically similar]
+  fiera.html → index.html
 - `SnakeKeeper Overview (llms.txt)` --references--> `SnakeKeeper Web App`  [EXTRACTED]
   llms.txt → index.html
 
@@ -80,7 +81,7 @@
 - **graphify Build Pipeline (Steps 1-9)** — _claude_skills_graphify_skill_step1_interpreter_detection, _claude_skills_graphify_skill_step2_detect_files, _claude_skills_graphify_skill_step3_extraction, _claude_skills_graphify_skill_step4_build_graph, _claude_skills_graphify_skill_step4_5_health_check, _claude_skills_graphify_skill_step5_label_communities, _claude_skills_graphify_skill_step6_exports, _claude_skills_graphify_skill_step9_manifest_cost [EXTRACTED 1.00]
 - **showPage() Page Router Dispatch Table** — index_showpage, index_renderdashboard, index_renderserpenti, index_renderaggiungi, index_renderdettaglio, index_renderregistro, index_rendervenduti, index_renderadmin, index_renderprofilo [EXTRACTED 1.00]
 
-## Communities (32 total, 6 thin omitted)
+## Communities (33 total, 6 thin omitted)
 
 ### Community 0 - "SnakeKeeper Web App"
 Cohesion: 0.15
@@ -99,24 +100,24 @@ Cohesion: 0.09
 Nodes (30): Extra Exports & Benchmark Reference, FalkorDB Export, MCP Server (graphify.serve), Neo4j Export, SVG/GraphML Export, Token Reduction Benchmark, Wiki Export (--wiki), BFS/DFS Traversal Modes (+22 more)
 
 ### Community 4 - "t"
-Cohesion: 0.10
-Nodes (57): accettaTrasferimento(), addLogToCaches(), age(), annullaVendita(), applySnakeLockUI(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions() (+49 more)
+Cohesion: 0.14
+Nodes (39): accettaTrasferimento(), annullaVendita(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions(), checkHash(), confermaInvioCliente(), deleteVenduto() (+31 more)
 
 ### Community 5 - "Manifest PWA"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, scope, short_name (+2 more)
 
 ### Community 6 - "toast"
-Cohesion: 0.10
-Nodes (37): adminAddUser(), applyAppLang(), applyPlanUI(), centerOnSquareCanvas(), changeAppLang(), changePlan(), checkTrialCountdown(), clearSession() (+29 more)
+Cohesion: 0.11
+Nodes (40): addLogToCaches(), adminAddUser(), applyAppLang(), changeAppLang(), changePlan(), clearSession(), closeToastEl(), compressImageToDataUrl() (+32 more)
 
 ### Community 7 - "app.js"
-Cohesion: 0.04
-Nodes (32): _annullaInFlight, checkHash(), _fieraEventiCache, getFilteredVenduti(), getVendutiYears(), I18N, _lastLogsPerSnake, loadAdminFiera() (+24 more)
+Cohesion: 0.05
+Nodes (27): _annullaInFlight, _fieraEventiCache, getFilteredVenduti(), I18N, _lastLogsPerSnake, loadAdminFiera(), LOG_FIELDS, _logsCache (+19 more)
 
 ### Community 8 - "closeModalEl"
-Cohesion: 0.20
-Nodes (16): closeModalEl(), confermaVendita(), editFieraEvent(), editLogEntry(), nomeGenitore(), openModalEl(), resendVerificationEmail(), showCancelSubscriptionModal() (+8 more)
+Cohesion: 0.17
+Nodes (16): age(), closeModalEl(), confermaVendita(), editLogEntry(), logsForSnake(), nomeGenitore(), openModalEl(), printSchedaSerpente() (+8 more)
 
 ### Community 9 - "Pagine Legali (Privacy/Termini)"
 Cohesion: 0.43
@@ -139,8 +140,8 @@ Cohesion: 0.22
 Nodes (9): closeMobileNav(), initFeatureShowcaseScroll(), initLanding(), initLandingNav(), initParticles(), initScrollReveal(), mobileNavGo(), showLanding() (+1 more)
 
 ### Community 17 - "_refreshLastLogsForSnake"
-Cohesion: 0.22
-Nodes (9): addLogsToCaches(), deleteLogEntry(), _isNewerLog(), _lastLogKey(), _refreshLastLogsForSnake(), removeLogFromCaches(), saveEditLog(), ultimiLogInvio() (+1 more)
+Cohesion: 0.29
+Nodes (7): addLogsToCaches(), _isNewerLog(), _lastLogKey(), _refreshLastLogsForSnake(), removeLogFromCaches(), ultimiLogInvio(), updateLogInCaches()
 
 ### Community 18 - "transfer-snake/index.ts"
 Cohesion: 0.17
@@ -174,9 +175,9 @@ Nodes (6): ALLOWED_ORIGINS, checkRateLimit(), getAuthenticatedUser(), json(), Ra
 Cohesion: 0.22
 Nodes (5): Weight Growth Chart Feature, Genealogy Tracking Feature, PDF/Print Export Feature, renderDettaglio(), Snake Management Feature
 
-### Community 26 - "previewFoto"
-Cohesion: 0.47
-Nodes (6): compressImageToDataUrl(), previewFoto(), previewFotoAdd(), previewFotoInvio(), renderPosPicker(), setFotoPosition()
+### Community 26 - "renderProfilo"
+Cohesion: 0.15
+Nodes (19): applyPlanUI(), centerOnSquareCanvas(), checkTrialCountdown(), daysUntil(), doCancelSubscription(), hidePaymentProcessingBanner(), loadPdfJs(), loadSubscriptionInfo() (+11 more)
 
 ### Community 27 - "check_fiera_code RPC"
 Cohesion: 0.53
@@ -185,6 +186,10 @@ Nodes (6): check_fiera_code RPC, Codice Promozionale Fiera, Offerta Fiera Regist
 ### Community 28 - "Admin Panel Feature"
 Cohesion: 0.50
 Nodes (3): Admin Panel Feature, isAdmin(), renderAdmin()
+
+### Community 32 - "saveSerpente"
+Cohesion: 0.20
+Nodes (10): applySnakeLockUI(), canAddSnake(), canEditSnake(), genICD(), genId(), isNameTaken(), isPro(), lockedSnakesCount() (+2 more)
 
 ## Knowledge Gaps
 - **64 isolated node(s):** `STRIPE_PRICES`, `SB`, `_snakes`, `_recentLogs`, `_logsCache` (+59 more)

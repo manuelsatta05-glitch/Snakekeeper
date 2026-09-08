@@ -12,6 +12,9 @@
        js.stripe.com        -> Stripe.js, caricato solo all'apertura del modale upgrade
        cdnjs.cloudflare.com -> pdf.js, caricato solo per "carica logo da PDF" (+ il suo worker)
        api.qrserver.com     -> immagine del QR code per i volantini fiera
+       challenges.cloudflare.com -> Turnstile, la verifica anti-bot sulle form di
+                                    auth: serve in script-src (l'api.js) e in
+                                    frame-src (il widget vive in un iframe suo)
        fonts.googleapis.com / fonts.gstatic.com -> Cinzel e Inter
        data:/blob: in img-src -> le foto dei serpenti sono data URI salvate in DB
      'unsafe-inline' resta necessario: l'app usa onclick="..." inline ovunque, toglierlo
@@ -19,7 +22,7 @@
      valore vero qui e' connect-src.
      Nota: frame-ancestors (anti-clickjacking) NON funziona via <meta>, serve un header
      HTTP vero -- GitHub Pages non li imposta. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; connect-src 'self' https://xmtxbtcexyrveifwfswb.supabase.co https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://api.qrserver.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdnjs.cloudflare.com https://challenges.cloudflare.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; connect-src 'self' https://xmtxbtcexyrveifwfswb.supabase.co https://cdnjs.cloudflare.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://api.qrserver.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://js.stripe.com https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <!-- PWA Meta Tags -->
@@ -185,6 +188,11 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
             <label>Password</label>
             <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
           </div>
+          <!-- Widget anti-bot Turnstile. Resta invisibile (appearance:
+               interaction-only) e occupa spazio solo se Cloudflare decide di
+               mostrare una sfida. Serve anche a "Password dimenticata?", che
+               rientra nello stesso interruttore CAPTCHA di Supabase. -->
+          <div id="login-captcha" style="display:flex;justify-content:center"></div>
           <button onclick="doLogin()" id="btn-login" class="auth-btn auth-btn-login">🔓 Accedi</button>
           <button onclick="doForgotPassword()" class="auth-link">Password dimenticata?</button>
         </div>
@@ -199,7 +207,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
           </div>
           <div class="auth-field">
             <label>Password</label>
-            <input type="password" id="reg-password" placeholder="min. 6 caratteri" autocomplete="new-password">
+            <input type="password" id="reg-password" placeholder="min. 10 caratteri" autocomplete="new-password">
           </div>
           <div class="auth-field">
             <label>Lingua / Language</label>
@@ -208,6 +216,7 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
               <button type="button" id="reg-lang-en" onclick="selectRegLang('en')" class="auth-lang-btn">🇬🇧 English</button>
             </div>
           </div>
+          <div id="register-captcha" style="display:flex;justify-content:center"></div>
           <button onclick="doRegister()" id="btn-register" class="auth-btn auth-btn-register">🐍 Crea Account</button>
           <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:10px;line-height:1.6">
             Registrandoti accetti i nostri

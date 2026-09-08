@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<!-- Questa pagina raccoglie email e password: e' la piu' esposta del sito ed e'
-     anche la piu' semplice, quindi la CSP puo' essere piu' stretta di quella di
-     index.html. Niente Stripe, niente pdf.js, nessuna immagine esterna. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src https://xmtxbtcexyrveifwfswb.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'none'">
+<!-- Questa pagina raccoglie email e password ed e' quella che regala Pro gratis:
+     e' la superficie piu' abusabile del sito. La CSP resta piu' stretta di quella
+     di index.html — niente Stripe, niente pdf.js, nessuna immagine esterna —
+     con la sola aggiunta di challenges.cloudflare.com, che serve a Turnstile
+     (lo script in script-src, il widget in frame-src). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; connect-src https://xmtxbtcexyrveifwfswb.supabase.co https://challenges.cloudflare.com; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>SnakeKeeper — Offerta Fiera</title>
 <meta name="description" content="Registrati con il codice della fiera e ottieni SnakeKeeper Pro gratis.">
@@ -130,6 +132,7 @@
           <input type="text" id="codice" autocomplete="off" required placeholder="es. VERONA26">
           <div class="code-status" id="code-status"></div>
         </div>
+        <div id="fiera-captcha" style="display:flex;justify-content:center"></div>
         <button class="btn" id="btn-submit" onclick="submitRegistration()">🐍 Crea account e attiva Pro gratis</button>
       </form>
 
@@ -152,6 +155,78 @@
 </div>
 
 <script>
+// ── PROTEZIONE ANTI-BOT (Cloudflare Turnstile) ─────────────────────────────
+// Questa pagina crea account con Pro gratis: senza un freno, un bot puo'
+// generarne a raffica. Il token viene verificato da Supabase, non qui: il
+// controllo lato client da solo non varrebbe nulla.
+//
+// ATTENZIONE: 0x4AAAAAAEs6mkAg8OwziuJr e' la sitekey DI TEST di Cloudflare, che
+// passa sempre. Va sostituita con quella vera prima di accendere l'interruttore
+// CAPTCHA su Supabase. Questa costante e' duplicata da app.js perche' fiera.html
+// e' una pagina autonoma che non carica app.js: se si cambia una, cambiare anche
+// l'altra.
+const TURNSTILE_SITE_KEY = '0x4AAAAAAEs6mkAg8OwziuJr';
+
+let _turnstilePromise = null;
+function loadTurnstile() {
+  if (_turnstilePromise) return _turnstilePromise;
+  _turnstilePromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.onload = () => resolve();
+    s.onerror = () => { _turnstilePromise = null; reject(new Error('script non caricato')); };
+    document.head.appendChild(s);
+  });
+  return _turnstilePromise;
+}
+
+// Restituisce un token monouso, o null se non e' stato possibile ottenerlo: si
+// lascia decidere al server invece di bloccare l'utente qui (vedi app.js).
+async function getCaptchaToken() {
+  if (!TURNSTILE_SITE_KEY) return null;
+  const host = document.getElementById('fiera-captcha');
+  if (!host) return null;
+  try {
+    await loadTurnstile();
+    if (typeof turnstile === 'undefined') return null;
+    return await new Promise((resolve, reject) => {
+      // Stessa logica di app.js: il widget vecchio va tolto con
+      // turnstile.remove(), e il timeout vale solo finche' non viene mostrata
+      // una sfida da risolvere a mano — da quel momento il tempo lo decide il
+      // visitatore, che magari e' allo stand con una rete mobile lenta.
+      // Un widget lasciato in sospeso da un tentativo precedente va rimosso,
+      // altrimenti se ne accumulano a ogni click sul pulsante.
+      if (host.dataset.turnstileId) {
+        try { turnstile.remove(host.dataset.turnstileId); } catch (e) {}
+        delete host.dataset.turnstileId;
+        host.innerHTML = '';
+      }
+      let widgetId = null;
+      let timer = null;
+      const chiudi = (fn) => (arg) => {
+        if (timer) clearTimeout(timer);
+        try { if (widgetId !== null) turnstile.remove(widgetId); } catch (e) {}
+        delete host.dataset.turnstileId;
+        fn(arg);
+      };
+      timer = setTimeout(() => chiudi(reject)(new Error('timeout')), 8000);
+      widgetId = turnstile.render(host, {
+        sitekey: TURNSTILE_SITE_KEY,
+        appearance: 'interaction-only',
+        'before-interactive-callback': () => { if (timer) { clearTimeout(timer); timer = null; } },
+        callback: (t) => chiudi(resolve)(t),
+        'error-callback': () => chiudi(reject)(new Error('errore')),
+        'expired-callback': () => chiudi(reject)(new Error('scaduto')),
+        'timeout-callback': () => chiudi(reject)(new Error('scaduto')),
+      });
+      host.dataset.turnstileId = widgetId;
+    });
+  } catch (e) {
+    console.warn('Turnstile non disponibile:', e.message);
+    return null;
+  }
+}
+
 const SUPABASE_URL = 'https://xmtxbtcexyrveifwfswb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhidGNleHlydmVpZndmc3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5Njc4MDYsImV4cCI6MjEwMDU0MzgwNn0.eVW5nAZeKu8NoryZUYRKsmHGoHrPV719X3cRINCUkjk';
 
@@ -254,10 +329,16 @@ async function submitRegistration() {
       return;
     }
 
+    const captchaToken = await getCaptchaToken();
     const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
       method: 'POST',
       headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, data: { lang: 'it', fiera_code: codice } })
+      body: JSON.stringify({
+        email,
+        password,
+        data: { lang: 'it', fiera_code: codice },
+        ...(captchaToken ? { gotrue_meta_security: { captcha_token: captchaToken } } : {})
+      })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -270,6 +351,10 @@ async function submitRegistration() {
     let msg = e.message || 'Errore durante la registrazione';
     if (/already registered|already exists|User already/i.test(msg)) {
       msg = 'Esiste già un account con questa email. Prova ad accedere da snakekeeper.it.';
+    } else if (/captcha/i.test(msg)) {
+      // Senza questa traduzione il visitatore in fiera leggerebbe un messaggio
+      // tecnico in inglese, davanti allo stand, senza capire cosa fare.
+      msg = 'Verifica anti-bot non superata. Ricarica la pagina e riprova; se usi un blocco pubblicità, disattivalo per questo sito.';
     }
     showError('❌ ' + msg);
     btn.disabled = false;
