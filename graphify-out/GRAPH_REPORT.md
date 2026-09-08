@@ -1,16 +1,16 @@
 # Graph Report - Snakekeeper-repo  (2026-09-08)
 
 ## Corpus Check
-- 19 files · ~207,838 words
+- 20 files · ~209,637 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 418 nodes · 880 edges · 34 communities (28 shown, 6 thin omitted)
+- 434 nodes · 905 edges · 34 communities (28 shown, 6 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 28 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7150d5d5`
+- Built from commit: `db1f7b3a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,11 +19,11 @@
 - Plan & Billing System
 - Extraction Subagent Prompt Spec
 - Extra Exports & Benchmark Reference
-- showPage
+- t
 - Manifest PWA
-- toast
-- app.js
 - closeModalEl
+- app.js
+- stripe-webhook/index.ts
 - Pagine Legali (Privacy/Termini)
 - GitHub Clone & Cross-Repo Merge Reference
 - Usage Monitor Dashboard
@@ -32,7 +32,7 @@
 - doLogin
 - loadAll
 - initLanding
-- _refreshLastLogsForSnake
+- renderProfilo
 - transfer-snake/index.ts
 - Drawer Mobile
 - landingLogin
@@ -47,13 +47,13 @@
 - loadUserPlan
 - Auth System
 - Dashboard Feature
-- t
+- toast
 - applyCookiePrefs
 
 ## God Nodes (most connected - your core abstractions)
 1. `toast()` - 48 edges
 2. `t()` - 38 edges
-3. `esc()` - 30 edges
+3. `esc()` - 32 edges
 4. `showPage()` - 26 edges
 5. `renderDettaglio()` - 22 edges
 6. `SnakeKeeper Web App` - 19 edges
@@ -67,10 +67,10 @@
   guide/muta-serpenti.html → index.html
 - `Registro Pasti (Feeding Log)` --semantically_similar_to--> `Feeding Log Feature`  [INFERRED] [semantically similar]
   guide/pasti-serpenti.html → index.html
-- `Codice Promozionale Fiera` --semantically_similar_to--> `Fiera Event Admin Feature`  [INFERRED] [semantically similar]
-  fiera.html → index.html
 - `graphify claude install` --references--> `SnakeKeeper graphify Project Rules`  [INFERRED]
   .claude/skills/graphify/references/hooks.md → CLAUDE.md
+- `Codice Promozionale Fiera` --semantically_similar_to--> `Fiera Event Admin Feature`  [INFERRED] [semantically similar]
+  fiera.html → index.html
 - `SnakeKeeper Overview (llms.txt)` --references--> `SnakeKeeper Web App`  [EXTRACTED]
   llms.txt → index.html
 
@@ -100,25 +100,25 @@ Nodes (27): graphify Skill Directive, Add URL & Watch Folder Reference, /graphif
 Cohesion: 0.09
 Nodes (30): Extra Exports & Benchmark Reference, FalkorDB Export, MCP Server (graphify.serve), Neo4j Export, SVG/GraphML Export, Token Reduction Benchmark, Wiki Export (--wiki), BFS/DFS Traversal Modes (+22 more)
 
-### Community 4 - "showPage"
-Cohesion: 0.13
-Nodes (28): accettaTrasferimento(), addLogsToCaches(), annullaVendita(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions(), checkHash(), confermaVendita() (+20 more)
+### Community 4 - "t"
+Cohesion: 0.11
+Nodes (44): accettaTrasferimento(), addLogsToCaches(), annullaVendita(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions(), checkHash(), deleteSerpente() (+36 more)
 
 ### Community 5 - "Manifest PWA"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, scope, short_name (+2 more)
 
-### Community 6 - "toast"
-Cohesion: 0.09
-Nodes (40): adminAddUser(), applyAppLang(), applyPlanUI(), centerOnSquareCanvas(), changeAppLang(), changePlan(), clearSession(), closeToastEl() (+32 more)
+### Community 6 - "closeModalEl"
+Cohesion: 0.08
+Nodes (42): adminAddUser(), applyAppLang(), applyPlanUI(), changeAppLang(), changePlan(), checkTrialCountdown(), clearSession(), closeModalEl() (+34 more)
 
 ### Community 7 - "app.js"
-Cohesion: 0.05
-Nodes (23): _annullaInFlight, _fieraEventiCache, I18N, _lastLogsPerSnake, loadAdminFiera(), LOG_FIELDS, _logsCache, MESI_ABBR (+15 more)
+Cohesion: 0.06
+Nodes (21): _annullaInFlight, _fieraEventiCache, I18N, _lastLogsPerSnake, LOG_FIELDS, _logsCache, MESI_ABBR, MESI_FULL (+13 more)
 
-### Community 8 - "closeModalEl"
-Cohesion: 0.17
-Nodes (17): checkTrialCountdown(), closeModalEl(), daysUntil(), editLogEntry(), _isNewerLog(), markTrialNotifiedServer(), openModalEl(), showCancelSubscriptionModal() (+9 more)
+### Community 8 - "stripe-webhook/index.ts"
+Cohesion: 0.19
+Nodes (13): collegaCustomerAUtente(), getCurrentPlan(), getStripeCustomerEmail(), getUserIdByEmail(), log(), planLabel(), purchaseEmailHtml(), resolveUserId() (+5 more)
 
 ### Community 9 - "Pagine Legali (Privacy/Termini)"
 Cohesion: 0.43
@@ -140,9 +140,9 @@ Nodes (10): addToOfflineQueue(), getOfflineQueue(), loadAll(), replayOfflineQueu
 Cohesion: 0.22
 Nodes (9): closeMobileNav(), initFeatureShowcaseScroll(), initLanding(), initLandingNav(), initParticles(), initScrollReveal(), mobileNavGo(), showLanding() (+1 more)
 
-### Community 17 - "_refreshLastLogsForSnake"
-Cohesion: 0.50
-Nodes (4): _lastLogKey(), _refreshLastLogsForSnake(), removeLogFromCaches(), updateLogInCaches()
+### Community 17 - "renderProfilo"
+Cohesion: 0.39
+Nodes (8): centerOnSquareCanvas(), loadPdfJs(), loadSubscriptionInfo(), removeLogo(), renderProfilo(), saveLogoToServer(), uploadLogo(), uploadLogoFromPdf()
 
 ### Community 18 - "transfer-snake/index.ts"
 Cohesion: 0.17
@@ -188,16 +188,16 @@ Nodes (6): check_fiera_code RPC, Codice Promozionale Fiera, Offerta Fiera Regist
 Cohesion: 0.50
 Nodes (3): Admin Panel Feature, isAdmin(), renderAdmin()
 
-### Community 32 - "t"
-Cohesion: 0.11
-Nodes (45): addLogToCaches(), age(), applySnakeLockUI(), canAddSnake(), canEditSnake(), deleteLogEntry(), esc(), fmtDate() (+37 more)
+### Community 32 - "toast"
+Cohesion: 0.10
+Nodes (42): addLogToCaches(), age(), applySnakeLockUI(), canAddSnake(), canEditSnake(), closeToastEl(), compressImageToDataUrl(), copyFieraLink() (+34 more)
 
 ### Community 38 - "applyCookiePrefs"
 Cohesion: 0.67
 Nodes (3): applyCookiePrefs(), cookieChoice(), initCookieBanner()
 
 ## Knowledge Gaps
-- **64 isolated node(s):** `STRIPE_PRICES`, `SB`, `_snakes`, `_recentLogs`, `_logsCache` (+59 more)
+- **65 isolated node(s):** `STRIPE_PRICES`, `SB`, `_snakes`, `_recentLogs`, `_logsCache` (+60 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -205,15 +205,15 @@ Nodes (3): applyCookiePrefs(), cookieChoice(), initCookieBanner()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `SnakeKeeper Web App` connect `SnakeKeeper Web App` to `Plan & Billing System`, `Snake Management Feature`, `Admin Panel Feature`, `Auth System`, `Dashboard Feature`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Why does `Plan & Billing System` connect `Plan & Billing System` to `SnakeKeeper Web App`, `Admin Panel Feature`, `loadUserPlan`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Why does `Step 3: Extract Entities and Relationships` connect `Extraction Subagent Prompt Spec` to `Extra Exports & Benchmark Reference`?**
   _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Are the 12 inferred relationships involving `showPage()` (e.g. with `renderAdmin()` and `renderDettaglio()`) actually correct?**
   _`showPage()` has 12 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `STRIPE_PRICES`, `SB`, `_snakes` to the rest of the system?**
-  _64 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _65 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Extraction Subagent Prompt Spec` be split into smaller, more focused modules?**
   _Cohesion score 0.07936507936507936 - nodes in this community are weakly interconnected._
 - **Should `Extra Exports & Benchmark Reference` be split into smaller, more focused modules?**
