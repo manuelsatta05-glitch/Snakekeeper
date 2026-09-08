@@ -11,7 +11,9 @@
 // sk-v15: fix di sicurezza (escaping XSS nei log e nel pannello admin, password
 // minima a 10 caratteri) + aggiornamento di pdf.js alla 6.3.289.
 // sk-v16: protezione anti-bot Turnstile sulle form di autenticazione.
-const CACHE_VERSION = "sk-v16";
+// sk-v17: avviso esplicito quando l'email ha gia' un account.
+// sk-v18: riscatto del codice fiera per utenti free gia' registrati.
+const CACHE_VERSION = "sk-v18";
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [

@@ -5740,6 +5740,92 @@ function renderTerms() {
 // ═══════════════════════════════════════
 //  PAGINA PROFILO
 // ═══════════════════════════════════════
+// La RPC solleva codici secchi invece di frasi: cosi' il messaggio all'utente
+// resta lato client, traducibile, e il database non deve conoscere la lingua.
+function traduciErroreRiscatto(msg) {
+  const en = _appLang === "en";
+  if (/GIA_PRO/.test(msg))
+    return en
+      ? "You already have an active Pro plan — the fair code is for free accounts."
+      : "Hai già un piano Pro attivo — il codice fiera è riservato agli account free.";
+  if (/GIA_USATO/.test(msg))
+    return en
+      ? "You have already used a fair code on this account. It can only be redeemed once."
+      : "Hai già usato un codice fiera su questo account. Si può riscattare una volta sola.";
+  if (/CODICE_NON_ANCORA_ATTIVO/.test(msg))
+    return en
+      ? "This code is not active yet: the fair hasn't started."
+      : "Questo codice non è ancora attivo: la fiera non è iniziata.";
+  if (/CODICE_SCADUTO/.test(msg))
+    return en
+      ? "This code has expired: the fair is over."
+      : "Questo codice è scaduto: la fiera è terminata.";
+  if (/CODICE_DISATTIVATO/.test(msg))
+    return en
+      ? "This code is no longer active."
+      : "Questo codice non è più attivo.";
+  if (/CODICE_NON_TROVATO/.test(msg))
+    return en
+      ? "Invalid code. Check that you typed it correctly."
+      : "Codice non valido. Controlla di averlo digitato correttamente.";
+  if (/NON_AUTENTICATO/.test(msg))
+    return en
+      ? "Session expired, sign in again."
+      : "Sessione scaduta, riaccedi.";
+  return msg;
+}
+
+async function riscattaCodiceFiera() {
+  const input = document.getElementById("riscatto-codice");
+  const msgEl = document.getElementById("riscatto-msg");
+  const btn = document.getElementById("btn-riscatto");
+  if (!input || !msgEl || !btn) return;
+
+  const codice = input.value.trim();
+  msgEl.textContent = "";
+  if (!codice) {
+    msgEl.style.color = "var(--accent-red)";
+    msgEl.textContent =
+      _appLang === "en" ? "Enter a code." : "Inserisci un codice.";
+    return;
+  }
+
+  const testoOriginale = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/riscatta_codice_fiera`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${await getSupabaseToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ p_codice: codice }),
+      },
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.hint || "Errore");
+
+    msgEl.style.color = "var(--accent-lime)";
+    msgEl.textContent = t("fiera_riscatta_ok").replace(
+      "{N}",
+      data.durata_giorni,
+    );
+    // Ricarica il piano dal server invece di aggiornarlo a mano: la fonte di
+    // verita' resta il database, e cosi' la pagina si ridisegna gia' come Pro.
+    await loadUserPlan();
+    setTimeout(() => renderProfilo(), 1200);
+  } catch (e) {
+    msgEl.style.color = "var(--accent-red)";
+    msgEl.textContent = "❌ " + traduciErroreRiscatto(e.message);
+    btn.disabled = false;
+    btn.textContent = testoOriginale;
+  }
+}
+
 async function renderProfilo() {
   const planLabels = {
     free: "🔓 Free",
@@ -5872,6 +5958,34 @@ async function renderProfilo() {
         </div>`
       }
     </div>
+
+    <!-- Riscatto codice fiera.
+         Visibile solo a chi puo' davvero riscattare: piano free e nessun trial
+         gia' usato in passato (trial_fiera_id resta valorizzato anche dopo la
+         scadenza, quindi funziona da memoria permanente). Mostrarla a chi paga
+         gia' sarebbe un invito a chiedere lo sconto; mostrarla a chi ha gia'
+         usato il suo trial sarebbe una promessa che il server rifiutera'.
+         Il controllo vero resta comunque nella RPC riscatta_codice_fiera. -->
+    ${
+      _userPlan === "free" && !_userTrialFieraId
+        ? `
+    <div class="card" style="margin-bottom:16px;border:1px solid rgba(201,168,76,0.3)">
+      <div class="card-title" style="color:var(--accent-gold)">${t("fiera_riscatta_titolo")}</div>
+      <p style="font-size:13px;color:var(--text-mid);margin-bottom:12px;line-height:1.5">${t("fiera_riscatta_desc")}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input type="text" id="riscatto-codice" autocomplete="off"
+          placeholder="${t("fiera_riscatta_placeholder")}"
+          onkeydown="if(event.key==='Enter')riscattaCodiceFiera()"
+          style="flex:1;min-width:160px;padding:12px 14px;background:var(--bg-moss);border:1px solid var(--border);border-radius:8px;color:var(--text-bright);font-family:monospace;text-transform:uppercase;letter-spacing:1px;font-size:14px">
+        <button id="btn-riscatto" onclick="riscattaCodiceFiera()"
+          style="padding:12px 20px;background:var(--accent-gold);color:#0a1a0a;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap">
+          ${t("fiera_riscatta_btn")}
+        </button>
+      </div>
+      <div id="riscatto-msg" style="font-size:13px;margin-top:10px;line-height:1.5"></div>
+    </div>`
+        : ""
+    }
 
     <!-- Card Pro Features -->
     ${
@@ -7922,6 +8036,30 @@ function traduciErroreCaptcha(msg) {
   return msg;
 }
 
+// Riconosce la risposta "offuscata" che Supabase restituisce quando si prova a
+// registrare un'email che ha gia' un account confermato: risponde 200 come se
+// fosse andato tutto bene, ma non crea nulla e non manda nessuna email. Lo fa di
+// proposito, per impedire che la form di registrazione diventi uno strumento per
+// scoprire quali indirizzi sono registrati.
+//
+// Senza questo controllo l'utente vedeva "Registrazione completata! Controlla la
+// tua email" e poi non riceveva niente, senza capire perche'. In fiera, davanti
+// allo stand, e' il momento peggiore per lasciare qualcuno nel dubbio.
+//
+// Il segnale e' identities vuoto: una registrazione vera restituisce l'utente con
+// una identity, quella offuscata con nessuna.
+//
+// Deliberatamente prudente: si considera "gia' registrata" SOLO se identities e'
+// esplicitamente un array vuoto. Se il campo mancasse (versione diversa di
+// GoTrue, risposta inattesa) si prosegue col messaggio di successo. Sbagliare in
+// questa direzione fa perdere l'avviso; sbagliare nell'altra bloccherebbe una
+// registrazione legittima dicendo a un utente nuovo che ha gia' un account.
+function emailGiaRegistrata(data) {
+  return (
+    !!data && Array.isArray(data.identities) && data.identities.length === 0
+  );
+}
+
 async function authReq(endpoint, body, captchaToken) {
   const payload = captchaToken
     ? { ...body, gotrue_meta_security: { captcha_token: captchaToken } }
@@ -8272,6 +8410,12 @@ const I18N = {
     piano_forever_desc:
       "Hai accesso completo a SnakeKeeper gratuitamente per sempre.",
     passa_a_pro: "Passa a Pro",
+    fiera_riscatta_titolo: "🎪 Hai un codice fiera?",
+    fiera_riscatta_desc:
+      "Inserisci qui il codice ricevuto in fiera e attiva subito il tuo periodo Pro gratuito.",
+    fiera_riscatta_placeholder: "es. VERONA26",
+    fiera_riscatta_btn: "Attiva Pro gratis",
+    fiera_riscatta_ok: "🎉 Fatto! Pro attivo per {N} giorni.",
     serpenti_utilizzati: "Serpenti utilizzati",
     limite_raggiunto: "Hai raggiunto il limite — passa a Pro per continuare",
     serpenti_illimitati_lbl: "Serpenti registrati:",
@@ -8657,6 +8801,12 @@ const I18N = {
     piano_forever_desc:
       "You have full access to SnakeKeeper for free, forever.",
     passa_a_pro: "Upgrade to Pro",
+    fiera_riscatta_titolo: "🎪 Got a fair code?",
+    fiera_riscatta_desc:
+      "Enter the code you received at the fair and start your free Pro period right away.",
+    fiera_riscatta_placeholder: "e.g. VERONA26",
+    fiera_riscatta_btn: "Activate free Pro",
+    fiera_riscatta_ok: "🎉 Done! Pro active for {N} days.",
     serpenti_utilizzati: "Snakes used",
     limite_raggiunto: "You've reached the limit — upgrade to Pro to continue",
     serpenti_illimitati_lbl: "Snakes registered:",
@@ -8980,11 +9130,20 @@ async function doRegister() {
   btn.innerHTML = '<span class="spinner"></span> Registrazione...';
   try {
     const captchaToken = await getCaptchaToken("register-captcha");
-    await authReq(
+    const data = await authReq(
       "signup",
       { email, password, data: { lang: _regLang } },
       captchaToken,
     );
+    if (emailGiaRegistrata(data)) {
+      showAuthMsg(
+        '❌ Hai già un account con questa email. Usa "Accedi" qui sopra, oppure "Password dimenticata?" se non la ricordi.',
+        true,
+      );
+      btn.disabled = false;
+      btn.innerHTML = "🐍 Crea Account";
+      return;
+    }
     showAuthMsg(
       "✅ Registrazione completata! Controlla SUBITO la tua email (anche lo spam) e clicca il link per verificare l'account. Il link scade dopo un po', quindi verificalo appena possibile.",
     );

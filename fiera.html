@@ -345,6 +345,21 @@ async function submitRegistration() {
       throw new Error(data.error_description || data.msg || 'Errore durante la registrazione');
     }
 
+    // Supabase risponde 200 anche quando l'email ha gia' un account confermato:
+    // non crea nulla e non manda nessuna email, per non rivelare quali indirizzi
+    // sono registrati. Senza questo controllo il visitatore vedeva
+    // "Registrazione completata", non riceveva niente e non otteneva il Pro,
+    // senza capire perche' — proprio mentre e' davanti allo stand.
+    // Prudente di proposito: solo un array identities esplicitamente vuoto
+    // conta come "gia' registrata" (vedi emailGiaRegistrata in app.js).
+    if (Array.isArray(data.identities) && data.identities.length === 0) {
+      // Nota: showError usa textContent (giustamente), quindi niente tag HTML qui.
+      showError('❌ Hai già un account con questa email. Non serve registrarti di nuovo: accedi su snakekeeper.it, apri la sezione Profilo e inserisci lì il codice — se sei sul piano gratuito il Pro si attiva subito.');
+      btn.disabled = false;
+      btn.innerHTML = '🐍 Crea account e attiva Pro gratis';
+      return;
+    }
+
     document.getElementById('form-view').style.display = 'none';
     document.getElementById('success-view').style.display = 'block';
   } catch(e) {
