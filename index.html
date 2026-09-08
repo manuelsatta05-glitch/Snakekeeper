@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
+<!-- Content Security Policy.
+     Serve a limitare i danni se un XSS dovesse comunque passare: anche riuscendo a
+     eseguire codice, l'attaccante non puo' spedire i dati (o il token di sessione,
+     che vive in localStorage) verso un dominio suo, perche' connect-src elenca solo
+     Supabase. Le origini qui sotto sono esattamente quelle che l'app carica davvero:
+       js.stripe.com        -> Stripe.js, caricato solo all'apertura del modale upgrade
+       cdnjs.cloudflare.com -> pdf.js, caricato solo per "carica logo da PDF" (+ il suo worker)
+       api.qrserver.com     -> immagine del QR code per i volantini fiera
+       fonts.googleapis.com / fonts.gstatic.com -> Cinzel e Inter
+       data:/blob: in img-src -> le foto dei serpenti sono data URI salvate in DB
+     'unsafe-inline' resta necessario: l'app usa onclick="..." inline ovunque, toglierlo
+     richiederebbe un refactor completo del rendering. La CSP vale comunque, perche' il
+     valore vero qui e' connect-src.
+     Nota: frame-ancestors (anti-clickjacking) NON funziona via <meta>, serve un header
+     HTTP vero -- GitHub Pages non li imposta. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; connect-src 'self' https://xmtxbtcexyrveifwfswb.supabase.co https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://api.qrserver.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <!-- PWA Meta Tags -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -390,38 +408,80 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
     <h2 class="lp-section-title" data-it="Tutto quello che ti serve" data-en="Everything you need">Tutto quello che ti serve</h2>
     <p class="lp-section-sub" style="margin:0 auto" data-it="Progettato da zero per chi alleva serpenti. Ogni funzione nasce da un'esigenza reale." data-en="Built from scratch for snake breeders. Every feature comes from a real need.">Progettato da zero per chi alleva serpenti. Ogni funzione nasce da un'esigenza reale.</p>
   </div>
+
+  <!-- SHOWCASE: scorrendo cambia il testo attivo e, in dissolvenza, la schermata nel dispositivo
+       (MacBook fisso a lato su desktop, iPhone fisso in alto su mobile/tablet) -->
+  <div class="lp-showcase" id="lp-showcase">
+    <div class="lp-showcase-list">
+
+      <div class="lp-showcase-item is-active" data-slide="0">
+        <div class="lp-showcase-item-ico">🐍</div>
+        <div class="lp-showcase-item-title" data-it="Schede complete" data-en="Complete profiles">Schede complete</div>
+        <p class="lp-showcase-item-desc" data-it="Specie, morfo, sesso, provenienza, foto e genealogia: tutto quello che serve per ogni esemplare, in un'unica scheda." data-en="Species, morph, sex, origin, photos and pedigree: everything you need for each specimen, in one profile.">Specie, morfo, sesso, provenienza, foto e genealogia: tutto quello che serve per ogni esemplare, in un'unica scheda.</p>
+      </div>
+
+      <div class="lp-showcase-item" data-slide="1">
+        <div class="lp-showcase-item-ico">🥩</div>
+        <div class="lp-showcase-item-title" data-it="Registro pasti" data-en="Feeding log">Registro pasti</div>
+        <p class="lp-showcase-item-desc" data-it="Traccia ogni pasto con tipo di preda, peso e note. Ricevi un alert se un serpente non mangia." data-en="Track every meal with prey type, weight and notes. Get an alert when a snake hasn't eaten.">Traccia ogni pasto con tipo di preda, peso e note. Ricevi un alert se un serpente non mangia.</p>
+      </div>
+
+      <div class="lp-showcase-item" data-slide="2">
+        <div class="lp-showcase-item-ico">⚖️</div>
+        <div class="lp-showcase-item-title" data-it="Monitoraggio peso" data-en="Weight tracking">Monitoraggio peso</div>
+        <p class="lp-showcase-item-desc" data-it="Curva di crescita nel tempo con grafico. Tieni sotto controllo la salute di ogni esemplare." data-en="Growth curve over time with chart. Monitor the health of every specimen.">Curva di crescita nel tempo con grafico. Tieni sotto controllo la salute di ogni esemplare.</p>
+      </div>
+
+      <div class="lp-showcase-item" data-slide="3">
+        <div class="lp-showcase-item-ico">📄</div>
+        <div class="lp-showcase-item-title" data-it="Export PDF" data-en="PDF export">Export PDF</div>
+        <p class="lp-showcase-item-desc" data-it="Genera una scheda professionale per ogni serpente da condividere col veterinario." data-en="Generate a professional profile for each snake to share with your vet.">Genera una scheda professionale per ogni serpente da condividere col veterinario.</p>
+      </div>
+
+      <div class="lp-showcase-item" data-slide="4">
+        <div class="lp-showcase-item-ico">📤</div>
+        <div class="lp-showcase-item-title" data-it="Trasferimento al cliente" data-en="Transfer to buyer">Trasferimento al cliente</div>
+        <p class="lp-showcase-item-desc" data-it="Quando vendi un esemplare, invia la scheda completa (foto, genetica, genealogia) all'acquirente: la ritrova già pronta nel suo account non appena accetta." data-en="When you sell a snake, send its full profile (photos, genetics, pedigree) to the buyer — it's ready and waiting in their own account as soon as they accept.">Quando vendi un esemplare, invia la scheda completa (foto, genetica, genealogia) all'acquirente: la ritrova già pronta nel suo account non appena accetta.</p>
+      </div>
+
+    </div>
+
+    <!-- Pannello sticky desktop: cornice MacBook, 5 schermate in crossfade -->
+    <div class="lp-showcase-visual lp-showcase-visual-desktop" aria-hidden="true">
+      <div class="device device-mac">
+        <div class="device-slide is-active" data-slide="0"><img class="device-mockup-mac-img" src="/shots/schede-complete-mockup-mac.png" alt="Schermata scheda serpente da desktop" loading="lazy"></div>
+        <div class="device-slide" data-slide="1"><img class="device-mockup-mac-img" src="/shots/registro-pasti-mockup-mac.png" alt="Schermata registro pasti da desktop" loading="lazy"></div>
+        <div class="device-slide" data-slide="2"><img class="device-mockup-mac-img" src="/shots/monitoraggio-peso-mockup-mac.png" alt="Schermata monitoraggio peso da desktop" loading="lazy"></div>
+        <div class="device-slide" data-slide="3"><img class="device-mockup-mac-img" src="/shots/export-pdf-mockup-mac.png" alt="Schermata export PDF da desktop" loading="lazy"></div>
+        <div class="device-slide" data-slide="4"><img class="device-mockup-mac-img" src="/shots/trasferimento-cliente-mockup-mac.png" alt="Schermata trasferimento al cliente da desktop" loading="lazy"></div>
+      </div>
+    </div>
+
+    <!-- Pannello sticky mobile/tablet: cornice iPhone fissa in alto, 5 schermate in crossfade -->
+    <div class="lp-showcase-visual lp-showcase-visual-mobile" aria-hidden="true">
+      <div class="device device-iphone-fx">
+        <div class="device-slide is-active" data-slide="0"><img class="device-mockup-img" src="/shots/schede-complete-mockup.png" alt="Schermata scheda serpente" loading="lazy"></div>
+        <div class="device-slide" data-slide="1"><img class="device-mockup-img" src="/shots/registro-pasti-mockup.png" alt="Schermata registro pasti" loading="lazy"></div>
+        <div class="device-slide" data-slide="2"><img class="device-mockup-img" src="/shots/monitoraggio-peso-mockup.png" alt="Schermata monitoraggio peso" loading="lazy"></div>
+        <div class="device-slide" data-slide="3"><img class="device-mockup-img" src="/shots/export-pdf-mockup.png" alt="Schermata export PDF" loading="lazy"></div>
+        <div class="device-slide" data-slide="4"><img class="device-mockup-img" src="/shots/trasferimento-cliente-mockup.png" alt="Schermata trasferimento al cliente" loading="lazy"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Altre funzionalità: griglia compatta -->
+  <div style="margin:80px 0 32px;text-align:center">
+    <h3 style="font-size:15px;color:#6b8f6e;font-weight:600;text-transform:uppercase;letter-spacing:1.5px" data-it="E non solo" data-en="And there's more">E non solo</h3>
+  </div>
   <div class="lp-features-grid">
-    
-    <div class="lp-feature-card">
-      <div class="lp-feature-icon">🐍</div>
-      <div class="lp-feature-title" data-it="Schede complete" data-en="Complete profiles">Schede complete</div>
-      <p class="lp-feature-desc" data-it="Specie, morfo, sesso, provenienza, foto e tutto quello che serve per ogni esemplare." data-en="Species, morph, sex, origin, photos and everything you need for each specimen.">Specie, morfo, sesso, provenienza, foto e tutto quello che serve per ogni esemplare.</p>
-    </div>
-    <div class="lp-feature-card">
-      <div class="lp-feature-icon">🥩</div>
-      <div class="lp-feature-title" data-it="Registro pasti" data-en="Feeding log">Registro pasti</div>
-      <p class="lp-feature-desc" data-it="Traccia ogni pasto con tipo di preda, peso e note. Ricevi alert se un serpente non mangia." data-en="Track every meal with prey type, weight and notes. Get alerts when a snake hasn't eaten.">Traccia ogni pasto con tipo di preda, peso e note. Ricevi alert se un serpente non mangia.</p>
-    </div>
-    <div class="lp-feature-card">
-      <div class="lp-feature-icon">⚖️</div>
-      <div class="lp-feature-title" data-it="Monitoraggio peso" data-en="Weight tracking">Monitoraggio peso</div>
-      <p class="lp-feature-desc" data-it="Curva di crescita nel tempo con grafico. Tieni sotto controllo la salute di ogni esemplare." data-en="Growth curve over time with chart. Monitor the health of every specimen.">Curva di crescita nel tempo con grafico. Tieni sotto controllo la salute di ogni esemplare.</p>
-    </div>
     <div class="lp-feature-card">
       <div class="lp-feature-icon">🦎</div>
       <div class="lp-feature-title" data-it="Registro mute" data-en="Shed tracking">Registro mute</div>
       <p class="lp-feature-desc" data-it="Traccia ogni ecdisi con data e esito. Identifica problemi prima che diventino seri." data-en="Log every shed with date and outcome. Spot issues before they become serious.">Traccia ogni ecdisi con data e esito. Identifica problemi prima che diventino seri.</p>
     </div>
     <div class="lp-feature-card">
-      <div class="lp-feature-icon">📄</div>
-      <div class="lp-feature-title" data-it="Export PDF" data-en="PDF export">Export PDF</div>
-      <p class="lp-feature-desc" data-it="Genera una scheda professionale per ogni serpente da condividere col veterinario." data-en="Generate a professional profile for each snake to share with your vet.">Genera una scheda professionale per ogni serpente da condividere col veterinario.</p>
-    </div>
-    <div class="lp-feature-card">
       <div class="lp-feature-icon">📱</div>
       <div class="lp-feature-title" data-it="App mobile" data-en="Mobile app">App mobile</div>
-      <!-- "come app nativa" mandava a cercarla negli store, dove non c'è: è una PWA che si
-           installa dal browser. La FAQ più in basso lo dice già correttamente. -->
       <p class="lp-feature-desc" data-it="Si installa sulla schermata Home di iPhone e Android dal browser, senza App Store. Funziona offline." data-en="Installs to your Home screen on iPhone and Android from the browser, no App Store. Works offline.">Si installa sulla schermata Home di iPhone e Android dal browser, senza App Store. Funziona offline.</p>
     </div>
     <div class="lp-feature-card">
@@ -430,16 +490,10 @@ QRCode.CorrectLevel = {L:1,M:0,Q:3,H:2};
       <p class="lp-feature-desc" data-it="Registra ogni vendita con acquirente, prezzo e documenti. Storico sempre disponibile." data-en="Log every sale with buyer, price and documents. History always available.">Registra ogni vendita con acquirente, prezzo e documenti. Storico sempre disponibile.</p>
     </div>
     <div class="lp-feature-card">
-      <div class="lp-feature-icon">📤</div>
-      <div class="lp-feature-title" data-it="Trasferimento al cliente" data-en="Transfer to buyer">Trasferimento al cliente</div>
-      <p class="lp-feature-desc" data-it="Quando vendi un esemplare, invia la scheda completa (foto, genetica, genealogia) all'acquirente: la ritrova già pronta nel suo account SnakeKeeper non appena accetta." data-en="When you sell a snake, send its full profile (photos, genetics, pedigree) to the buyer — it's ready and waiting in their own SnakeKeeper account as soon as they accept.">Quando vendi un esemplare, invia la scheda completa (foto, genetica, genealogia) all'acquirente: la ritrova già pronta nel suo account SnakeKeeper non appena accetta.</p>
-    </div>
-    <div class="lp-feature-card">
       <div class="lp-feature-icon">☁️</div>
       <div class="lp-feature-title" data-it="Sync automatico nel cloud" data-en="Automatic cloud sync">Sync automatico nel cloud</div>
       <p class="lp-feature-desc" data-it="Ogni modifica viene salvata subito nel cloud. Accedi ai tuoi dati aggiornati da qualsiasi dispositivo, in sicurezza." data-en="Every change is saved to the cloud right away. Access your up-to-date data from any device, securely.">Ogni modifica viene salvata subito nel cloud. Accedi ai tuoi dati aggiornati da qualsiasi dispositivo, in sicurezza.</p>
     </div>
-  
   </div>
 </section>
 

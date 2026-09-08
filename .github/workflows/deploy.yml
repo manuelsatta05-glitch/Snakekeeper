@@ -30,11 +30,22 @@ jobs:
         run: |
           set -e
           mkdir -p _site
+          # private-monitor-9x7k2.html tolto dall'allowlist: era una seconda copia del
+          # monitor, ferma a un formato di risposta che usage-monitor non restituisce
+          # piu' (si aspetta sent_this_month/limit_month, la function manda
+          # sentThisMonth/monthLimit), quindi non mostrava piu' nulla. In piu' teneva la
+          # password del monitor in localStorage invece che in sessionStorage come
+          # monitor.html. Una pagina pubblica, rotta e con la sicurezza affidata al nome
+          # del file: non ha motivo di stare online. Quella buona e' monitor.html.
           cp index.html style.css sw.js manifest.json fiera.html monitor.html \
-             private-monitor-9x7k2.html robots.txt sitemap.xml llms.txt CNAME \
+             robots.txt sitemap.xml llms.txt CNAME \
              icon-180.png icon-192.png icon-512.png hero-snake.jpg hero-snake.webp \
              _site/
           cp -r guide _site/guide
+          # Mockup dello showcase in home: index.html ne carica 10 da /shots/.
+          # Senza questa riga l'allowlist li escluderebbe e la sezione uscirebbe
+          # con tutte le immagini rotte.
+          cp -r shots _site/shots
           touch _site/.nojekyll
 
       - name: Minify app.js con terser (pinnato, mangle.toplevel di default = false)

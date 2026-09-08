@@ -1,84 +1,128 @@
-import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
-const SUPPORT_EMAIL = 'snakekeeper.it@gmail.com';
-const APP_URL = 'https://snakekeeper.it';
+const SUPPORT_EMAIL = "snakekeeper.it@gmail.com";
+const APP_URL = "https://snakekeeper.it";
 const GIORNI_VALIDITA = 30;
 
 const SB_HEADERS = {
-  'apikey': SUPABASE_SERVICE_KEY,
-  'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-  'Content-Type': 'application/json'
+  apikey: SUPABASE_SERVICE_KEY,
+  Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+  "Content-Type": "application/json",
 };
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
-};
+const ALLOWED_ORIGINS = [
+  "https://snakekeeper.it",
+  "https://www.snakekeeper.it",
+];
 
-function json(body: any, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+// Prima era Access-Control-Allow-Origin: '*'. Non era una falla (l'autorizzazione
+// viene dal bearer token, non dai cookie, quindi un sito terzo non poteva agire per
+// conto dell'utente), ma non c'e' motivo di lasciare che qualunque pagina sul web
+// legga le risposte di questo endpoint dal browser di un utente loggato.
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin)
+      ? origin
+      : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
+    Vary: "Origin",
+  };
+}
+
+// json() viene creata dentro Deno.serve, come closure sulla richiesta corrente:
+// una variabile CORS a livello di modulo riassegnata a ogni richiesta sarebbe
+// soggetta a race tra richieste concorrenti.
+function makeJson(cors: Record<string, string>) {
+  return (body: any, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
 }
 
 function getClientIp(req: Request): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('cf-connecting-ip') || 'unknown';
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return req.headers.get("cf-connecting-ip") || "unknown";
 }
 
-async function checkRateLimit(key: string, maxRequests: number, windowSeconds: number): Promise<boolean> {
+// Prima restituiva `true` (= consenti) anche quando il controllo falliva: bastava un
+// errore del database perche' il rate limit sparisse in silenzio. Ora l'esito e'
+// esplicito e chi chiama decide cosa farne.
+type RateLimitResult = "ok" | "limited" | "error";
+
+async function checkRateLimit(
+  key: string,
+  maxRequests: number,
+  windowSeconds: number,
+): Promise<RateLimitResult> {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/check_rate_limit`, {
-      method: 'POST',
+      method: "POST",
       headers: { ...SB_HEADERS },
-      body: JSON.stringify({ p_key: key, p_max_requests: maxRequests, p_window_seconds: windowSeconds })
+      body: JSON.stringify({
+        p_key: key,
+        p_max_requests: maxRequests,
+        p_window_seconds: windowSeconds,
+      }),
     });
-    if (!res.ok) return true;
-    return await res.json();
-  } catch(e) { return true; }
+    if (!res.ok) return "error";
+    return (await res.json()) === true ? "ok" : "limited";
+  } catch (e) {
+    return "error";
+  }
 }
 
 async function log(message: string, data: any = null) {
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/debug_log`, {
-      method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ source: 'transfer-snake', message, data })
+      method: "POST",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ source: "transfer-snake", message, data }),
     });
-  } catch(e) {}
+  } catch (e) {}
 }
 
-async function getAuthenticatedUser(req: Request): Promise<{ id: string, email: string } | null> {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+async function getAuthenticatedUser(
+  req: Request,
+): Promise<{ id: string; email: string } | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
   const token = authHeader.slice(7);
   try {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return null;
     const user = await res.json();
     if (!user?.id) return null;
-    return { id: user.id, email: user.email || '' };
-  } catch(e) { return null; }
+    return { id: user.id, email: user.email || "" };
+  } catch (e) {
+    return null;
+  }
 }
 
 // Il nome del serpente finisce dentro un'email HTML ed e' testo scritto dall'utente:
 // va sempre scappato e accorciato, altrimenti il template diventa un veicolo di spam.
 function esc(value: unknown): string {
-  if (value === null || value === undefined) return '';
+  if (value === null || value === undefined) return "";
   return String(value)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 function short(value: unknown, max = 60): string {
-  const s = value === null || value === undefined ? '' : String(value);
-  return s.length > max ? s.slice(0, max) + '…' : s;
+  const s = value === null || value === undefined ? "" : String(value);
+  return s.length > max ? s.slice(0, max) + "…" : s;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -91,19 +135,27 @@ function ultimiLogPerTipo(snapshot: any[]): any[] {
   for (const l of snapshot) {
     if (!l || !l.tipo) continue;
     const prev = perTipo[l.tipo];
-    if (!prev) { perTipo[l.tipo] = l; continue; }
-    const a = `${l.data || ''}|${l.created_at || ''}`;
-    const b = `${prev.data || ''}|${prev.created_at || ''}`;
+    if (!prev) {
+      perTipo[l.tipo] = l;
+      continue;
+    }
+    const a = `${l.data || ""}|${l.created_at || ""}`;
+    const b = `${prev.data || ""}|${prev.created_at || ""}`;
     if (a > b) perTipo[l.tipo] = l;
   }
   // Scartati di proposito: id, snake_id, user_id, created_at (rigenerati lato DB),
   // `note` e `partner_id` (annotazioni interne / riferimenti ai serpenti dell'allevatore).
   return Object.values(perTipo).map((l: any) => ({
-    tipo: l.tipo, data: l.data ?? null,
-    grammi: l.grammi ?? null, qty: l.qty ?? null,
-    food_tipo: l.food_tipo ?? null, feci_tipo: l.feci_tipo ?? null,
-    num_uova: l.num_uova ?? null, fertili: l.fertili ?? null,
-    temp: l.temp ?? null, pulizia_tipo: l.pulizia_tipo ?? null,
+    tipo: l.tipo,
+    data: l.data ?? null,
+    grammi: l.grammi ?? null,
+    qty: l.qty ?? null,
+    food_tipo: l.food_tipo ?? null,
+    feci_tipo: l.feci_tipo ?? null,
+    num_uova: l.num_uova ?? null,
+    fertili: l.fertili ?? null,
+    temp: l.temp ?? null,
+    pulizia_tipo: l.pulizia_tipo ?? null,
     partner_esterno: l.partner_esterno ?? null,
   }));
 }
@@ -172,14 +224,21 @@ function emailHtml(nomeSerpente: string, mittente: string): string {
   </div>`;
 }
 
-async function sendEmail(to: string, nomeSerpente: string, mittente: string): Promise<boolean> {
+async function sendEmail(
+  to: string,
+  nomeSerpente: string,
+  mittente: string,
+): Promise<boolean> {
   if (!RESEND_API_KEY) return false;
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        from: 'SnakeKeeper <noreply@snakekeeper.it>',
+        from: "SnakeKeeper <noreply@snakekeeper.it>",
         reply_to: SUPPORT_EMAIL,
         to: [to],
         subject: `🐍 ${short(nomeSerpente, 40)} ti aspetta su SnakeKeeper / is waiting for you`,
@@ -187,50 +246,97 @@ async function sendEmail(to: string, nomeSerpente: string, mittente: string): Pr
       }),
     });
     return res.ok;
-  } catch(e) { return false; }
+  } catch (e) {
+    return false;
+  }
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  const CORS = corsFor(req);
+  const json = makeJson(CORS);
 
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  // Fail-closed: se il rate limit non e' verificabile si rifiuta. Un invito di
+  // trasferimento non e' mai urgente, mentre un endpoint che manda email senza
+  // freni e' esattamente il modo in cui si brucia la quota Resend (o si finisce
+  // in blacklist) durante un disservizio del database.
   const ip = getClientIp(req);
-  if (!await checkRateLimit(`transfer-snake-ip:${ip}`, 20, 3600)) {
-    return json({ error: 'Troppe richieste. Riprova piu\' tardi.' }, 429);
+  const rlIp = await checkRateLimit(`transfer-snake-ip:${ip}`, 20, 3600);
+  if (rlIp === "limited") {
+    return json({ error: "Troppe richieste. Riprova piu' tardi." }, 429);
+  }
+  if (rlIp === "error") {
+    await log("Rate limit non verificabile: richiesta rifiutata", { ip });
+    return json(
+      {
+        error:
+          "Servizio temporaneamente non disponibile. Riprova tra qualche minuto.",
+      },
+      503,
+    );
   }
 
   try {
     // L'identita' del mittente viene SEMPRE dal JWT, mai dal body: un user_id
     // passato dal client sarebbe banalmente falsificabile.
     const user = await getAuthenticatedUser(req);
-    if (!user) return json({ error: 'Non autenticato' }, 401);
+    if (!user) return json({ error: "Non autenticato" }, 401);
 
-    if (!await checkRateLimit(`transfer-snake:${user.id}`, 10, 3600)) {
-      return json({ error: 'Hai inviato troppi trasferimenti nell\'ultima ora. Riprova piu\' tardi.' }, 429);
+    const rlUser = await checkRateLimit(`transfer-snake:${user.id}`, 10, 3600);
+    if (rlUser === "limited") {
+      return json(
+        {
+          error:
+            "Hai inviato troppi trasferimenti nell'ultima ora. Riprova piu' tardi.",
+        },
+        429,
+      );
+    }
+    if (rlUser === "error") {
+      await log("Rate limit utente non verificabile: richiesta rifiutata", {
+        userId: user.id,
+      });
+      return json(
+        {
+          error:
+            "Servizio temporaneamente non disponibile. Riprova tra qualche minuto.",
+        },
+        503,
+      );
     }
 
     const body = await req.json().catch(() => ({}));
-    const vendutoId = typeof body?.venduto_id === 'string' ? body.venduto_id.trim() : '';
-    const emailRaw  = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const vendutoId =
+      typeof body?.venduto_id === "string" ? body.venduto_id.trim() : "";
+    const emailRaw =
+      typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 
-    if (!vendutoId) return json({ error: 'Vendita non specificata' }, 400);
+    if (!vendutoId) return json({ error: "Vendita non specificata" }, 400);
     if (!EMAIL_RE.test(emailRaw) || emailRaw.length > 254) {
-      return json({ error: 'Indirizzo email non valido' }, 400);
+      return json({ error: "Indirizzo email non valido" }, 400);
     }
-    if (emailRaw === (user.email || '').toLowerCase()) {
-      return json({ error: 'Non puoi trasferire un serpente a te stesso.' }, 400);
+    if (emailRaw === (user.email || "").toLowerCase()) {
+      return json(
+        { error: "Non puoi trasferire un serpente a te stesso." },
+        400,
+      );
     }
 
     // Proprieta' verificata server-side: il venduto deve essere di chi chiama.
     const vRes = await fetch(
       `${SUPABASE_URL}/rest/v1/venduti?id=eq.${encodeURIComponent(vendutoId)}&user_id=eq.${user.id}&select=*`,
-      { headers: SB_HEADERS }
+      { headers: SB_HEADERS },
     );
     const vRows = await vRes.json();
     const venduto = Array.isArray(vRows) ? vRows[0] : null;
     if (!venduto) {
-      await log('Vendita non trovata o non di proprieta\'', { userId: user.id, vendutoId });
-      return json({ error: 'Vendita non trovata' }, 404);
+      await log("Vendita non trovata o non di proprieta'", {
+        userId: user.id,
+        vendutoId,
+      });
+      return json({ error: "Vendita non trovata" }, 404);
     }
 
     // Un invito scaduto resta 'pending' finche' qualcuno non lo tocca, e l'indice unico
@@ -239,55 +345,83 @@ Deno.serve(async (req: Request) => {
     // serve un cron dedicato.
     await fetch(
       `${SUPABASE_URL}/rest/v1/trasferimenti?venduto_id=eq.${encodeURIComponent(vendutoId)}&stato=eq.pending&expires_at=lt.${new Date().toISOString()}`,
-      { method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify({ stato: 'expired' }) }
+      {
+        method: "PATCH",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ stato: "expired" }),
+      },
     ).catch(() => {});
 
     const pRes = await fetch(
       `${SUPABASE_URL}/rest/v1/trasferimenti?venduto_id=eq.${encodeURIComponent(vendutoId)}&stato=eq.pending&select=id`,
-      { headers: SB_HEADERS }
+      { headers: SB_HEADERS },
     );
     const pending = await pRes.json();
     if (Array.isArray(pending) && pending.length > 0) {
-      return json({ error: 'Per questa vendita c\'e\' gia\' un invito in attesa. Ritiralo prima di inviarne un altro.' }, 409);
+      return json(
+        {
+          error:
+            "Per questa vendita c'e' gia' un invito in attesa. Ritiralo prima di inviarne un altro.",
+        },
+        409,
+      );
     }
 
-    const id = 'TR' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
-    const expiresAt = new Date(Date.now() + GIORNI_VALIDITA * 86400000).toISOString();
+    const id =
+      "TR" +
+      Date.now().toString(36).toUpperCase() +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+    const expiresAt = new Date(
+      Date.now() + GIORNI_VALIDITA * 86400000,
+    ).toISOString();
 
     const insRes = await fetch(`${SUPABASE_URL}/rest/v1/trasferimenti`, {
-      method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+      method: "POST",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
       body: JSON.stringify({
         id,
         mittente_id: user.id,
         mittente_email: user.email,
         destinatario_email: emailRaw,
         venduto_id: vendutoId,
-        stato: 'pending',
+        stato: "pending",
         payload: buildPayload(venduto),
         expires_at: expiresAt,
-      })
+      }),
     });
 
     if (!insRes.ok) {
       const errBody = await insRes.text();
       // 23505 = l'indice unico parziale ha gia' un pending per questo venduto
       if (insRes.status === 409) {
-        return json({ error: 'Per questa vendita c\'e\' gia\' un invito in attesa.' }, 409);
+        return json(
+          { error: "Per questa vendita c'e' gia' un invito in attesa." },
+          409,
+        );
       }
-      await log('ERRORE: insert trasferimento fallito', { status: insRes.status, body: errBody });
-      return json({ error: 'Non e\' stato possibile creare il trasferimento.' }, 500);
+      await log("ERRORE: insert trasferimento fallito", {
+        status: insRes.status,
+        body: errBody,
+      });
+      return json(
+        { error: "Non e' stato possibile creare il trasferimento." },
+        500,
+      );
     }
 
     const sent = await sendEmail(emailRaw, venduto.nome, user.email);
-    await log('Trasferimento creato', { id, mittente: user.id, vendutoId, emailInviata: sent });
+    await log("Trasferimento creato", {
+      id,
+      mittente: user.id,
+      vendutoId,
+      emailInviata: sent,
+    });
 
     // Risposta volutamente identica che l'indirizzo sia registrato o no:
     // altrimenti questo endpoint diventerebbe un oracolo per scoprire chi ha un account.
     return json({ success: true, id, expires_at: expiresAt, email_sent: sent });
-
   } catch (e) {
-    await log('ECCEZIONE', { error: e.message });
+    await log("ECCEZIONE", { error: e.message });
     return json({ error: e.message }, 500);
   }
 });

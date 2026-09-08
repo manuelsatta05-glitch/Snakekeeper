@@ -1673,16 +1673,22 @@ function renderLogList(logs, type, snakeId) {
   return logs
     .map((l) => {
       let desc = "";
+      // food_tipo/feci_tipo sono colonne text: arrivano da una <select>, ma nulla
+      // impedisce di scriverci HTML con una POST diretta su /rest/v1/logs. E questi
+      // campi viaggiano anche fuori dall'account di chi li scrive — transfer-snake li
+      // copia nel payload e accetta_trasferimento li inserisce nei log del destinatario,
+      // che poi li vede renderizzati nel proprio browser. Vanno sempre scappati.
+      // grammi/qty/num_uova/fertili/temp no: sono numeric/integer lato DB.
       if (l.tipo === "cibo")
-        desc = `${l.food_tipo || t("log_cibo_default")} ×${l.qty || 1} — ${l.grammi || 0}g`;
-      if (l.tipo === "feci") desc = `${l.feci_tipo || "—"}`;
+        desc = `${esc(l.food_tipo) || t("log_cibo_default")} ×${l.qty || 1} — ${l.grammi || 0}g`;
+      if (l.tipo === "feci") desc = `${esc(l.feci_tipo) || "—"}`;
       if (l.tipo === "uova") {
         const partnerNome = l.partner_id
           ? _snakes.find((s) => s.id === l.partner_id)?.nome || null
           : l.partner_esterno || null;
         desc = `${l.num_uova || 0} ${t("log_uova_desc")}, ${l.fertili || 0} ${t("log_fertili_desc")}${l.temp ? ` — ${l.temp}°C` : ""}${partnerNome ? ` · ${t("gen_partner")}: ${esc(partnerNome)}` : ""}`;
       }
-      if (l.tipo === "muta") desc = `${l.feci_tipo || t("muta_completa")}`;
+      if (l.tipo === "muta") desc = `${esc(l.feci_tipo) || t("muta_completa")}`;
       if (l.tipo === "peso") desc = `${l.grammi || 0}g`;
       return `<div class="log-entry">
       <div class="log-icon ${type}">${icons[type]}</div>
@@ -3972,14 +3978,16 @@ function renderRegistro() {
       const snake = snakeMap[l.snake_id];
       const sname = snake ? snake.nome : "?";
       let desc = "";
+      // Stesso motivo di renderLogList: colonne text scrivibili via POST diretta e
+      // trasferibili a un altro account. Vedi il commento esteso in renderLogList.
       if (l.tipo === "cibo")
-        desc = `${l.food_tipo || t("log_cibo_default")} ×${l.qty || 1} — ${l.grammi || 0}g`;
+        desc = `${esc(l.food_tipo) || t("log_cibo_default")} ×${l.qty || 1} — ${l.grammi || 0}g`;
       if (l.tipo === "feci")
-        desc = `${t("log_feci_prefix")}${l.feci_tipo || "—"}`;
+        desc = `${t("log_feci_prefix")}${esc(l.feci_tipo) || "—"}`;
       if (l.tipo === "uova")
         desc = `${t("log_deposizione_prefix")}${l.num_uova || 0} ${t("log_uova_desc")}`;
       if (l.tipo === "pulizia")
-        desc = `${t("log_pulizia_prefix")}${l.pulizia_tipo || "—"}`;
+        desc = `${t("log_pulizia_prefix")}${esc(l.pulizia_tipo) || "—"}`;
       html += `<div class="log-entry">
         <div class="log-icon ${types[l.tipo] || "food"}">${icons[l.tipo] || "📌"}</div>
         <div class="log-info">
@@ -4661,6 +4669,48 @@ function initParticles() {
   draw();
 }
 
+function initFeatureShowcaseScroll() {
+  const showcase = document.getElementById("lp-showcase");
+  if (!showcase) return;
+  const items = showcase.querySelectorAll(".lp-showcase-item");
+  const slides = showcase.querySelectorAll(".device-slide");
+  if (!items.length || !slides.length) return;
+  const setActive = (idx) => {
+    items.forEach((it) =>
+      it.classList.toggle("is-active", it.dataset.slide === String(idx)),
+    );
+    slides.forEach((sl) =>
+      sl.classList.toggle("is-active", sl.dataset.slide === String(idx)),
+    );
+  };
+  // Fascia sottile che fa da "trigger": solo l'item che la attraversa è attivo, evita
+  // ambiguità quando più card sono parzialmente visibili insieme (apple-design §7/§8).
+  // Su desktop il dispositivo è centrato nel viewport → fascia al centro (50%).
+  // Su mobile/tablet il dispositivo è fisso in alto (sticky) e il testo scorre sotto:
+  // la fascia va spostata più in basso, nella zona di lettura effettivamente visibile.
+  let observer = null;
+  const setupObserver = () => {
+    if (observer) observer.disconnect();
+    const mobile = window.matchMedia("(max-width: 1024px)").matches;
+    const rootMargin = mobile ? "-60% 0px -35% 0px" : "-45% 0px -45% 0px";
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActive(e.target.dataset.slide);
+        });
+      },
+      { threshold: 0, rootMargin },
+    );
+    items.forEach((it) => observer.observe(it));
+  };
+  setupObserver();
+  let resizeT;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(setupObserver, 200);
+  });
+}
+
 function initScrollReveal() {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -4710,6 +4760,7 @@ function mobileNavGo(id) {
 
 function initLanding() {
   initParticles();
+  initFeatureShowcaseScroll();
   initScrollReveal();
   initLandingNav();
 }
@@ -6758,16 +6809,21 @@ async function loadAdminData() {
                 .map(
                   (p) => `
                 <tr style="border-bottom:1px solid rgba(45,80,48,0.4)" id="row-${p.user_id}">
-                  <td style="padding:12px 8px;color:var(--text-bright)">${p.email || '<span style="color:var(--text-dim);font-style:italic">—</span>'}</td>
+                  <td style="padding:12px 8px;color:var(--text-bright)">${p.email ? esc(p.email) : '<span style="color:var(--text-dim);font-style:italic">—</span>'}</td>
                   <td style="padding:12px 8px">
                     <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(0,0,0,0.3);color:${planColors[p.plan] || "var(--text-dim)"}">
-                      ${planLabels[p.plan] || p.plan}
+                      ${planLabels[p.plan] || esc(p.plan)}
                     </span>
                   </td>
-                  <td style="padding:12px 8px;color:var(--text-dim);font-size:12px">${p.notes || "—"}</td>
+                  <td style="padding:12px 8px;color:var(--text-dim);font-size:12px">${esc(p.notes) || "—"}</td>
                   <td style="padding:12px 8px;text-align:right">
                     ${
-                      p.user_id === "${_currentUser.id}"
+                      // Era: p.user_id === "${_currentUser.id}" — dentro un ${} quelle
+                      // virgolette fanno una stringa normale, non un template literal, quindi
+                      // il confronto era contro i caratteri letterali "${_currentUser.id}" ed
+                      // era sempre falso: l'admin vedeva la tendina anche sulla propria riga e
+                      // poteva declassare se stesso.
+                      p.user_id === _currentUser?.id
                         ? `<span style="font-size:11px;color:var(--accent-gold)">👑 Tu (Admin)</span>`
                         : `
                     <select onchange="changePlan('${p.user_id}', this.value)" 
@@ -8761,8 +8817,8 @@ async function doRegister() {
     showAuthMsg("Inserisci email e password", true);
     return;
   }
-  if (password.length < 6) {
-    showAuthMsg("La password deve avere almeno 6 caratteri", true);
+  if (password.length < 10) {
+    showAuthMsg("La password deve avere almeno 10 caratteri", true);
     return;
   }
   const btn = document.getElementById("btn-register");

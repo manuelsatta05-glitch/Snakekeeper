@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<!-- Questa pagina raccoglie email e password: e' la piu' esposta del sito ed e'
+     anche la piu' semplice, quindi la CSP puo' essere piu' stretta di quella di
+     index.html. Niente Stripe, niente pdf.js, nessuna immagine esterna. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src https://xmtxbtcexyrveifwfswb.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>SnakeKeeper — Offerta Fiera</title>
 <meta name="description" content="Registrati con il codice della fiera e ottieni SnakeKeeper Pro gratis.">
 <meta name="robots" content="noindex">
@@ -117,8 +122,8 @@
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" autocomplete="new-password" required placeholder="Almeno 6 caratteri">
-          <div class="pwd-hint">Minimo 6 caratteri</div>
+          <input type="password" id="password" autocomplete="new-password" required placeholder="Almeno 10 caratteri">
+          <div class="pwd-hint">Minimo 10 caratteri</div>
         </div>
         <div class="form-group">
           <label for="codice">Codice promozionale fiera</label>
@@ -230,7 +235,7 @@ async function submitRegistration() {
   const codice = document.getElementById('codice').value.trim().toUpperCase();
 
   if (!email || !password || !codice) { showError('Compila tutti i campi.'); return; }
-  if (password.length < 6) { showError('La password deve avere almeno 6 caratteri.'); return; }
+  if (password.length < 10) { showError('La password deve avere almeno 10 caratteri.'); return; }
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;

@@ -533,6 +533,67 @@
 .lp-feature-title{font-size:16px;font-weight:600;color:#c8d5c9;margin:0 0 8px}
 .lp-feature-desc{font-size:14px;color:#6b8f6e;line-height:1.6;margin:0}
 
+/* FEATURE SHOWCASE (scroll-driven device mockup) */
+.lp-showcase{display:grid;grid-template-columns:0.72fr 1fr;gap:40px;align-items:start;margin-top:10px}
+.lp-showcase-list{display:flex;flex-direction:column}
+/* ogni item occupa ~un viewport ed è centrato al suo interno: quando la fascia di rilevamento
+   al centro dello schermo lo attraversa (vedi initFeatureShowcaseScroll), il suo contenuto è
+   già centrato lì — combacia con il pannello sticky, anch'esso centrato nel viewport */
+.lp-showcase-item{min-height:88vh;display:flex;flex-direction:column;justify-content:center;padding:24px 0;border-bottom:1px solid rgba(45,80,48,0.15)}
+.lp-showcase-item:last-child{border-bottom:none}
+.lp-showcase-item-ico{width:48px;height:48px;background:rgba(77,222,128,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px;transition:background .3s,transform .35s var(--ease-spring)}
+.lp-showcase-item.is-active .lp-showcase-item-ico{background:rgba(77,222,128,0.22);transform:scale(1.08)}
+.lp-showcase-item-title{font-size:21px;font-weight:700;color:#c8d5c9;margin:0 0 10px;transition:color .3s}
+.lp-showcase-item.is-active .lp-showcase-item-title{color:#fff}
+.lp-showcase-item-desc{font-size:15px;color:#6b8f6e;line-height:1.7;max-width:420px;margin:0}
+.lp-showcase-visual{position:sticky;top:110px;height:calc(100vh - 180px);min-height:420px;display:flex;align-items:center;justify-content:center}
+.lp-showcase-visual-mobile{display:none}
+
+/* device chrome — drawn in CSS, no external assets */
+.device{position:relative}
+.device-screen{position:relative;overflow:hidden;background:#04140a}
+
+/* iPhone: mockup fotorealistico già completo (cornice+screenshot in un solo PNG) */
+.device-iphone-fx{width:220px;aspect-ratio:1419/2796;position:relative;margin:0 auto}
+.device-mockup-img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+
+/* MacBook: mockup fotorealistico già completo (cornice+screenshot in un solo PNG,
+   ritagliato del margine trasparente in eccesso attorno al laptop) */
+.device-mac{width:570px;aspect-ratio:1300/760;margin:0 auto}
+.device-mockup-mac-img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+
+/* crossfade slides dentro il pannello sticky (mac o iphone) */
+.device-slide{position:absolute;inset:0;opacity:0;transform:scale(1.015);transition:opacity .6s var(--ease-spring),transform .6s var(--ease-spring)}
+.device-slide.is-active{opacity:1;transform:scale(1)}
+
+@media(max-width:1024px){
+  /* dispositivo fisso in alto (sticky), il testo scorre sotto — stesso meccanismo del
+     MacBook desktop ma verticale: colonna singola con la cornice per prima nel flusso */
+  .lp-showcase{display:flex;flex-direction:column;align-items:stretch}
+  .lp-showcase-visual-desktop{display:none}
+  .lp-showcase-visual-mobile{
+    display:flex;justify-content:center;order:-1;
+    position:sticky;top:58px;z-index:5;padding:14px 0 26px;
+    height:auto;min-height:0;
+    background:#060d07;
+  }
+  /* sfuma il bordo inferiore del pannello sticky nello sfondo, invece di un taglio netto */
+  .lp-showcase-visual-mobile::after{
+    content:'';position:absolute;left:0;right:0;bottom:-24px;height:24px;
+    background:linear-gradient(#060d07,rgba(6,13,7,0));pointer-events:none;
+  }
+  /* margine extra in fondo: dà spazio di scroll sufficiente perché l'ultima card
+     attraversi comodamente la fascia di rilevamento, anche con uno scroll veloce */
+  .lp-showcase-list{order:2;padding-bottom:20vh}
+  /* testo allineato in alto (non centrato): compare subito sotto il dispositivo, niente
+     grande vuoto in mezzo — il min-height regola solo il ritmo dello scroll tra una
+     funzione e l'altra */
+  .lp-showcase-item{min-height:0;justify-content:flex-start;padding:40px 0;border-bottom:none}
+}
+@media(max-width:600px){
+  .device-iphone-fx{width:180px}
+}
+
 /* HOW IT WORKS */
 .lp-steps{padding:100px 32px;background:rgba(13,31,15,0.3);border-top:1px solid rgba(45,80,48,0.2);border-bottom:1px solid rgba(45,80,48,0.2)}
 .lp-steps-inner{max-width:900px;margin:0 auto;text-align:center}
@@ -629,6 +690,10 @@
   .lp-hero-glow,.lp-hero-glow2,.lp-scroll-hint{animation:none!important}
   #lp-particles{display:none}
   .lp-faq-a,.lp-faq-icon{transition-duration:.1s!important}
+  /* showcase: niente sticky pin, il dispositivo compare una volta sola nel flusso normale */
+  .lp-showcase-visual-desktop,.lp-showcase-visual-mobile{position:static!important}
+  .lp-showcase-item{min-height:0!important;padding:0 0 48px!important}
+  .device-slide{transition:opacity .1s linear!important;transform:none!important}
 }
 @media (prefers-reduced-transparency: reduce){
   .lp-nav{background:#060d07;backdrop-filter:none}
