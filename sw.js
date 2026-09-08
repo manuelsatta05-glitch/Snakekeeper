@@ -13,7 +13,8 @@
 // sk-v16: protezione anti-bot Turnstile sulle form di autenticazione.
 // sk-v17: avviso esplicito quando l'email ha gia' un account.
 // sk-v18: riscatto del codice fiera per utenti free gia' registrati.
-const CACHE_VERSION = "sk-v18";
+// sk-v19: escaping dei messaggi d'errore mostrati in pagina.
+const CACHE_VERSION = "sk-v19";
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [

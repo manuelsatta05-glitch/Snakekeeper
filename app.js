@@ -6166,7 +6166,10 @@ async function loadSubscriptionInfo() {
         }
       </div>`;
   } catch (e) {
-    el.innerHTML = `<div style="color:var(--accent-red);font-size:12px">Impossibile caricare i dettagli: ${e.message}</div>`;
+    // esc() anche sui messaggi d'errore: non arrivano da noi ma da PostgREST, e
+    // i messaggi di violazione di vincolo possono contenere i valori inseriti
+    // dall'utente. Stesso motivo negli altri tre punti dove si mostra e.message.
+    el.innerHTML = `<div style="color:var(--accent-red);font-size:12px">Impossibile caricare i dettagli: ${esc(e.message)}</div>`;
   }
 }
 
@@ -7059,7 +7062,7 @@ async function loadAdminData() {
     loadAdminFiera(plans);
   } catch (e) {
     document.getElementById("admin-content").innerHTML =
-      `<div class="card" style="color:var(--accent-red)">Errore caricamento: ${e.message}</div>`;
+      `<div class="card" style="color:var(--accent-red)">Errore caricamento: ${esc(e.message)}</div>`;
   }
 }
 
@@ -7074,7 +7077,7 @@ async function loadAdminFiera(plans) {
     const eventi = await SB.req("fiere_eventi?select=*&order=created_at.desc");
     renderAdminFiera(eventi, plans || []);
   } catch (e) {
-    el.innerHTML = `<div class="card" style="color:var(--accent-red)">Errore caricamento fiere: ${e.message}</div>`;
+    el.innerHTML = `<div class="card" style="color:var(--accent-red)">Errore caricamento fiere: ${esc(e.message)}</div>`;
   }
 }
 
@@ -7830,7 +7833,7 @@ async function showFieraHistory(id, nome) {
       .join("");
   } catch (e) {
     document.getElementById("fiera-history-content").innerHTML =
-      `<div style="color:var(--accent-red);font-size:13px">Errore caricamento: ${e.message}</div>`;
+      `<div style="color:var(--accent-red);font-size:13px">Errore caricamento: ${esc(e.message)}</div>`;
   }
 }
 
