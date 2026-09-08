@@ -1,41 +1,64 @@
 // SnakeKeeper Service Worker
-const CACHE_VERSION = 'sk-v14';
+//
+// ⚠️ REGOLA DA NON DIMENTICARE: app.js e style.css sono serviti cache-first, senza
+// rivalidazione (vedi in fondo). La cache viene svuotata SOLO quando cambia
+// CACHE_VERSION. Quindi ogni volta che si modifica app.js o style.css bisogna
+// alzare questo numero, altrimenti chi ha gia' la PWA installata continua a
+// eseguire la versione vecchia per sempre — index.html invece e' network-first,
+// quindi si aggiorna da solo e la cosa passa inosservata nei test (basta un
+// hard-refresh o una curl per vedere il file nuovo mentre gli utenti reali no).
+//
+// sk-v15: fix di sicurezza (escaping XSS nei log e nel pannello admin, password
+// minima a 10 caratteri) + aggiornamento di pdf.js alla 6.3.289.
+const CACHE_VERSION = "sk-v15";
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/style.css',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/manifest.json',
-  '/hero-snake.webp',
+  "/",
+  "/index.html",
+  "/app.js",
+  "/style.css",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/manifest.json",
+  "/hero-snake.webp",
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => self.skipWaiting()),
   );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)),
+        ),
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim()),
   );
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   // API calls e risorse esterne — sempre network
-  if (url.hostname.includes('supabase.co') || url.hostname.includes('stripe.com') || url.hostname.includes('qrserver.com') || url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
+  if (
+    url.hostname.includes("supabase.co") ||
+    url.hostname.includes("stripe.com") ||
+    url.hostname.includes("qrserver.com") ||
+    url.hostname.includes("fonts.googleapis.com") ||
+    url.hostname.includes("fonts.gstatic.com")
+  ) {
     event.respondWith(
       fetch(event.request).catch(() => {
         // Prima restituiva un finto 200 con [] per le chiamate Supabase: sembrava un
@@ -44,53 +67,63 @@ self.addEventListener('fetch', event => {
         // che il caricamento era fallito. Un 503 reale lascia che SB.req() lanci
         // l'errore come previsto, così l'app può gestirlo (retry, banner) invece di
         // credere che i dati siano semplicemente assenti.
-        return new Response(JSON.stringify({ message: 'offline' }), {
+        return new Response(JSON.stringify({ message: "offline" }), {
           status: 503,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         });
-      })
+      }),
     );
     return;
   }
 
   // index.html — SEMPRE network first
-  if (url.pathname === '/' || url.pathname.endsWith('index.html')) {
+  if (url.pathname === "/" || url.pathname.endsWith("index.html")) {
     event.respondWith(
-      fetch(event.request).then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return response;
-      }).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request)),
     );
     return;
   }
 
   // Tutto il resto — cache first
   event.respondWith(
-    caches.match(event.request).then(cached => {
+    caches.match(event.request).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('/');
-        }
-        return new Response('Offline', { status: 503 });
-      });
-    })
+      return fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          if (event.request.destination === "document") {
+            return caches.match("/");
+          }
+          return new Response("Offline", { status: 503 });
+        });
+    }),
   );
 });
 
-self.addEventListener('sync', event => {
-  if (event.tag === 'sync-pending-data') {
+self.addEventListener("sync", (event) => {
+  if (event.tag === "sync-pending-data") {
     event.waitUntil(
-      self.clients.matchAll().then(clients =>
-        clients.forEach(c => c.postMessage({ type: 'SYNC_REQUESTED' }))
-      )
+      self.clients
+        .matchAll()
+        .then((clients) =>
+          clients.forEach((c) => c.postMessage({ type: "SYNC_REQUESTED" })),
+        ),
     );
   }
 });

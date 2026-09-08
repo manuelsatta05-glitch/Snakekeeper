@@ -2203,18 +2203,45 @@ function uploadLogo(input) {
   reader.readAsDataURL(file);
 }
 
+// pdf.js serve solo per "carica logo da PDF", ma il PDF lo sceglie l'utente: e' input
+// non fidato dato in pasto a un parser complesso. La 3.11.174 che stava qui era affetta
+// da CVE-2024-4367 — un PDF costruito ad arte esegue JavaScript arbitrario nella pagina
+// che lo apre, quindi nella sessione dell'allevatore. Corretta dalla 4.2.67 in poi.
+//
+// Dalla 4.x pdf.js e' distribuito SOLO come modulo ES (.mjs): non si puo' piu' caricare
+// con loadScriptOnce, che crea un <script> classico. Serve import() dinamico, che
+// funziona anche dentro uno script classico come questo.
+//
+// La 6.3.289 accetta ancora `canvasContext` in render() (verificato nel sorgente:
+// `render({canvasContext: t, canvas: e = t.canvas, ...})`), quindi la chiamata piu'
+// sotto resta identica.
+const PDFJS_VERSION = "6.3.289";
+const PDFJS_BASE = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
+let _pdfjsPromise = null;
+
+function loadPdfJs() {
+  if (_pdfjsPromise) return _pdfjsPromise;
+  _pdfjsPromise = import(`${PDFJS_BASE}/pdf.min.mjs`)
+    .then((lib) => {
+      // Il worker sta su un'altra origine: i worker cross-origin sarebbero vietati dal
+      // browser, ma pdf.js se ne accorge e lo scarica trasformandolo in un blob
+      // same-origin. Per questo la CSP elenca cdnjs sia in connect-src sia in worker-src,
+      // oltre a blob: in worker-src.
+      lib.GlobalWorkerOptions.workerSrc = `${PDFJS_BASE}/pdf.worker.min.mjs`;
+      return lib;
+    })
+    .catch(() => {
+      // Un fallimento di rete non deve restare in cache: al prossimo tentativo si riprova.
+      _pdfjsPromise = null;
+      throw new Error("Libreria PDF non disponibile, ricarica la pagina");
+    });
+  return _pdfjsPromise;
+}
+
 async function uploadLogoFromPdf(file) {
   try {
     toast("📄 Lettura PDF in corso...", "var(--accent-lime)");
-    if (typeof pdfjsLib === "undefined") {
-      await loadScriptOnce(
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
-      );
-    }
-    if (typeof pdfjsLib === "undefined")
-      throw new Error("Libreria PDF non disponibile, ricarica la pagina");
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const pdfjsLib = await loadPdfJs();
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
