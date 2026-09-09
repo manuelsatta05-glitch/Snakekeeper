@@ -1,27 +1,27 @@
 # Graph Report - Snakekeeper-repo  (2026-09-08)
 
 ## Corpus Check
-- 20 files · ~209,637 words
+- 23 files · ~213,522 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 434 nodes · 905 edges · 34 communities (28 shown, 6 thin omitted)
+- 469 nodes · 938 edges · 44 communities (38 shown, 6 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 28 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `db1f7b3a`
+- Built from commit: `8b46b94b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - SnakeKeeper Web App
 - Plan & Billing System
-- Extraction Subagent Prompt Spec
-- Extra Exports & Benchmark Reference
+- Step 3: Extract Entities and Relationships
+- Query, Path, Explain Reference
 - t
 - Manifest PWA
-- closeModalEl
+- getSession
 - app.js
 - stripe-webhook/index.ts
 - Pagine Legali (Privacy/Termini)
@@ -32,7 +32,7 @@
 - doLogin
 - loadAll
 - initLanding
-- renderProfilo
+- cancel-subscription/index.ts
 - transfer-snake/index.ts
 - Drawer Mobile
 - landingLogin
@@ -48,7 +48,17 @@
 - Auth System
 - Dashboard Feature
 - toast
-- applyCookiePrefs
+- closeModalEl
+- create-checkout/index.ts
+- verify-checkout/index.ts
+- Step 4: Build Graph, Cluster, Analyze
+- saveSerpente
+- Extraction Subagent Prompt Spec
+- _refreshLastLogsForSnake
+- Add URL & Watch Folder Reference
+- Extra Exports & Benchmark Reference
+- Part A: Structural (AST) Extraction
+- Incremental Update & Cluster-Only Reference
 
 ## God Nodes (most connected - your core abstractions)
 1. `toast()` - 48 edges
@@ -57,10 +67,10 @@
 4. `showPage()` - 26 edges
 5. `renderDettaglio()` - 22 edges
 6. `SnakeKeeper Web App` - 19 edges
-7. `closeModalEl()` - 17 edges
-8. `renderVenduti()` - 17 edges
-9. `openModalEl()` - 14 edges
-10. `requireEditable()` - 14 edges
+7. `renderVenduti()` - 17 edges
+8. `closeModalEl()` - 17 edges
+9. `requireEditable()` - 14 edges
+10. `openModalEl()` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Registro Mute (Molt Log)` --semantically_similar_to--> `Molt Log Feature`  [INFERRED] [semantically similar]
@@ -82,7 +92,7 @@
 - **graphify Build Pipeline (Steps 1-9)** — _claude_skills_graphify_skill_step1_interpreter_detection, _claude_skills_graphify_skill_step2_detect_files, _claude_skills_graphify_skill_step3_extraction, _claude_skills_graphify_skill_step4_build_graph, _claude_skills_graphify_skill_step4_5_health_check, _claude_skills_graphify_skill_step5_label_communities, _claude_skills_graphify_skill_step6_exports, _claude_skills_graphify_skill_step9_manifest_cost [EXTRACTED 1.00]
 - **showPage() Page Router Dispatch Table** — index_showpage, index_renderdashboard, index_renderserpenti, index_renderaggiungi, index_renderdettaglio, index_renderregistro, index_rendervenduti, index_renderadmin, index_renderprofilo [EXTRACTED 1.00]
 
-## Communities (34 total, 6 thin omitted)
+## Communities (44 total, 6 thin omitted)
 
 ### Community 0 - "SnakeKeeper Web App"
 Cohesion: 0.15
@@ -92,29 +102,29 @@ Nodes (14): Guida alla muta (ecdisi) nei serpenti, Registro Mute (Molt Log), Com
 Cohesion: 0.16
 Nodes (9): applySnakeLockUI(), canAddSnake(), canEditSnake(), FREE_SNAKE_LIMIT (3 snakes), isPro(), Plan & Billing System, Plan Tiers (free/pro/admin/free_forever/for_life), requireEditable() (+1 more)
 
-### Community 2 - "Extraction Subagent Prompt Spec"
-Cohesion: 0.08
-Nodes (27): graphify Skill Directive, Add URL & Watch Folder Reference, /graphify add, graphify.watch Module, --watch Flag, Confidence Score Rubric, Extraction Subagent Prompt Spec, Hyperedge Extraction Rule (+19 more)
+### Community 2 - "Step 3: Extract Entities and Relationships"
+Cohesion: 0.25
+Nodes (9): graphify Skill Directive, Video/Audio Transcription Reference, graphify.transcribe.transcribe_all(), Whisper Domain-Hint Prompt Strategy, /graphify Command, Step 1: Ensure graphify Installed, Step 2.5: Video/Audio Transcription, Step 2: Detect Files (+1 more)
 
-### Community 3 - "Extra Exports & Benchmark Reference"
-Cohesion: 0.09
-Nodes (30): Extra Exports & Benchmark Reference, FalkorDB Export, MCP Server (graphify.serve), Neo4j Export, SVG/GraphML Export, Token Reduction Benchmark, Wiki Export (--wiki), BFS/DFS Traversal Modes (+22 more)
+### Community 3 - "Query, Path, Explain Reference"
+Cohesion: 0.29
+Nodes (10): MCP Server (graphify.serve), BFS/DFS Traversal Modes, /graphify explain, /graphify path, Query, Path, Explain Reference, Constrained Query Expansion, graphify reflect / LESSONS.md, save-result Work Memory Loop (+2 more)
 
 ### Community 4 - "t"
-Cohesion: 0.11
-Nodes (44): accettaTrasferimento(), addLogsToCaches(), annullaVendita(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions(), checkHash(), deleteSerpente() (+36 more)
+Cohesion: 0.14
+Nodes (39): accettaTrasferimento(), annullaVendita(), applyTrasferimentiUI(), bindTrasferimentiActions(), bindVendutiActions(), checkHash(), confermaInvioCliente(), deleteVenduto() (+31 more)
 
 ### Community 5 - "Manifest PWA"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, scope, short_name (+2 more)
 
-### Community 6 - "closeModalEl"
-Cohesion: 0.08
-Nodes (42): adminAddUser(), applyAppLang(), applyPlanUI(), changeAppLang(), changePlan(), checkTrialCountdown(), clearSession(), closeModalEl() (+34 more)
+### Community 6 - "getSession"
+Cohesion: 0.09
+Nodes (34): adminAddUser(), applyAppLang(), applyPlanUI(), centerOnSquareCanvas(), changeAppLang(), changePlan(), checkTrialCountdown(), clearSession() (+26 more)
 
 ### Community 7 - "app.js"
-Cohesion: 0.06
-Nodes (21): _annullaInFlight, _fieraEventiCache, I18N, _lastLogsPerSnake, LOG_FIELDS, _logsCache, MESI_ABBR, MESI_FULL (+13 more)
+Cohesion: 0.05
+Nodes (26): _annullaInFlight, _fieraEventiCache, getFilteredVenduti(), getVendutiYears(), I18N, _lastLogsPerSnake, LOG_FIELDS, _logsCache (+18 more)
 
 ### Community 8 - "stripe-webhook/index.ts"
 Cohesion: 0.19
@@ -129,8 +139,8 @@ Cohesion: 0.60
 Nodes (5): GitHub Clone & Cross-Repo Merge Reference, graphify clone Command, graphify merge-graphs Command, Multi-Subfolder / Monorepo Extraction, Step 0: GitHub Clone & Merge
 
 ### Community 14 - "doLogin"
-Cohesion: 0.25
-Nodes (11): authReq(), doForgotPassword(), doLogin(), doRegister(), emailGiaRegistrata(), getCaptchaToken(), hideLoginScreen(), loadTurnstile() (+3 more)
+Cohesion: 0.19
+Nodes (14): applyCookiePrefs(), authReq(), cookieChoice(), doForgotPassword(), doLogin(), doRegister(), emailGiaRegistrata(), getCaptchaToken() (+6 more)
 
 ### Community 15 - "loadAll"
 Cohesion: 0.24
@@ -140,9 +150,9 @@ Nodes (10): addToOfflineQueue(), getOfflineQueue(), loadAll(), replayOfflineQueu
 Cohesion: 0.22
 Nodes (9): closeMobileNav(), initFeatureShowcaseScroll(), initLanding(), initLandingNav(), initParticles(), initScrollReveal(), mobileNavGo(), showLanding() (+1 more)
 
-### Community 17 - "renderProfilo"
-Cohesion: 0.39
-Nodes (8): centerOnSquareCanvas(), loadPdfJs(), loadSubscriptionInfo(), removeLogo(), renderProfilo(), saveLogoToServer(), uploadLogo(), uploadLogoFromPdf()
+### Community 17 - "cancel-subscription/index.ts"
+Cohesion: 0.13
+Nodes (5): ALLOWED_ORIGINS, log(), RateLimitResult, SB_HEADERS, sendEmail()
 
 ### Community 18 - "transfer-snake/index.ts"
 Cohesion: 0.17
@@ -189,15 +199,55 @@ Cohesion: 0.50
 Nodes (3): Admin Panel Feature, isAdmin(), renderAdmin()
 
 ### Community 32 - "toast"
-Cohesion: 0.10
-Nodes (42): addLogToCaches(), age(), applySnakeLockUI(), canAddSnake(), canEditSnake(), closeToastEl(), compressImageToDataUrl(), copyFieraLink() (+34 more)
+Cohesion: 0.16
+Nodes (29): addLogToCaches(), age(), applySnakeLockUI(), canEditSnake(), closeToastEl(), compressImageToDataUrl(), copyFieraLink(), deleteLogEntry() (+21 more)
 
-### Community 38 - "applyCookiePrefs"
-Cohesion: 0.67
-Nodes (3): applyCookiePrefs(), cookieChoice(), initCookieBanner()
+### Community 33 - "closeModalEl"
+Cohesion: 0.23
+Nodes (14): closeModalEl(), confermaVendita(), editFieraEvent(), editLogEntry(), nomeGenitore(), openModalEl(), showCancelSubscriptionModal(), showDeleteAccountModal() (+6 more)
+
+### Community 34 - "create-checkout/index.ts"
+Cohesion: 0.20
+Nodes (4): ALLOWED_ORIGINS, PRICES, RateLimitResult, SB_HEADERS
+
+### Community 35 - "verify-checkout/index.ts"
+Cohesion: 0.22
+Nodes (3): ALLOWED_ORIGINS, RateLimitResult, SB_HEADERS
+
+### Community 36 - "Step 4: Build Graph, Cluster, Analyze"
+Cohesion: 0.32
+Nodes (8): Honesty Rules, PowerShell Scrolling Troubleshooting, graph.json Shrink Guard (#479), Step 4.5: Graph Health Check, Step 4: Build Graph, Cluster, Analyze, Step 5: Label Communities, Step 6: Obsidian Vault + HTML Export, Step 9: Manifest, Cost Tracker, Cleanup
+
+### Community 37 - "saveSerpente"
+Cohesion: 0.25
+Nodes (8): canAddSnake(), genICD(), genId(), isNameTaken(), isPro(), lockedSnakesCount(), readParentFields(), saveSerpente()
+
+### Community 38 - "Extraction Subagent Prompt Spec"
+Cohesion: 0.33
+Nodes (7): Confidence Score Rubric, Extraction Subagent Prompt Spec, Hyperedge Extraction Rule, semantically_similar_to Edge Rule, Semantic Extraction Cache, Gemini Semantic Extraction Backend, Part B: Semantic Extraction (Subagents)
+
+### Community 39 - "_refreshLastLogsForSnake"
+Cohesion: 0.29
+Nodes (7): addLogsToCaches(), _isNewerLog(), _lastLogKey(), _refreshLastLogsForSnake(), removeLogFromCaches(), ultimiLogInvio(), updateLogInCaches()
+
+### Community 40 - "Add URL & Watch Folder Reference"
+Cohesion: 0.33
+Nodes (5): Add URL & Watch Folder Reference, /graphify add, graphify.watch Module, --watch Flag, /graphify add & --watch
+
+### Community 41 - "Extra Exports & Benchmark Reference"
+Cohesion: 0.33
+Nodes (6): Extra Exports & Benchmark Reference, FalkorDB Export, Neo4j Export, SVG/GraphML Export, Token Reduction Benchmark, Wiki Export (--wiki)
+
+### Community 42 - "Part A: Structural (AST) Extraction"
+Cohesion: 0.33
+Nodes (6): Node ID Format Rule, graphify claude install, Commit Hook & CLAUDE.md Integration Reference, graphify hook install, Part A: Structural (AST) Extraction, Commit Hook & CLAUDE.md Integration
+
+### Community 43 - "Incremental Update & Cluster-Only Reference"
+Cohesion: 0.47
+Nodes (6): build_merge(), graphify cluster-only Command, detect_incremental(), prune_sources Deletion-Only Rule, Incremental Update & Cluster-Only Reference, --update / --cluster-only Subcommands
 
 ## Knowledge Gaps
-- **65 isolated node(s):** `STRIPE_PRICES`, `SB`, `_snakes`, `_recentLogs`, `_logsCache` (+60 more)
+- **75 isolated node(s):** `SB_HEADERS`, `ALLOWED_ORIGINS`, `RateLimitResult`, `PRICES`, `ALLOWED_ORIGINS` (+70 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -205,16 +255,16 @@ Nodes (3): applyCookiePrefs(), cookieChoice(), initCookieBanner()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `SnakeKeeper Web App` connect `SnakeKeeper Web App` to `Plan & Billing System`, `Snake Management Feature`, `Admin Panel Feature`, `Auth System`, `Dashboard Feature`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **Why does `Plan & Billing System` connect `Plan & Billing System` to `SnakeKeeper Web App`, `Admin Panel Feature`, `loadUserPlan`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `Step 3: Extract Entities and Relationships` connect `Extraction Subagent Prompt Spec` to `Extra Exports & Benchmark Reference`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Are the 12 inferred relationships involving `showPage()` (e.g. with `renderAdmin()` and `renderDettaglio()`) actually correct?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **Why does `Step 3: Extract Entities and Relationships` connect `Step 3: Extract Entities and Relationships` to `Part A: Structural (AST) Extraction`, `Step 4: Build Graph, Cluster, Analyze`, `Extraction Subagent Prompt Spec`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **Are the 12 inferred relationships involving `showPage()` (e.g. with `renderAdmin()` and `renderAggiungi()`) actually correct?**
   _`showPage()` has 12 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `STRIPE_PRICES`, `SB`, `_snakes` to the rest of the system?**
-  _65 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Extraction Subagent Prompt Spec` be split into smaller, more focused modules?**
-  _Cohesion score 0.07936507936507936 - nodes in this community are weakly interconnected._
-- **Should `Extra Exports & Benchmark Reference` be split into smaller, more focused modules?**
-  _Cohesion score 0.08505747126436781 - nodes in this community are weakly interconnected._
+- **What connects `SB_HEADERS`, `ALLOWED_ORIGINS`, `RateLimitResult` to the rest of the system?**
+  _75 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `t` be split into smaller, more focused modules?**
+  _Cohesion score 0.1417004048582996 - nodes in this community are weakly interconnected._
+- **Should `getSession` be split into smaller, more focused modules?**
+  _Cohesion score 0.08912655971479501 - nodes in this community are weakly interconnected._
