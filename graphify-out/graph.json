@@ -65,10 +65,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_ratelimitresult",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "ratelimitresult"
+      "norm_label": "ratelimitresult",
+      "id": "supabase_functions_cancel_subscription_index_ratelimitresult"
     },
     {
       "label": "RateLimitResult",
@@ -104,10 +104,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_ratelimitresult",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "ratelimitresult"
+      "norm_label": "ratelimitresult",
+      "id": "supabase_functions_create_checkout_index_ratelimitresult"
     },
     {
       "label": "RateLimitResult",
@@ -117,10 +117,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_ratelimitresult",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "ratelimitresult"
+      "norm_label": "ratelimitresult",
+      "id": "supabase_functions_verify_checkout_index_ratelimitresult"
     },
     {
       "label": "applyCookiePrefs()",
@@ -525,10 +525,10 @@
       "source_location": "L114",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_cancellationemailhtml",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "cancellationemailhtml()"
+      "norm_label": "cancellationemailhtml()",
+      "id": "supabase_functions_cancel_subscription_index_cancellationemailhtml"
     },
     {
       "label": "checkRateLimit()",
@@ -537,10 +537,10 @@
       "source_location": "L44",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_checkratelimit",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "checkratelimit()"
+      "norm_label": "checkratelimit()",
+      "id": "supabase_functions_cancel_subscription_index_checkratelimit"
     },
     {
       "label": "corsFor()",
@@ -549,10 +549,10 @@
       "source_location": "L18",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_corsfor",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "corsfor()"
+      "norm_label": "corsfor()",
+      "id": "supabase_functions_cancel_subscription_index_corsfor"
     },
     {
       "label": "extractPeriodEnd()",
@@ -561,10 +561,10 @@
       "source_location": "L208",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_extractperiodend",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "extractperiodend()"
+      "norm_label": "extractperiodend()",
+      "id": "supabase_functions_cancel_subscription_index_extractperiodend"
     },
     {
       "label": "findChargeForInvoice()",
@@ -573,10 +573,10 @@
       "source_location": "L217",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_findchargeforinvoice",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "findchargeforinvoice()"
+      "norm_label": "findchargeforinvoice()",
+      "id": "supabase_functions_cancel_subscription_index_findchargeforinvoice"
     },
     {
       "label": "getAuthenticatedUserId()",
@@ -585,10 +585,10 @@
       "source_location": "L74",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_getauthenticateduserid",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "getauthenticateduserid()"
+      "norm_label": "getauthenticateduserid()",
+      "id": "supabase_functions_cancel_subscription_index_getauthenticateduserid"
     },
     {
       "label": "getClientIp()",
@@ -597,10 +597,10 @@
       "source_location": "L35",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_getclientip",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "getclientip()"
+      "norm_label": "getclientip()",
+      "id": "supabase_functions_cancel_subscription_index_getclientip"
     },
     {
       "label": "getStripeCustomerEmail()",
@@ -609,10 +609,10 @@
       "source_location": "L198",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_getstripecustomeremail",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "getstripecustomeremail()"
+      "norm_label": "getstripecustomeremail()",
+      "id": "supabase_functions_cancel_subscription_index_getstripecustomeremail"
     },
     {
       "label": "getUserEmail()",
@@ -621,10 +621,10 @@
       "source_location": "L185",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_getuseremail",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "getuseremail()"
+      "norm_label": "getuseremail()",
+      "id": "supabase_functions_cancel_subscription_index_getuseremail"
     },
     {
       "label": "log()",
@@ -633,10 +633,10 @@
       "source_location": "L58",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_log",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "log()"
+      "norm_label": "log()",
+      "id": "supabase_functions_cancel_subscription_index_log"
     },
     {
       "label": "makeJson()",
@@ -645,10 +645,10 @@
       "source_location": "L28",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_makejson",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "makejson()"
+      "norm_label": "makejson()",
+      "id": "supabase_functions_cancel_subscription_index_makejson"
     },
     {
       "label": "sendEmail()",
@@ -657,10 +657,10 @@
       "source_location": "L88",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_sendemail",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "sendemail()"
+      "norm_label": "sendemail()",
+      "id": "supabase_functions_cancel_subscription_index_sendemail"
     },
     {
       "label": "buildPayload()",
@@ -1186,7 +1186,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 26,
-      "community_name": "riscattaCodiceFiera",
+      "community_name": "getSupabaseToken",
       "norm_label": "getsupabasetoken()",
       "id": "app_getsupabasetoken"
     },
@@ -1198,21 +1198,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 26,
-      "community_name": "riscattaCodiceFiera",
+      "community_name": "getSupabaseToken",
       "norm_label": "refreshaccesstoken()",
       "id": "app_refreshaccesstoken"
-    },
-    {
-      "label": "riscattaCodiceFiera()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L5778",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 26,
-      "community_name": "riscattaCodiceFiera",
-      "norm_label": "riscattacodicefiera()",
-      "id": "app_riscattacodicefiera"
     },
     {
       "label": "saveSession()",
@@ -1222,21 +1210,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 26,
-      "community_name": "riscattaCodiceFiera",
+      "community_name": "getSupabaseToken",
       "norm_label": "savesession()",
       "id": "app_savesession"
-    },
-    {
-      "label": "traduciErroreRiscatto()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L5745",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 26,
-      "community_name": "riscattaCodiceFiera",
-      "norm_label": "traducierroreriscatto()",
-      "id": "app_traducierroreriscatto"
     },
     {
       "label": "addLogToCaches()",
@@ -1246,21 +1222,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "addlogtocaches()",
       "id": "app_addlogtocaches"
-    },
-    {
-      "label": "age()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L572",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "age()",
-      "id": "app_age"
     },
     {
       "label": "applySnakeLockUI()",
@@ -1270,7 +1234,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "applysnakelockui()",
       "id": "app_applysnakelockui"
     },
@@ -1282,45 +1246,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "caneditsnake()",
       "id": "app_caneditsnake"
-    },
-    {
-      "label": "closeToastEl()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L591",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "closetoastel()",
-      "id": "app_closetoastel"
-    },
-    {
-      "label": "compressImageToDataUrl()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L2078",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "compressimagetodataurl()",
-      "id": "app_compressimagetodataurl"
-    },
-    {
-      "label": "copyFieraLink()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7302",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "copyfieralink()",
-      "id": "app_copyfieralink"
     },
     {
       "label": "deleteLogEntry()",
@@ -1330,21 +1258,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "deletelogentry()",
       "id": "app_deletelogentry"
-    },
-    {
-      "label": "deleteSerpente()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L2383",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "deleteserpente()",
-      "id": "app_deleteserpente"
     },
     {
       "label": "logFeci()",
@@ -1354,7 +1270,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "logfeci()",
       "id": "app_logfeci"
     },
@@ -1366,7 +1282,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "logfood()",
       "id": "app_logfood"
     },
@@ -1378,7 +1294,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "logmuta()",
       "id": "app_logmuta"
     },
@@ -1390,7 +1306,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "logpeso()",
       "id": "app_logpeso"
     },
@@ -1402,21 +1318,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "logpulizia()",
       "id": "app_logpulizia"
-    },
-    {
-      "label": "logsForSnake()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L610",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "logsforsnake()",
-      "id": "app_logsforsnake"
     },
     {
       "label": "logUova()",
@@ -1426,57 +1330,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "loguova()",
       "id": "app_loguova"
-    },
-    {
-      "label": "previewFoto()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L2128",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "previewfoto()",
-      "id": "app_previewfoto"
-    },
-    {
-      "label": "previewFotoAdd()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L2111",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "previewfotoadd()",
-      "id": "app_previewfotoadd"
-    },
-    {
-      "label": "previewFotoInvio()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L3347",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "previewfotoinvio()",
-      "id": "app_previewfotoinvio"
-    },
-    {
-      "label": "printSchedaSerpente()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L4035",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "printschedaserpente()",
-      "id": "app_printschedaserpente"
     },
     {
       "label": "renderDettaglio()",
@@ -1486,21 +1342,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "renderdettaglio()",
       "id": "app_renderdettaglio"
-    },
-    {
-      "label": "renderPosPicker()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L1478",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "renderpospicker()",
-      "id": "app_renderpospicker"
     },
     {
       "label": "requireEditable()",
@@ -1510,7 +1354,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "requireeditable()",
       "id": "app_requireeditable"
     },
@@ -1522,7 +1366,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "saveeditlog()",
       "id": "app_saveeditlog"
     },
@@ -1534,21 +1378,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "saveeditserpente()",
       "id": "app_saveeditserpente"
-    },
-    {
-      "label": "setFotoPosition()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L1499",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "setfotoposition()",
-      "id": "app_setfotoposition"
     },
     {
       "label": "switchTab()",
@@ -1558,21 +1390,9 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "switchtab()",
       "id": "app_switchtab"
-    },
-    {
-      "label": "toast()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L581",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "toast",
-      "norm_label": "toast()",
-      "id": "app_toast"
     },
     {
       "label": "toggleEditSerpente()",
@@ -1582,9 +1402,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "toast",
+      "community_name": "renderDettaglio",
       "norm_label": "toggleeditserpente()",
       "id": "app_toggleeditserpente"
+    },
+    {
+      "label": "age()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L572",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 33,
+      "community_name": "closeModalEl",
+      "norm_label": "age()",
+      "id": "app_age"
     },
     {
       "label": "closeModalEl()",
@@ -1611,18 +1443,6 @@
       "id": "app_confermavendita"
     },
     {
-      "label": "editFieraEvent()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7641",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 33,
-      "community_name": "closeModalEl",
-      "norm_label": "editfieraevent()",
-      "id": "app_editfieraevent"
-    },
-    {
       "label": "editLogEntry()",
       "file_type": "code",
       "source_file": "app.js",
@@ -1633,6 +1453,18 @@
       "community_name": "closeModalEl",
       "norm_label": "editlogentry()",
       "id": "app_editlogentry"
+    },
+    {
+      "label": "logsForSnake()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L610",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 33,
+      "community_name": "closeModalEl",
+      "norm_label": "logsforsnake()",
+      "id": "app_logsforsnake"
     },
     {
       "label": "nomeGenitore()",
@@ -1657,6 +1489,18 @@
       "community_name": "closeModalEl",
       "norm_label": "openmodalel()",
       "id": "app_openmodalel"
+    },
+    {
+      "label": "printSchedaSerpente()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L4035",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 33,
+      "community_name": "closeModalEl",
+      "norm_label": "printschedaserpente()",
+      "id": "app_printschedaserpente"
     },
     {
       "label": "showCancelSubscriptionModal()",
@@ -1719,18 +1563,6 @@
       "id": "app_showlockedsnakemodal"
     },
     {
-      "label": "showTrialCountdownModal()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L6503",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 33,
-      "community_name": "closeModalEl",
-      "norm_label": "showtrialcountdownmodal()",
-      "id": "app_showtrialcountdownmodal"
-    },
-    {
       "label": "showUpgradeModal()",
       "file_type": "code",
       "source_file": "app.js",
@@ -1761,10 +1593,10 @@
       "source_location": "L59",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_checkratelimit",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "checkratelimit()"
+      "norm_label": "checkratelimit()",
+      "id": "supabase_functions_create_checkout_index_checkratelimit"
     },
     {
       "label": "corsFor()",
@@ -1773,10 +1605,10 @@
       "source_location": "L19",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_corsfor",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "corsfor()"
+      "norm_label": "corsfor()",
+      "id": "supabase_functions_create_checkout_index_corsfor"
     },
     {
       "label": "getAuthenticatedUserId()",
@@ -1785,10 +1617,10 @@
       "source_location": "L76",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_getauthenticateduserid",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "getauthenticateduserid()"
+      "norm_label": "getauthenticateduserid()",
+      "id": "supabase_functions_create_checkout_index_getauthenticateduserid"
     },
     {
       "label": "getClientIp()",
@@ -1797,10 +1629,10 @@
       "source_location": "L48",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_getclientip",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "getclientip()"
+      "norm_label": "getclientip()",
+      "id": "supabase_functions_create_checkout_index_getclientip"
     },
     {
       "label": "log()",
@@ -1809,10 +1641,10 @@
       "source_location": "L35",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_log",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "log()"
+      "norm_label": "log()",
+      "id": "supabase_functions_create_checkout_index_log"
     },
     {
       "label": "checkRateLimit()",
@@ -1821,10 +1653,10 @@
       "source_location": "L34",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_checkratelimit",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "checkratelimit()"
+      "norm_label": "checkratelimit()",
+      "id": "supabase_functions_verify_checkout_index_checkratelimit"
     },
     {
       "label": "corsFor()",
@@ -1833,10 +1665,10 @@
       "source_location": "L15",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_corsfor",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "corsfor()"
+      "norm_label": "corsfor()",
+      "id": "supabase_functions_verify_checkout_index_corsfor"
     },
     {
       "label": "getClientIp()",
@@ -1845,10 +1677,10 @@
       "source_location": "L25",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_getclientip",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "getclientip()"
+      "norm_label": "getclientip()",
+      "id": "supabase_functions_verify_checkout_index_getclientip"
     },
     {
       "label": "getCurrentPlan()",
@@ -1857,10 +1689,10 @@
       "source_location": "L58",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_getcurrentplan",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "getcurrentplan()"
+      "norm_label": "getcurrentplan()",
+      "id": "supabase_functions_verify_checkout_index_getcurrentplan"
     },
     {
       "label": "log()",
@@ -1869,10 +1701,10 @@
       "source_location": "L48",
       "_callable": true,
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_log",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "log()"
+      "norm_label": "log()",
+      "id": "supabase_functions_verify_checkout_index_log"
     },
     {
       "label": "canAddSnake()",
@@ -2403,28 +2235,16 @@
       "id": "app_ritiratrasferimento"
     },
     {
-      "label": "setVendutiYear()",
+      "label": "setVendutiMonth()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L2616",
+      "source_location": "L2622",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "t",
-      "norm_label": "setvendutiyear()",
-      "id": "app_setvendutiyear"
-    },
-    {
-      "label": "showFieraQr()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7309",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "t",
-      "norm_label": "showfieraqr()",
-      "id": "app_showfieraqr"
+      "norm_label": "setvendutimonth()",
+      "id": "app_setvendutimonth"
     },
     {
       "label": "showInviaClienteModal()",
@@ -2449,6 +2269,30 @@
       "community_name": "t",
       "norm_label": "showpage()",
       "id": "app_showpage"
+    },
+    {
+      "label": "showPhotoLightbox()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L29",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "t",
+      "norm_label": "showphotolightbox()",
+      "id": "app_showphotolightbox"
+    },
+    {
+      "label": "showTrialCountdownModal()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L6503",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "t",
+      "norm_label": "showtrialcountdownmodal()",
+      "id": "app_showtrialcountdownmodal"
     },
     {
       "label": "t()",
@@ -2523,6 +2367,114 @@
       "id": "app_trasferimentopill"
     },
     {
+      "label": "compressImageToDataUrl()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L2078",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 44,
+      "community_name": "previewFoto",
+      "norm_label": "compressimagetodataurl()",
+      "id": "app_compressimagetodataurl"
+    },
+    {
+      "label": "previewFoto()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L2128",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 44,
+      "community_name": "previewFoto",
+      "norm_label": "previewfoto()",
+      "id": "app_previewfoto"
+    },
+    {
+      "label": "previewFotoAdd()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L2111",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 44,
+      "community_name": "previewFoto",
+      "norm_label": "previewfotoadd()",
+      "id": "app_previewfotoadd"
+    },
+    {
+      "label": "previewFotoInvio()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L3347",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 44,
+      "community_name": "previewFoto",
+      "norm_label": "previewfotoinvio()",
+      "id": "app_previewfotoinvio"
+    },
+    {
+      "label": "renderPosPicker()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L1478",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 44,
+      "community_name": "previewFoto",
+      "norm_label": "renderpospicker()",
+      "id": "app_renderpospicker"
+    },
+    {
+      "label": "setFotoPosition()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L1499",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 44,
+      "community_name": "previewFoto",
+      "norm_label": "setfotoposition()",
+      "id": "app_setfotoposition"
+    },
+    {
+      "label": "eDiSicurezza()",
+      "file_type": "code",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L40",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "supabase_functions_daily_health_check_index_edisicurezza",
+      "community": 45,
+      "community_name": "daily-health-check/index.ts",
+      "norm_label": "edisicurezza()"
+    },
+    {
+      "label": "esc()",
+      "file_type": "code",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L20",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "supabase_functions_daily_health_check_index_esc",
+      "community": 45,
+      "community_name": "daily-health-check/index.ts",
+      "norm_label": "esc()"
+    },
+    {
+      "label": "sendEmail()",
+      "file_type": "code",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L27",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "supabase_functions_daily_health_check_index_sendemail",
+      "community": 45,
+      "community_name": "daily-health-check/index.ts",
+      "norm_label": "sendemail()"
+    },
+    {
       "label": "adminAddUser()",
       "file_type": "code",
       "source_file": "app.js",
@@ -2530,7 +2482,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "adminadduser()",
       "id": "app_adminadduser"
     },
@@ -2542,7 +2494,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "applyapplang()",
       "id": "app_applyapplang"
     },
@@ -2554,7 +2506,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "applyplanui()",
       "id": "app_applyplanui"
     },
@@ -2566,7 +2518,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "centeronsquarecanvas()",
       "id": "app_centeronsquarecanvas"
     },
@@ -2578,7 +2530,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "changeapplang()",
       "id": "app_changeapplang"
     },
@@ -2590,7 +2542,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "changeplan()",
       "id": "app_changeplan"
     },
@@ -2602,7 +2554,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "checktrialcountdown()",
       "id": "app_checktrialcountdown"
     },
@@ -2614,9 +2566,33 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "clearsession()",
       "id": "app_clearsession"
+    },
+    {
+      "label": "closeToastEl()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L591",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "closetoastel()",
+      "id": "app_closetoastel"
+    },
+    {
+      "label": "copyFieraLink()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L7302",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "copyfieralink()",
+      "id": "app_copyfieralink"
     },
     {
       "label": "createFieraEvent()",
@@ -2626,7 +2602,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "createfieraevent()",
       "id": "app_createfieraevent"
     },
@@ -2638,7 +2614,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "daysuntil()",
       "id": "app_daysuntil"
     },
@@ -2650,9 +2626,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "deletefieraevent()",
       "id": "app_deletefieraevent"
+    },
+    {
+      "label": "deleteSerpente()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L2383",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "deleteserpente()",
+      "id": "app_deleteserpente"
     },
     {
       "label": "doCancelSubscription()",
@@ -2662,7 +2650,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "docancelsubscription()",
       "id": "app_docancelsubscription"
     },
@@ -2674,9 +2662,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "dodeleteaccount()",
       "id": "app_dodeleteaccount"
+    },
+    {
+      "label": "editFieraEvent()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L7641",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "editfieraevent()",
+      "id": "app_editfieraevent"
     },
     {
       "label": "getSession()",
@@ -2686,7 +2686,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "getsession()",
       "id": "app_getsession"
     },
@@ -2698,7 +2698,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "hidepaymentprocessingbanner()",
       "id": "app_hidepaymentprocessingbanner"
     },
@@ -2710,7 +2710,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "isadmin()",
       "id": "app_isadmin"
     },
@@ -2722,7 +2722,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "loadadmindata()",
       "id": "app_loadadmindata"
     },
@@ -2734,7 +2734,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "loadpdfjs()",
       "id": "app_loadpdfjs"
     },
@@ -2746,7 +2746,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "loadsubscriptioninfo()",
       "id": "app_loadsubscriptioninfo"
     },
@@ -2758,7 +2758,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "loaduserplan()",
       "id": "app_loaduserplan"
     },
@@ -2770,7 +2770,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "marktrialnotifiedserver()",
       "id": "app_marktrialnotifiedserver"
     },
@@ -2782,7 +2782,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "removelogo()",
       "id": "app_removelogo"
     },
@@ -2794,7 +2794,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "renderadmin()",
       "id": "app_renderadmin"
     },
@@ -2806,9 +2806,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "renderprofilo()",
       "id": "app_renderprofilo"
+    },
+    {
+      "label": "riscattaCodiceFiera()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L5778",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "riscattacodicefiera()",
+      "id": "app_riscattacodicefiera"
     },
     {
       "label": "saveFieraEdit()",
@@ -2818,7 +2830,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "savefieraedit()",
       "id": "app_savefieraedit"
     },
@@ -2830,7 +2842,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "savelogotoserver()",
       "id": "app_savelogotoserver"
     },
@@ -2842,7 +2854,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "showpaymentprocessingbanner()",
       "id": "app_showpaymentprocessingbanner"
     },
@@ -2854,7 +2866,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "showpaymentsuccessmodal()",
       "id": "app_showpaymentsuccessmodal"
     },
@@ -2866,9 +2878,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "startcheckout()",
       "id": "app_startcheckout"
+    },
+    {
+      "label": "toast()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L581",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "toast()",
+      "id": "app_toast"
     },
     {
       "label": "todayStr()",
@@ -2878,7 +2902,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "todaystr()",
       "id": "app_todaystr"
     },
@@ -2890,9 +2914,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "togglefieraattivo()",
       "id": "app_togglefieraattivo"
+    },
+    {
+      "label": "traduciErroreRiscatto()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L5745",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "toast",
+      "norm_label": "traducierroreriscatto()",
+      "id": "app_traducierroreriscatto"
     },
     {
       "label": "uploadLogo()",
@@ -2902,7 +2938,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "uploadlogo()",
       "id": "app_uploadlogo"
     },
@@ -2914,7 +2950,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "uploadlogofrompdf()",
       "id": "app_uploadlogofrompdf"
     },
@@ -2926,7 +2962,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 6,
-      "community_name": "getSession",
+      "community_name": "toast",
       "norm_label": "verifyandupdateplan()",
       "id": "app_verifyandupdateplan"
     },
@@ -3075,16 +3111,16 @@
       "id": "app_setlandinglang"
     },
     {
-      "label": "setVendutiMonth()",
+      "label": "setVendutiYear()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L2622",
+      "source_location": "L2616",
       "_callable": true,
       "_origin": "ast",
       "community": 7,
       "community_name": "app.js",
-      "norm_label": "setvendutimonth()",
-      "id": "app_setvendutimonth"
+      "norm_label": "setvendutiyear()",
+      "id": "app_setvendutiyear"
     },
     {
       "label": "showAuthSuccess()",
@@ -3099,16 +3135,16 @@
       "id": "app_showauthsuccess"
     },
     {
-      "label": "showPhotoLightbox()",
+      "label": "showFieraQr()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L29",
+      "source_location": "L7309",
       "_callable": true,
       "_origin": "ast",
       "community": 7,
       "community_name": "app.js",
-      "norm_label": "showphotolightbox()",
-      "id": "app_showphotolightbox"
+      "norm_label": "showfieraqr()",
+      "id": "app_showfieraqr"
     },
     {
       "label": "showUpdateBanner()",
@@ -3486,10 +3522,10 @@
       "source_file": "supabase/functions/cancel-subscription/index.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "cancel-subscription/index.ts"
+      "norm_label": "cancel-subscription/index.ts",
+      "id": "supabase_functions_cancel_subscription_index"
     },
     {
       "label": "ALLOWED_ORIGINS",
@@ -3497,10 +3533,10 @@
       "source_file": "supabase/functions/cancel-subscription/index.ts",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_allowed_origins",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "allowed_origins"
+      "norm_label": "allowed_origins",
+      "id": "supabase_functions_cancel_subscription_index_allowed_origins"
     },
     {
       "label": "SB_HEADERS",
@@ -3508,10 +3544,10 @@
       "source_file": "supabase/functions/cancel-subscription/index.ts",
       "source_location": "L10",
       "_origin": "ast",
-      "id": "supabase_functions_cancel_subscription_index_sb_headers",
       "community": 17,
       "community_name": "cancel-subscription/index.ts",
-      "norm_label": "sb_headers"
+      "norm_label": "sb_headers",
+      "id": "supabase_functions_cancel_subscription_index_sb_headers"
     },
     {
       "label": "transfer-snake/index.ts",
@@ -3673,10 +3709,10 @@
       "source_file": "supabase/functions/create-checkout/index.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "create-checkout/index.ts"
+      "norm_label": "create-checkout/index.ts",
+      "id": "supabase_functions_create_checkout_index"
     },
     {
       "label": "ALLOWED_ORIGINS",
@@ -3684,10 +3720,10 @@
       "source_file": "supabase/functions/create-checkout/index.ts",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_allowed_origins",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "allowed_origins"
+      "norm_label": "allowed_origins",
+      "id": "supabase_functions_create_checkout_index_allowed_origins"
     },
     {
       "label": "PRICES",
@@ -3695,10 +3731,10 @@
       "source_file": "supabase/functions/create-checkout/index.ts",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_prices",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "prices"
+      "norm_label": "prices",
+      "id": "supabase_functions_create_checkout_index_prices"
     },
     {
       "label": "SB_HEADERS",
@@ -3706,10 +3742,10 @@
       "source_file": "supabase/functions/create-checkout/index.ts",
       "source_location": "L29",
       "_origin": "ast",
-      "id": "supabase_functions_create_checkout_index_sb_headers",
       "community": 34,
       "community_name": "create-checkout/index.ts",
-      "norm_label": "sb_headers"
+      "norm_label": "sb_headers",
+      "id": "supabase_functions_create_checkout_index_sb_headers"
     },
     {
       "label": "verify-checkout/index.ts",
@@ -3717,10 +3753,10 @@
       "source_file": "supabase/functions/verify-checkout/index.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "verify-checkout/index.ts"
+      "norm_label": "verify-checkout/index.ts",
+      "id": "supabase_functions_verify_checkout_index"
     },
     {
       "label": "ALLOWED_ORIGINS",
@@ -3728,10 +3764,10 @@
       "source_file": "supabase/functions/verify-checkout/index.ts",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_allowed_origins",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
-      "norm_label": "allowed_origins"
+      "norm_label": "allowed_origins",
+      "id": "supabase_functions_verify_checkout_index_allowed_origins"
     },
     {
       "label": "SB_HEADERS",
@@ -3739,9 +3775,31 @@
       "source_file": "supabase/functions/verify-checkout/index.ts",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "supabase_functions_verify_checkout_index_sb_headers",
       "community": 35,
       "community_name": "verify-checkout/index.ts",
+      "norm_label": "sb_headers",
+      "id": "supabase_functions_verify_checkout_index_sb_headers"
+    },
+    {
+      "label": "daily-health-check/index.ts",
+      "file_type": "code",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "supabase_functions_daily_health_check_index",
+      "community": 45,
+      "community_name": "daily-health-check/index.ts",
+      "norm_label": "daily-health-check/index.ts"
+    },
+    {
+      "label": "SB_HEADERS",
+      "file_type": "code",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "supabase_functions_daily_health_check_index_sb_headers",
+      "community": 45,
+      "community_name": "daily-health-check/index.ts",
       "norm_label": "sb_headers"
     },
     {
@@ -4717,7 +4775,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "graphify.transcribe.transcribe_all()",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_references_transcribe_transcribe_all_function"
@@ -4732,7 +4790,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "/graphify command",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_graphify"
@@ -4747,7 +4805,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "graphify skill directive",
       "_origin": "semantic",
       "id": "_claude_claude_graphify_directive"
@@ -4762,7 +4820,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "video/audio transcription reference",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_references_transcribe_transcribe"
@@ -4777,7 +4835,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "step 1: ensure graphify installed",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step1_interpreter_detection"
@@ -4792,7 +4850,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "step 2.5: video/audio transcription",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step2_5_transcribe"
@@ -4807,25 +4865,10 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "step 2: detect files",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step2_detect_files"
-    },
-    {
-      "label": "Step 3: Extract Entities and Relationships",
-      "file_type": "document",
-      "source_file": ".claude/skills/graphify/SKILL.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
-      "norm_label": "step 3: extract entities and relationships",
-      "_origin": "semantic",
-      "id": "_claude_skills_graphify_skill_step3_extraction"
     },
     {
       "label": "Whisper Domain-Hint Prompt Strategy",
@@ -4837,7 +4880,7 @@
       "author": null,
       "contributor": null,
       "community": 2,
-      "community_name": "Step 3: Extract Entities and Relationships",
+      "community_name": "Video/Audio Transcription Reference",
       "norm_label": "whisper domain-hint prompt strategy",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_references_transcribe_whisper_prompt"
@@ -5428,6 +5471,21 @@
       "id": "index_dashboard"
     },
     {
+      "label": "Step 3: Extract Entities and Relationships",
+      "file_type": "document",
+      "source_file": ".claude/skills/graphify/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 36,
+      "community_name": "Step 3: Extract Entities and Relationships",
+      "norm_label": "step 3: extract entities and relationships",
+      "_origin": "semantic",
+      "id": "_claude_skills_graphify_skill_step3_extraction"
+    },
+    {
       "label": "Step 4.5: Graph Health Check",
       "file_type": "document",
       "source_file": ".claude/skills/graphify/SKILL.md",
@@ -5437,7 +5495,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "step 4.5: graph health check",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step4_5_health_check"
@@ -5452,7 +5510,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "step 4: build graph, cluster, analyze",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step4_build_graph"
@@ -5467,7 +5525,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "step 5: label communities",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step5_label_communities"
@@ -5482,7 +5540,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "step 6: obsidian vault + html export",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step6_exports"
@@ -5497,7 +5555,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "step 9: manifest, cost tracker, cleanup",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_step9_manifest_cost"
@@ -5512,7 +5570,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "honesty rules",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_honesty_rules"
@@ -5527,7 +5585,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "powershell scrolling troubleshooting",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_powershell_troubleshooting"
@@ -5542,7 +5600,7 @@
       "author": null,
       "contributor": null,
       "community": 36,
-      "community_name": "Step 4: Build Graph, Cluster, Analyze",
+      "community_name": "Step 3: Extract Entities and Relationships",
       "norm_label": "graph.json shrink guard (#479)",
       "_origin": "semantic",
       "id": "_claude_skills_graphify_skill_shrink_guard"
@@ -11086,9 +11144,9 @@
       "source_location": "L90",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index_sendemail",
-      "target": "supabase_functions_cancel_subscription_index_log",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_log"
     },
     {
       "relation": "calls",
@@ -13999,9 +14057,9 @@
       "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_sb_headers",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_sb_headers"
     },
     {
       "relation": "contains",
@@ -14010,9 +14068,9 @@
       "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_cancellationemailhtml",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_cancellationemailhtml"
     },
     {
       "relation": "contains",
@@ -14021,9 +14079,9 @@
       "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_allowed_origins",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_allowed_origins"
     },
     {
       "relation": "contains",
@@ -14032,9 +14090,9 @@
       "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_corsfor",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_corsfor"
     },
     {
       "relation": "contains",
@@ -14043,9 +14101,9 @@
       "source_location": "L185",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_getuseremail",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_getuseremail"
     },
     {
       "relation": "contains",
@@ -14054,9 +14112,9 @@
       "source_location": "L198",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_getstripecustomeremail",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_getstripecustomeremail"
     },
     {
       "relation": "contains",
@@ -14065,9 +14123,9 @@
       "source_location": "L208",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_extractperiodend",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_extractperiodend"
     },
     {
       "relation": "contains",
@@ -14076,9 +14134,9 @@
       "source_location": "L217",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_findchargeforinvoice",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_findchargeforinvoice"
     },
     {
       "relation": "contains",
@@ -14087,9 +14145,9 @@
       "source_location": "L28",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_makejson",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_makejson"
     },
     {
       "relation": "contains",
@@ -14098,9 +14156,9 @@
       "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_getclientip",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_getclientip"
     },
     {
       "relation": "contains",
@@ -14109,9 +14167,9 @@
       "source_location": "L42",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_ratelimitresult",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_ratelimitresult"
     },
     {
       "relation": "contains",
@@ -14120,9 +14178,9 @@
       "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_checkratelimit",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_checkratelimit"
     },
     {
       "relation": "contains",
@@ -14131,9 +14189,9 @@
       "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_log",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_log"
     },
     {
       "relation": "contains",
@@ -14142,9 +14200,9 @@
       "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_getauthenticateduserid",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_getauthenticateduserid"
     },
     {
       "relation": "contains",
@@ -14153,9 +14211,9 @@
       "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_cancel_subscription_index",
-      "target": "supabase_functions_cancel_subscription_index_sendemail",
-      "confidence_score": 1.0
+      "target": "supabase_functions_cancel_subscription_index_sendemail"
     },
     {
       "relation": "contains",
@@ -14164,9 +14222,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_prices",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_prices"
     },
     {
       "relation": "contains",
@@ -14175,9 +14233,9 @@
       "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_allowed_origins",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_allowed_origins"
     },
     {
       "relation": "contains",
@@ -14186,9 +14244,9 @@
       "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_corsfor",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_corsfor"
     },
     {
       "relation": "contains",
@@ -14197,9 +14255,9 @@
       "source_location": "L29",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_sb_headers",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_sb_headers"
     },
     {
       "relation": "contains",
@@ -14208,9 +14266,9 @@
       "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_log",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_log"
     },
     {
       "relation": "contains",
@@ -14219,9 +14277,9 @@
       "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_getclientip",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_getclientip"
     },
     {
       "relation": "contains",
@@ -14230,9 +14288,9 @@
       "source_location": "L57",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_ratelimitresult",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_ratelimitresult"
     },
     {
       "relation": "contains",
@@ -14241,9 +14299,9 @@
       "source_location": "L59",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_checkratelimit",
-      "confidence_score": 1.0
+      "target": "supabase_functions_create_checkout_index_checkratelimit"
     },
     {
       "relation": "contains",
@@ -14252,8 +14310,52 @@
       "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_create_checkout_index",
-      "target": "supabase_functions_create_checkout_index_getauthenticateduserid",
+      "target": "supabase_functions_create_checkout_index_getauthenticateduserid"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "supabase_functions_daily_health_check_index",
+      "target": "supabase_functions_daily_health_check_index_sb_headers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "supabase_functions_daily_health_check_index",
+      "target": "supabase_functions_daily_health_check_index_esc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "supabase_functions_daily_health_check_index",
+      "target": "supabase_functions_daily_health_check_index_sendemail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/daily-health-check/index.ts",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "supabase_functions_daily_health_check_index",
+      "target": "supabase_functions_daily_health_check_index_edisicurezza",
       "confidence_score": 1.0
     },
     {
@@ -14868,9 +14970,9 @@
       "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_allowed_origins",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_allowed_origins"
     },
     {
       "relation": "contains",
@@ -14879,9 +14981,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_corsfor",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_corsfor"
     },
     {
       "relation": "contains",
@@ -14890,9 +14992,9 @@
       "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_getclientip",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_getclientip"
     },
     {
       "relation": "contains",
@@ -14901,9 +15003,9 @@
       "source_location": "L32",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_ratelimitresult",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_ratelimitresult"
     },
     {
       "relation": "contains",
@@ -14912,9 +15014,9 @@
       "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_checkratelimit",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_checkratelimit"
     },
     {
       "relation": "contains",
@@ -14923,9 +15025,9 @@
       "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_log",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_log"
     },
     {
       "relation": "contains",
@@ -14934,9 +15036,9 @@
       "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_getcurrentplan",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_getcurrentplan"
     },
     {
       "relation": "contains",
@@ -14945,9 +15047,9 @@
       "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "supabase_functions_verify_checkout_index",
-      "target": "supabase_functions_verify_checkout_index_sb_headers",
-      "confidence_score": 1.0
+      "target": "supabase_functions_verify_checkout_index_sb_headers"
     },
     {
       "relation": "contains",
@@ -16845,5 +16947,5 @@
       "source_file": "index.html"
     }
   ],
-  "built_at_commit": "8b46b94b1217994ca23ef7b33df293ae7774536f"
+  "built_at_commit": "969c895e4b976d352ba1b8b94bc4e3d89cb56f70"
 }

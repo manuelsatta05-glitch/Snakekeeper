@@ -21,9 +21,40 @@
      richiederebbe un refactor completo del rendering. La CSP vale comunque, perche' il
      valore vero qui e' connect-src.
      Nota: frame-ancestors (anti-clickjacking) NON funziona via <meta>, serve un header
-     HTTP vero -- GitHub Pages non li imposta. -->
+     HTTP vero -- GitHub Pages non li imposta. Al suo posto c'e' il frame-buster
+     qui sotto. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdnjs.cloudflare.com https://challenges.cloudflare.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; connect-src 'self' https://xmtxbtcexyrveifwfswb.supabase.co https://cdnjs.cloudflare.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://api.qrserver.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://js.stripe.com https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Anti-clickjacking (frame-buster).
+     GitHub Pages non puo' impostare X-Frame-Options, e frame-ancestors non
+     funziona da <meta>: questo e' il sostituto possibile.
+     Va PRIMA di qualsiasi contenuto, altrimenti la pagina lampeggerebbe dentro
+     l'iframe prima di nascondersi.
+
+     Perche' prima si nasconde tutto via CSS e poi si mostra, invece del classico
+     "se sono in un frame vai altrove": dentro un iframe con sandbox il browser
+     BLOCCA la navigazione, quindi il redirect non parte e la pagina resterebbe
+     visibile e cliccabile. Nascondendo di default, in quel caso resta bianca.
+
+     Il <noscript> rimette tutto visibile con JavaScript disattivato: la pagina e'
+     anche la vetrina pubblica del prodotto e deve restare leggibile dai motori di
+     ricerca, e senza JavaScript l'app non funziona comunque, quindi non c'e'
+     niente da rubare con un click. -->
+<style id="anti-clickjack">html{display:none !important}</style>
+<noscript><style>html{display:block !important}</style></noscript>
+<script>
+(function () {
+  if (self === top) {
+    var s = document.getElementById('anti-clickjack');
+    if (s) s.remove();
+  } else {
+    // Se la navigazione e' bloccata (iframe con sandbox) l'eccezione viene
+    // ignorata di proposito: la pagina resta nascosta, che e' l'esito voluto.
+    try { top.location = self.location; } catch (e) {}
+  }
+})();
+</script>
 
 <!-- PWA Meta Tags -->
 <meta name="apple-mobile-web-app-capable" content="yes">

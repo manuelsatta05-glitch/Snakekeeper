@@ -14,7 +14,8 @@
 // sk-v17: avviso esplicito quando l'email ha gia' un account.
 // sk-v18: riscatto del codice fiera per utenti free gia' registrati.
 // sk-v19: escaping dei messaggi d'errore mostrati in pagina.
-const CACHE_VERSION = "sk-v19";
+// sk-v20: frame-buster anti-clickjacking (serve a fiera.html, che e' cache-first).
+const CACHE_VERSION = "sk-v20";
 const CACHE_NAME = `snakekeeper-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [

@@ -10,6 +10,23 @@
      (lo script in script-src, il widget in frame-src). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; connect-src https://xmtxbtcexyrveifwfswb.supabase.co https://challenges.cloudflare.com; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Anti-clickjacking (frame-buster). Stessa logica di index.html, e qui conta
+     di piu': questa pagina raccoglie email e password, quindi incorniciarla
+     servirebbe a rubare credenziali con una finta sovrapposizione.
+     Nessun <noscript> di scampo: senza JavaScript la registrazione non funziona
+     comunque, quindi mostrare la pagina non servirebbe a nulla. -->
+<style id="anti-clickjack">html{display:none !important}</style>
+<script>
+(function () {
+  if (self === top) {
+    var s = document.getElementById('anti-clickjack');
+    if (s) s.remove();
+  } else {
+    try { top.location = self.location; } catch (e) {}
+  }
+})();
+</script>
 <title>SnakeKeeper — Offerta Fiera</title>
 <meta name="description" content="Registrati con il codice della fiera e ottieni SnakeKeeper Pro gratis.">
 <meta name="robots" content="noindex">
